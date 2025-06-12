@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+    
+    function isValidEncryptedData() {
+      return request.resource.data.encrypted is map
+        && request.resource.data.encrypted.keys().hasAll(['data', 'iv', 'algorithm'])
+        && request.resource.data.encrypted.data is string
+        && request.resource.data.encrypted.iv is string;
+    }
+    
+    // User profile (public keys for sharing)
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId)
+        && hasRequiredFields(['publicKey', 'email']);
+    }
+    
+    // Encrypted vault data
+    match /vaults/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId)
+        && isValidEncryptedData();
+        
+      // Vault items
+      match /items/{itemId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && isValidEncryptedData()
+          && request.resource.data.created == request.time;
+        allow update: if isOwner(userId)
+          && isValidEncryptedData()
+          && request.resource.data.modified == request.time
+          && resource.data.created == request.resource.data.created;
+        allow delete: if isOwner(userId);
+      }
+    }
+    
+    // Shared items
+    match /shares/{shareId} {
+      allow read: if isAuthenticated()
+        && (resource.data.from == request.auth.uid 
+            || resource.data.to == request.auth.uid);
+      allow create: if isAuthenticated()
+        && request.auth.uid == request.resource.data.from
+        && request.resource.data.keys().hasAll(['from', 'to', 'itemId', 'encryptedKey']);
+      allow delete: if isAuthenticated()
+        && (resource.data.from == request.auth.uid 
+            || resource.data.to == request.auth.uid);
+    }
+
+    // Authentication data (SRP verifiers)
+    match /auth/{email} {
+      // Auth data can only be read by Cloud Functions
+      allow read: if false;
+      // Users can create their own auth records
+      allow create: if hasRequiredFields(['salt', 'verifier']);
+      // Updates must preserve the original email
+      allow update: if resource.data.email == request.resource.data.email;
+    }
+    
+    // Rate limiting data
+    match /rateLimit/{userId} {
+      allow read: if isOwner(userId);
+      // Only Cloud Functions can write rate limiting data
+      allow write: if false;
+    }
+  }
+}

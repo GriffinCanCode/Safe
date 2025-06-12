@@ -1,0 +1,16 @@
+{
+  "name": "@zk-vault/browser-extension",
+  "version": "0.1.0",
+  "description": "ZK-Vault browser extension",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "build": "echo 'Browser extension build not implemented'",
+    "dev": "echo 'Browser extension dev not implemented'",
+    "test": "echo 'Browser extension test not implemented'"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "author": "ZK-Vault Team",
+  "license": "MIT"
+}

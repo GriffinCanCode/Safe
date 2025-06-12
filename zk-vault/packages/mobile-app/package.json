@@ -1,0 +1,16 @@
+{
+  "name": "@zk-vault/mobile-app",
+  "version": "0.1.0",
+  "description": "ZK-Vault mobile application",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "build": "echo 'Mobile app build not implemented'",
+    "dev": "echo 'Mobile app dev not implemented'",
+    "test": "echo 'Mobile app test not implemented'"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "author": "ZK-Vault Team",
+  "license": "MIT"
+}

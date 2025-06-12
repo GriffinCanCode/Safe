@@ -1,0 +1,41 @@
+{
+  "name": "@zk-vault/shared",
+  "version": "0.1.0",
+  "description": "Shared utilities and types for ZK-Vault system",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src/**/*.ts",
+    "test": "jest"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "jest": "^29.0.0",
+    "@types/jest": "^29.0.0"
+  },
+  "publishConfig": {
+    "access": "restricted"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/zk-vault.git",
+    "directory": "packages/shared"
+  },
+  "keywords": [
+    "zero-knowledge",
+    "types",
+    "utilities",
+    "shared"
+  ],
+  "author": "ZK-Vault Team",
+  "license": "MIT"
+}

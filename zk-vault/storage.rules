@@ -1,0 +1,39 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isValidChunk() {
+      return request.resource.size <= 5 * 1024 * 1024  // 5MB max chunk
+        && request.resource.metadata.keys().hasAll(['iv'])
+        && request.resource.metadata.iv is string;
+    }
+    
+    // User file chunks
+    match /users/{userId}/chunks/{chunkId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && isValidChunk();
+      allow delete: if isOwner(userId);
+    }
+    
+    // Deduplicated chunks (content-addressed)
+    match /chunks/{contentHash} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidChunk();
+      // Never allow deletion of deduplicated chunks
+    }
+    
+    // User file uploads temporary storage
+    match /users/{userId}/uploads/{uploadId}/{filename} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+  }
+}

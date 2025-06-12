@@ -1,0 +1,16 @@
+{
+  "name": "@zk-vault/web-app",
+  "version": "0.1.0",
+  "description": "ZK-Vault web application",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "build": "echo 'Web app build not implemented'",
+    "dev": "echo 'Web app dev not implemented'",
+    "test": "echo 'Web app test not implemented'"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "author": "ZK-Vault Team",
+  "license": "MIT"
+}
