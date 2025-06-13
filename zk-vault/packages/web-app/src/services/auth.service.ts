@@ -1,12 +1,20 @@
 /**
  * @fileoverview Authentication Service
  * @description Handles user authentication using zero-knowledge cryptography
+ * @responsibility Manages authentication state, user profiles, and ZK operations
+ * @principle Single Responsibility - Only authentication operations
+ * @security Zero-knowledge architecture - server never sees plaintext passwords
  */
 
 import { ZeroKnowledgeAuth, ZeroKnowledgeVault } from '@zk-vault/crypto';
-import type { SRPAuthProof, MasterKeyStructure, CryptoOperationResult } from '@zk-vault/shared';
+import type { 
+  SRPAuthProof, 
+  MasterKeyStructure, 
+  CryptoOperationResult,
+  AuthenticationResult 
+} from '@zk-vault/shared';
 
-// User profile interface
+// User profile interface matching system patterns
 export interface UserProfile {
   uid: string;
   email: string;
@@ -44,7 +52,7 @@ export interface AuthResult {
   masterKeyStructure: MasterKeyStructure;
 }
 
-// ZK User interface
+// ZK User interface matching Firebase User pattern
 export interface ZKUser {
   uid: string;
   email: string;
@@ -68,6 +76,17 @@ export interface BiometricOptions {
   userVerification: 'required' | 'preferred' | 'discouraged';
 }
 
+// Biometric authentication result
+export interface BiometricAuthResult {
+  success: boolean;
+  error?: string;
+}
+
+/**
+ * Authentication Service
+ * @responsibility Manages user authentication using zero-knowledge cryptography
+ * @security Implements ZK authentication without revealing passwords to server
+ */
 class AuthService {
   private static instance: AuthService;
   private authStateListeners: Set<(user: ZKUser | null) => void> = new Set();
@@ -75,6 +94,7 @@ class AuthService {
   private currentProfile: UserProfile | null = null;
   private masterKeyStructure: MasterKeyStructure | null = null;
   private zkVault: ZeroKnowledgeVault = new ZeroKnowledgeVault();
+  private sessionTimeout: number | null = null;
 
   private constructor() {}
 
@@ -92,6 +112,17 @@ class AuthService {
     try {
       if (!data.acceptTerms) {
         throw new Error('Terms and conditions must be accepted');
+      }
+
+      // Validate email format
+      if (!this.isValidEmail(data.email)) {
+        throw new Error('Invalid email address format');
+      }
+
+      // Check if user already exists
+      const existingUser = this.getStoredUser(data.email);
+      if (existingUser) {
+        throw new Error('An account with this email already exists');
       }
 
       // Initialize ZK vault with password to create master key structure
@@ -120,6 +151,7 @@ class AuthService {
       this.currentUser = user;
       this.currentProfile = profile;
       this.masterKeyStructure = initResult.data;
+      this.setupSessionTimeout();
       this.notifyAuthStateListeners(user);
 
       return {
@@ -139,10 +171,29 @@ class AuthService {
    */
   async signIn(email: string, password: string): Promise<AuthResult> {
     try {
+      // Validate inputs
+      if (!email || !password) {
+        throw new Error('Email and password are required');
+      }
+
+      if (!this.isValidEmail(email)) {
+        throw new Error('Invalid email address format');
+      }
+
       // Verify stored credentials exist
       const storedUser = this.getStoredUser(email);
       if (!storedUser) {
         throw new Error('No account found with this email');
+      }
+
+      const profile = await this.getUserProfile(storedUser.uid);
+
+      // Check if account is locked
+      if (profile.security.lockedUntil && profile.security.lockedUntil > new Date()) {
+        const lockTimeRemaining = Math.ceil(
+          (profile.security.lockedUntil.getTime() - Date.now()) / (1000 * 60)
+        );
+        throw new Error(`Account is temporarily locked. Try again in ${lockTimeRemaining} minutes.`);
       }
 
       // Initialize ZK vault with password
@@ -152,13 +203,6 @@ class AuthService {
         throw new Error('Invalid credentials');
       }
 
-      const profile = await this.getUserProfile(storedUser.uid);
-
-      // Check if account is locked
-      if (profile.security.lockedUntil && profile.security.lockedUntil > new Date()) {
-        throw new Error('Account is temporarily locked due to multiple failed login attempts');
-      }
-
       // Reset login attempts on successful login
       await this.resetLoginAttempts(storedUser.uid);
       await this.updateLastLoginTime(storedUser.uid);
@@ -166,6 +210,7 @@ class AuthService {
       this.currentUser = storedUser;
       this.currentProfile = profile;
       this.masterKeyStructure = initResult.data;
+      this.setupSessionTimeout();
       this.notifyAuthStateListeners(storedUser);
 
       return {
@@ -189,6 +234,7 @@ class AuthService {
       this.currentUser = null;
       this.currentProfile = null;
       this.masterKeyStructure = null;
+      this.clearSessionTimeout();
       this.zkVault.lock();
       this.notifyAuthStateListeners(null);
     } catch (error) {
@@ -202,6 +248,18 @@ class AuthService {
    */
   async resetPassword(email: string): Promise<void> {
     try {
+      if (!this.isValidEmail(email)) {
+        throw new Error('Invalid email address format');
+      }
+
+      const storedUser = this.getStoredUser(email);
+      if (!storedUser) {
+        // Don't reveal whether account exists for security
+        console.log(`Password reset initiated for: ${email}`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return;
+      }
+
       // In a real implementation, this would trigger a secure reset process
       console.log(`Password reset initiated for: ${email}`);
       // Simulate async operation
@@ -219,6 +277,10 @@ class AuthService {
     try {
       if (!this.currentUser) {
         throw new Error('No authenticated user');
+      }
+
+      if (!newPassword || newPassword.length < 8) {
+        throw new Error('Password must be at least 8 characters long');
       }
 
       // Initialize vault with new password to create new master key structure
@@ -305,7 +367,6 @@ class AuthService {
           },
           pubKeyCredParams: [{ alg: -7, type: 'public-key' }],
           timeout: options.timeout,
-          userVerification: options.userVerification,
           authenticatorSelection: {
             authenticatorAttachment: 'platform',
             userVerification: options.userVerification,
@@ -356,10 +417,44 @@ class AuthService {
   }
 
   /**
+   * Generate authentication proof using ZK Auth
+   */
+  async generateAuthProof(email: string, password: string): Promise<CryptoOperationResult<SRPAuthProof>> {
+    try {
+      const challenge = ZeroKnowledgeAuth.generateChallenge();
+      return await ZeroKnowledgeAuth.generateAuthProof(email, password, challenge);
+    } catch (error: any) {
+      return {
+        success: false,
+        error: `Auth proof generation failed: ${error.message}`,
+        errorCode: 'AUTH_PROOF_FAILED',
+      };
+    }
+  }
+
+  /**
+   * Verify authentication proof
+   */
+  async verifyAuthProof(
+    proof: SRPAuthProof,
+    email: string,
+    challenge: string
+  ): Promise<CryptoOperationResult<boolean>> {
+    return await ZeroKnowledgeAuth.verifyAuthProof(proof, email, challenge);
+  }
+
+  /**
    * Get current user
    */
   getCurrentUser(): ZKUser | null {
     return this.currentUser;
+  }
+
+  /**
+   * Get current user profile
+   */
+  getCurrentProfile(): UserProfile | null {
+    return this.currentProfile;
   }
 
   /**
@@ -438,11 +533,44 @@ class AuthService {
           await this.zkVault.restoreFromMasterKey(session.masterKeyStructure);
         }
 
+        this.setupSessionTimeout();
         this.notifyAuthStateListeners(session.user);
       }
     } catch (error) {
       console.error('Failed to initialize auth state:', error);
     }
+  }
+
+  /**
+   * Check if user is authenticated
+   */
+  isAuthenticated(): boolean {
+    return !!this.currentUser;
+  }
+
+  /**
+   * Check if current user's email is verified
+   */
+  isEmailVerified(): boolean {
+    return this.currentUser?.emailVerified ?? false;
+  }
+
+  /**
+   * Update last activity timestamp
+   */
+  updateActivity(): void {
+    if (this.currentProfile) {
+      // In a real implementation, this might update server-side activity tracking
+      this.setupSessionTimeout();
+    }
+  }
+
+  /**
+   * Clear authentication error state
+   */
+  clearError(): void {
+    // This method is for compatibility with store patterns
+    // Actual error handling is done through exceptions
   }
 
   // Private helper methods
@@ -527,8 +655,32 @@ class AuthService {
     }
   }
 
+  private setupSessionTimeout(): void {
+    this.clearSessionTimeout();
+    
+    if (this.currentProfile?.preferences.autoLockTimeout) {
+      const timeoutMs = this.currentProfile.preferences.autoLockTimeout * 60 * 1000;
+      this.sessionTimeout = window.setTimeout(() => {
+        this.signOut();
+      }, timeoutMs);
+    }
+  }
+
+  private clearSessionTimeout(): void {
+    if (this.sessionTimeout) {
+      clearTimeout(this.sessionTimeout);
+      this.sessionTimeout = null;
+    }
+  }
+
   private notifyAuthStateListeners(user: ZKUser | null): void {
-    this.authStateListeners.forEach(listener => listener(user));
+    this.authStateListeners.forEach(listener => {
+      try {
+        listener(user);
+      } catch (error) {
+        console.error('Auth state listener error:', error);
+      }
+    });
   }
 
   private handleAuthError(error: any): Error {
@@ -545,6 +697,11 @@ class AuthService {
 
     const message = errorMap[error.code] || error.message || 'An unknown error occurred';
     return new Error(message);
+  }
+
+  private isValidEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   }
 
   // Storage helper methods (using localStorage for demo)
@@ -649,6 +806,7 @@ class AuthService {
    */
   destroy(): void {
     this.authStateListeners.clear();
+    this.clearSessionTimeout();
   }
 }
 

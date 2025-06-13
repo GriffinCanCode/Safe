@@ -43,11 +43,12 @@ Thumbs.db
 *token*
 *package-lock*
 *.tsbuildinfo*
+*package-lock.json*
 *~
 .gif
-.js.map
-.log
+*.js.map
+*.log
 .png
-.pyc
-.ts.map
-.tsbuildinfo
+*.pyc
+*.ts.map
+*.tsbuildinfo
