@@ -33,7 +33,8 @@ interface SearchWorkerMessage {
     | 'clearIndex'
     | 'fuzzySearch'
     | 'getSearchStats'
-    | 'rebuildIndex';
+    | 'rebuildIndex'
+    | 'ping';
   data: any;
 }
 
@@ -118,7 +119,7 @@ const defaultSearchConfig: SearchIndexConfig = {
     { name: 'tags', weight: 0.7 },
     { name: 'url', weight: 0.5 },
     { name: 'username', weight: 0.4 },
-    { name: 'searchText', weight: 0.3 }
+    { name: 'searchText', weight: 0.3 },
   ] as any[],
 };
 
@@ -150,6 +151,10 @@ self.onmessage = async (event: MessageEvent<SearchWorkerMessage>) => {
     let result: any;
 
     switch (type) {
+      case 'ping':
+        result = await handlePing(data);
+        break;
+
       case 'indexItems':
         result = await handleIndexItems(data);
         break;
@@ -237,6 +242,26 @@ self.onmessage = async (event: MessageEvent<SearchWorkerMessage>) => {
     self.postMessage(response);
   }
 };
+
+/**
+ * Handle ping operation for health checks
+ */
+async function handlePing(
+  _data: any
+): Promise<CryptoOperationResult<{ status: string; timestamp: number }>> {
+  return {
+    success: true,
+    data: {
+      status: 'healthy',
+      timestamp: Date.now(),
+    },
+    metrics: {
+      duration: 0,
+      memoryUsed: 0,
+      cpuUsage: 0,
+    },
+  };
+}
 
 /**
  * Handle indexing vault items
@@ -341,7 +366,7 @@ async function handleSearch(data: {
     let filteredResults = results;
 
     if (criteria.types && criteria.types.length > 0) {
-      filteredResults = filteredResults.filter(result => 
+      filteredResults = filteredResults.filter(result =>
         criteria.types!.includes(result.item.type)
       );
     }
@@ -359,9 +384,7 @@ async function handleSearch(data: {
     }
 
     if (criteria.favoritesOnly) {
-      filteredResults = filteredResults.filter(result =>
-        result.item.metadata.favorite === true
-      );
+      filteredResults = filteredResults.filter(result => result.item.metadata.favorite === true);
     }
 
     if (criteria.dateRange) {
@@ -378,8 +401,10 @@ async function handleSearch(data: {
         return (a.score || 0) - (b.score || 0);
       } else {
         // Sort by modified date for non-query searches
-        return new Date(b.item.metadata.modified).getTime() - 
-               new Date(a.item.metadata.modified).getTime();
+        return (
+          new Date(b.item.metadata.modified).getTime() -
+          new Date(a.item.metadata.modified).getTime()
+        );
       }
     });
 
@@ -430,7 +455,7 @@ async function handleSearchEncrypted(data: {
   try {
     // This would require importing crypto functions in the worker
     // For now, return a placeholder implementation
-    
+
     return {
       success: false,
       error: 'Encrypted search not yet implemented - items should be decrypted on main thread',
@@ -493,12 +518,12 @@ async function handleUpdateIndex(data: {
 
     // Remove existing item and add updated one
     await handleRemoveFromIndex({ itemId: item.id });
-    
+
     // Add to index (Fuse.js doesn't have direct update, so we rebuild)
     const indexData = searchIndex.getIndex() as any;
     const currentDocs = (indexData.docs || []) as SearchableItem[];
     const updatedDocs = [...currentDocs, searchableItem];
-    
+
     // Get current options from the search index
     const currentOptions = {
       threshold: defaultSearchConfig.fuzzyThreshold,
@@ -507,7 +532,7 @@ async function handleUpdateIndex(data: {
       minMatchCharLength: defaultSearchConfig.minMatchCharLength,
       keys: defaultSearchConfig.keys,
     };
-    
+
     searchIndex = new Fuse(updatedDocs, currentOptions);
     updateSearchStats(updatedDocs);
 
@@ -560,7 +585,7 @@ async function handleRemoveFromIndex(data: {
     const indexData = searchIndex.getIndex() as any;
     const currentDocs = (indexData.docs || []) as SearchableItem[];
     const filteredDocs = currentDocs.filter(item => item.id !== itemId);
-    
+
     // Get current options from the search index
     const currentOptions = {
       threshold: defaultSearchConfig.fuzzyThreshold,
@@ -569,7 +594,7 @@ async function handleRemoveFromIndex(data: {
       minMatchCharLength: defaultSearchConfig.minMatchCharLength,
       keys: defaultSearchConfig.keys,
     };
-    
+
     searchIndex = new Fuse(filteredDocs, currentOptions);
     updateSearchStats(filteredDocs);
 
@@ -734,13 +759,13 @@ async function handleRebuildIndex(data: {
   try {
     // Clear existing index
     await handleClearIndex({});
-    
+
     // Rebuild with new items - handle undefined config properly
-    const result = await handleIndexItems({ 
-      items, 
-      ...(config && { config })
+    const result = await handleIndexItems({
+      items,
+      ...(config && { config }),
     });
-    
+
     if (!result.success) {
       return {
         success: false,
@@ -785,7 +810,7 @@ async function convertToSearchableItem(item: VaultItem): Promise<SearchableItem 
   try {
     // For now, assume the item contains decrypted data
     // In a real implementation, this would decrypt the item.encrypted data
-    
+
     let title = '';
     let content = '';
     let url = '';
@@ -815,7 +840,8 @@ async function convertToSearchableItem(item: VaultItem): Promise<SearchableItem 
     } else if (item.type === 'identity') {
       const identityItem = item as IdentityEntry;
       if (identityItem.decrypted) {
-        title = `${identityItem.decrypted.name?.first || ''} ${identityItem.decrypted.name?.last || ''}`.trim();
+        title =
+          `${identityItem.decrypted.name?.first || ''} ${identityItem.decrypted.name?.last || ''}`.trim();
         content = identityItem.decrypted.emails?.join(' ') || '';
       }
     } else if (item.type === 'file') {
@@ -832,7 +858,9 @@ async function convertToSearchableItem(item: VaultItem): Promise<SearchableItem 
     }
 
     // Create combined search text
-    const searchText = [title, content, url, username, ...item.metadata.tags].join(' ').toLowerCase();
+    const searchText = [title, content, url, username, ...item.metadata.tags]
+      .join(' ')
+      .toLowerCase();
 
     const searchableItem: SearchableItem = {
       id: item.id,
@@ -881,7 +909,8 @@ function trackSearchPerformance(duration: number): void {
   }
 
   // Calculate average search time
-  searchStats.averageSearchTime = searchTimes.reduce((sum, time) => sum + time, 0) / searchTimes.length;
+  searchStats.averageSearchTime =
+    searchTimes.reduce((sum, time) => sum + time, 0) / searchTimes.length;
 }
 
 function estimateMemoryUsage(data: any): number {
@@ -890,17 +919,11 @@ function estimateMemoryUsage(data: any): number {
 }
 
 function estimateIndexSize(items: SearchableItem[]): number {
-  // Estimate index size in bytes
-  let size = 0;
-  for (const item of items) {
-    size += JSON.stringify(item).length * 2;
-  }
-  return size;
+  // Rough estimate: each item is about 1KB on average
+  return items.length * 1024;
 }
 
-/**
- * Worker initialization
- */
+// Log that the search worker is initialized
 console.log('Search Worker initialized');
 
 // Set up periodic cleanup of search statistics
@@ -908,6 +931,7 @@ setInterval(() => {
   // Clean up old search times if too many accumulate
   if (searchTimes.length > 1000) {
     searchTimes = searchTimes.slice(-100);
-    searchStats.averageSearchTime = searchTimes.reduce((sum, time) => sum + time, 0) / searchTimes.length;
+    searchStats.averageSearchTime =
+      searchTimes.reduce((sum, time) => sum + time, 0) / searchTimes.length;
   }
 }, 60000); // Clean up every minute

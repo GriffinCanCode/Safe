@@ -4,10 +4,10 @@
     :class="wrapperClasses"
     role="progressbar"
     :aria-valuenow="value"
-    :aria-valuemin="min"
-    :aria-valuemax="max"
-    :aria-label="label"
-    :aria-describedby="showText ? `${progressId}-text` : undefined"
+    :aria-valuemin="min || 0"
+    :aria-valuemax="max || 100"
+    :aria-label="label || 'Progress'"
+    :aria-describedby="showText ? `${progressId}-text` : ''"
   >
     <div v-if="showLabel && label" class="progress-label">
       <span>{{ label }}</span>
@@ -20,7 +20,7 @@
       <div 
         class="progress-fill"
         :class="fillClasses"
-        :style="fillStyle"
+        :style="{ '--progress-width': `${percentage}%` }"
       >
         <div v-if="animated" class="progress-animation" />
       </div>
@@ -101,231 +101,11 @@ const fillClasses = computed(() => ({
   'progress-fill-indeterminate': props.indeterminate
 }))
 
-const fillStyle = computed(() => {
-  if (props.indeterminate) return {}
-  return {
-    width: `${percentage.value}%`
-  }
-})
+// fillStyle removed - now using CSS custom properties
 
 const textClasses = computed(() => ({
   [`progress-text-${props.size}`]: true
 }))
 </script>
 
-<style scoped>
-.progress-wrapper {
-  @apply w-full;
-}
-
-.progress-label {
-  @apply flex items-center justify-between mb-1;
-}
-
-.progress-label span {
-  @apply text-sm font-medium text-neutral-700;
-}
-
-.progress-percentage {
-  @apply text-neutral-500;
-}
-
-.progress-track {
-  @apply relative w-full bg-neutral-200 overflow-hidden;
-}
-
-.progress-track-rounded {
-  @apply rounded-full;
-}
-
-.progress-fill {
-  @apply h-full transition-all duration-300 ease-out relative;
-}
-
-/* Size variants */
-.progress-xs .progress-track {
-  @apply h-1;
-}
-
-.progress-sm .progress-track {
-  @apply h-2;
-}
-
-.progress-md .progress-track {
-  @apply h-3;
-}
-
-.progress-lg .progress-track {
-  @apply h-4;
-}
-
-.progress-xl .progress-track {
-  @apply h-6;
-}
-
-/* Variant colors */
-.progress-fill-primary {
-  @apply bg-primary-600;
-}
-
-.progress-fill-secondary {
-  @apply bg-neutral-600;
-}
-
-.progress-fill-success {
-  @apply bg-success-600;
-}
-
-.progress-fill-warning {
-  @apply bg-warning-600;
-}
-
-.progress-fill-danger {
-  @apply bg-danger-600;
-}
-
-.progress-fill-info {
-  @apply bg-info-600;
-}
-
-/* Striped pattern */
-.progress-fill-striped {
-  background-image: linear-gradient(
-    45deg,
-    rgba(255, 255, 255, 0.15) 25%,
-    transparent 25%,
-    transparent 50%,
-    rgba(255, 255, 255, 0.15) 50%,
-    rgba(255, 255, 255, 0.15) 75%,
-    transparent 75%,
-    transparent
-  );
-  background-size: 1rem 1rem;
-}
-
-/* Animation */
-.progress-fill-animated {
-  animation: progress-stripes 1s linear infinite;
-}
-
-.progress-animation {
-  @apply absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30;
-  animation: progress-shimmer 2s infinite;
-}
-
-/* Indeterminate */
-.progress-fill-indeterminate {
-  @apply w-full;
-  animation: progress-indeterminate 2s ease-in-out infinite;
-}
-
-.progress-fill-indeterminate::before {
-  content: '';
-  @apply absolute inset-0 bg-current;
-  animation: progress-indeterminate-fill 2s ease-in-out infinite;
-}
-
-/* Text styles */
-.progress-text {
-  @apply mt-1 text-neutral-600;
-}
-
-.progress-text-xs {
-  @apply text-xs;
-}
-
-.progress-text-sm {
-  @apply text-sm;
-}
-
-.progress-text-md {
-  @apply text-sm;
-}
-
-.progress-text-lg {
-  @apply text-base;
-}
-
-.progress-text-xl {
-  @apply text-lg;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .progress-track {
-    @apply bg-neutral-700;
-  }
-  
-  .progress-label span {
-    @apply text-neutral-300;
-  }
-  
-  .progress-percentage {
-    @apply text-neutral-400;
-  }
-  
-  .progress-text {
-    @apply text-neutral-400;
-  }
-}
-
-/* Animations */
-@keyframes progress-stripes {
-  0% {
-    background-position: 1rem 0;
-  }
-  100% {
-    background-position: 0 0;
-  }
-}
-
-@keyframes progress-shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-@keyframes progress-indeterminate {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-@keyframes progress-indeterminate-fill {
-  0%, 100% {
-    width: 0%;
-    margin-left: 0%;
-  }
-  50% {
-    width: 100%;
-    margin-left: 0%;
-  }
-}
-
-/* Reduced motion support */
-@media (prefers-reduced-motion: reduce) {
-  .progress-fill {
-    @apply transition-none;
-  }
-  
-  .progress-fill-animated,
-  .progress-animation,
-  .progress-fill-indeterminate,
-  .progress-fill-indeterminate::before {
-    animation: none;
-  }
-}
-
-/* High contrast support */
-@media (prefers-contrast: high) {
-  .progress-track {
-    @apply border border-neutral-400;
-  }
-}
-</style>
+<!-- CSS classes are now defined in /styles/components/common/progress-bar.css -->

@@ -1,0 +1,140 @@
+/**
+ * CSS Grid Layout Utilities
+ * Modern grid system with container queries
+ */
+
+/* === GRID CONTAINERS === */
+.grid-container {
+  display: grid;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+/* === RESPONSIVE GRID LAYOUTS === */
+.grid-auto-fit {
+  grid-template-columns: repeat(auto-fit, minmax(var(--grid-min-width, 280px), 1fr));
+}
+
+.grid-auto-fill {
+  grid-template-columns: repeat(auto-fill, minmax(var(--grid-min-width, 280px), 1fr));
+}
+
+/* === SPECIFIC GRID PATTERNS === */
+.grid-stats {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-6);
+}
+
+.grid-cards {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-6);
+}
+
+.grid-files {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-4);
+}
+
+.grid-vault-items {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-5);
+}
+
+/* === CONTAINER QUERY RESPONSIVE GRIDS === */
+@container (min-width: 640px) {
+  .grid-responsive-sm {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@container (min-width: 768px) {
+  .grid-responsive-md {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@container (min-width: 1024px) {
+  .grid-responsive-lg {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@container (min-width: 1280px) {
+  .grid-responsive-xl {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* === GRID ITEM UTILITIES === */
+.grid-item-span-2 {
+  grid-column: span 2;
+}
+
+.grid-item-span-3 {
+  grid-column: span 3;
+}
+
+.grid-item-span-full {
+  grid-column: 1 / -1;
+}
+
+/* === MASONRY-LIKE GRID === */
+.grid-masonry {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-auto-rows: max-content;
+  gap: var(--space-4);
+}
+
+/* === DASHBOARD GRID === */
+.grid-dashboard {
+  display: grid;
+  grid-template-areas:
+    "header header header"
+    "sidebar main aside"
+    "footer footer footer";
+  grid-template-columns: var(--sidebar-width) 1fr 300px;
+  grid-template-rows: var(--header-height) 1fr var(--footer-height);
+  min-height: 100vh;
+  gap: 0;
+}
+
+.grid-dashboard-header {
+  grid-area: header;
+}
+
+.grid-dashboard-sidebar {
+  grid-area: sidebar;
+}
+
+.grid-dashboard-main {
+  grid-area: main;
+}
+
+.grid-dashboard-aside {
+  grid-area: aside;
+}
+
+.grid-dashboard-footer {
+  grid-area: footer;
+}
+
+/* === RESPONSIVE DASHBOARD === */
+@media (max-width: 1024px) {
+  .grid-dashboard {
+    grid-template-areas:
+      "header header"
+      "main main"
+      "footer footer";
+    grid-template-columns: 1fr;
+    grid-template-rows: var(--header-height) 1fr var(--footer-height);
+  }
+  
+  .grid-dashboard-sidebar {
+    display: none;
+  }
+  
+  .grid-dashboard-aside {
+    display: none;
+  }
+} 

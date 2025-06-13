@@ -3,11 +3,10 @@
     <div class="search-container" ref="searchContainer">
       <!-- Search Input -->
       <div class="search-input-wrapper">
-        <input
+                <input
           ref="searchInput"
           v-model="localQuery"
           type="search"
-          :placeholder="placeholder"
           class="search-input"
           :class="inputClasses"
           @input="handleInput"
@@ -15,11 +14,14 @@
           @blur="handleBlur"
           @keydown="handleKeydown"
           @keyup.escape="handleEscape"
-          :disabled="disabled"
+          v-bind="{
+            ...(placeholder ? { placeholder } : {}),
+            ...(disabled ? { disabled: true } : {})
+          }"
           autocomplete="off"
           spellcheck="false"
         />
-        
+
         <!-- Search Icon -->
         <svg 
           v-if="!isLoading" 
@@ -41,7 +43,7 @@
           v-if="localQuery && !isLoading"
           class="search-clear"
           @click="clearSearch"
-          :aria-label="clearLabel"
+          v-bind="clearLabel ? { 'aria-label': clearLabel } : {}"
           type="button"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,7 +57,7 @@
           class="search-filter-toggle"
           :class="{ 'active': showFilters || appliedFiltersCount > 0 }"
           @click="toggleFilters"
-          :aria-label="filterToggleLabel"
+          v-bind="filterToggleLabel ? { 'aria-label': filterToggleLabel } : {}"
           type="button"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -426,274 +428,4 @@ defineExpose({
 })
 </script>
 
-<style scoped>
-.search-bar {
-  @apply relative w-full;
-}
-
-.search-container {
-  @apply relative;
-}
-
-.search-input-wrapper {
-  @apply relative flex items-center;
-}
-
-.search-input {
-  @apply w-full border border-neutral-300 rounded-lg bg-white text-neutral-900;
-  @apply focus:ring-2 focus:ring-primary-500 focus:border-primary-500;
-  @apply placeholder-neutral-500 transition-all duration-200;
-  @apply disabled:bg-neutral-50 disabled:text-neutral-500 disabled:cursor-not-allowed;
-}
-
-/* Size variants */
-.search-input-sm {
-  @apply pl-9 pr-8 py-1.5 text-sm;
-}
-
-.search-input-md {
-  @apply pl-10 pr-10 py-2 text-sm;
-}
-
-.search-input-lg {
-  @apply pl-12 pr-12 py-3 text-base;
-}
-
-.search-input-with-clear.search-input-sm {
-  @apply pr-16;
-}
-
-.search-input-with-clear.search-input-md {
-  @apply pr-20;
-}
-
-.search-input-with-clear.search-input-lg {
-  @apply pr-24;
-}
-
-.search-input-with-filter.search-input-sm {
-  @apply pr-16;
-}
-
-.search-input-with-filter.search-input-md {
-  @apply pr-20;
-}
-
-.search-input-with-filter.search-input-lg {
-  @apply pr-24;
-}
-
-.search-input-with-clear.search-input-with-filter.search-input-sm {
-  @apply pr-24;
-}
-
-.search-input-with-clear.search-input-with-filter.search-input-md {
-  @apply pr-28;
-}
-
-.search-input-with-clear.search-input-with-filter.search-input-lg {
-  @apply pr-32;
-}
-
-/* Icons and buttons */
-.search-icon,
-.search-loading {
-  @apply absolute left-3 w-4 h-4 text-neutral-400;
-}
-
-.search-bar-sm .search-icon,
-.search-bar-sm .search-loading {
-  @apply left-2.5 w-3 h-3;
-}
-
-.search-bar-lg .search-icon,
-.search-bar-lg .search-loading {
-  @apply left-4 w-5 h-5;
-}
-
-.search-clear,
-.search-filter-toggle {
-  @apply absolute w-4 h-4 text-neutral-400 hover:text-neutral-600;
-  @apply transition-colors duration-200 cursor-pointer;
-  @apply flex items-center justify-center;
-}
-
-.search-clear {
-  @apply right-10;
-}
-
-.search-filter-toggle {
-  @apply right-3;
-}
-
-.search-bar-sm .search-clear {
-  @apply right-8 w-3 h-3;
-}
-
-.search-bar-sm .search-filter-toggle {
-  @apply right-2.5 w-3 h-3;
-}
-
-.search-bar-lg .search-clear {
-  @apply right-12 w-5 h-5;
-}
-
-.search-bar-lg .search-filter-toggle {
-  @apply right-4 w-5 h-5;
-}
-
-.search-filter-toggle.active {
-  @apply text-primary-600;
-}
-
-.filter-badge {
-  @apply absolute -top-1 -right-1 w-4 h-4 bg-primary-500 text-white text-xs;
-  @apply rounded-full flex items-center justify-center;
-}
-
-/* Suggestions dropdown */
-.search-suggestions {
-  @apply absolute top-full left-0 right-0 mt-1 bg-white border border-neutral-200;
-  @apply rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto;
-}
-
-.suggestions-section {
-  @apply border-b border-neutral-100 last:border-b-0;
-}
-
-.suggestions-header {
-  @apply flex items-center justify-between px-4 py-2 bg-neutral-50 border-b border-neutral-100;
-}
-
-.suggestions-title {
-  @apply text-xs font-medium text-neutral-600 uppercase tracking-wider;
-}
-
-.suggestions-clear {
-  @apply text-xs text-primary-600 hover:text-primary-700 font-medium;
-}
-
-.suggestions-list {
-  @apply divide-y divide-neutral-100;
-}
-
-.suggestion-item {
-  @apply w-full flex items-center gap-3 px-4 py-3 text-left;
-  @apply hover:bg-neutral-50 transition-colors cursor-pointer;
-}
-
-.suggestion-item.active {
-  @apply bg-primary-50 text-primary-900;
-}
-
-.suggestion-icon {
-  @apply flex-shrink-0 w-4 h-4 text-neutral-400;
-}
-
-.suggestion-item.active .suggestion-icon {
-  @apply text-primary-600;
-}
-
-.suggestion-content {
-  @apply flex-1 min-w-0;
-}
-
-.suggestion-text {
-  @apply font-medium text-neutral-900 truncate;
-}
-
-.suggestion-item.active .suggestion-text {
-  @apply text-primary-900;
-}
-
-.suggestion-description {
-  @apply text-xs text-neutral-500 truncate;
-}
-
-.suggestion-item.active .suggestion-description {
-  @apply text-primary-700;
-}
-
-/* Filter panel */
-.search-filters-panel {
-  @apply absolute top-full left-0 right-0 mt-1 bg-white border border-neutral-200;
-  @apply rounded-lg shadow-lg z-40;
-}
-
-/* Focus states */
-.search-bar-focused .search-input {
-  @apply ring-2 ring-primary-500 border-primary-500;
-}
-
-.search-bar-with-filters .search-input {
-  @apply rounded-b-none border-b-transparent;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .search-input {
-    @apply bg-neutral-800 border-neutral-600 text-neutral-100;
-    @apply placeholder-neutral-400;
-    @apply focus:border-primary-400 focus:ring-primary-400;
-    @apply disabled:bg-neutral-900 disabled:text-neutral-600;
-  }
-  
-  .search-icon,
-  .search-clear,
-  .search-filter-toggle {
-    @apply text-neutral-500 hover:text-neutral-300;
-  }
-  
-  .search-filter-toggle.active {
-    @apply text-primary-400;
-  }
-  
-  .search-suggestions {
-    @apply bg-neutral-800 border-neutral-600;
-  }
-  
-  .suggestions-header {
-    @apply bg-neutral-700 border-neutral-600;
-  }
-  
-  .suggestions-title {
-    @apply text-neutral-400;
-  }
-  
-  .suggestions-clear {
-    @apply text-primary-400 hover:text-primary-300;
-  }
-  
-  .suggestions-list {
-    @apply divide-neutral-600;
-  }
-  
-  .suggestion-item {
-    @apply hover:bg-neutral-700;
-  }
-  
-  .suggestion-item.active {
-    @apply bg-primary-900 text-primary-100;
-  }
-  
-  .suggestion-text {
-    @apply text-neutral-100;
-  }
-  
-  .suggestion-item.active .suggestion-text {
-    @apply text-primary-100;
-  }
-  
-  .suggestion-description {
-    @apply text-neutral-400;
-  }
-  
-  .suggestion-item.active .suggestion-description {
-    @apply text-primary-300;
-  }
-  
-  .search-filters-panel {
-    @apply bg-neutral-800 border-neutral-600;
-  }
-}
-</style> 
+<!-- Styles are now handled by the comprehensive CSS architecture in /src/styles/components/search/search-bar.css --> 

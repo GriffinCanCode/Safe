@@ -37,7 +37,8 @@ interface FileWorkerMessage {
     | 'optimizeChunks'
     | 'assembleFile'
     | 'processUpload'
-    | 'processDownload';
+    | 'processDownload'
+    | 'ping';
   data: any;
 }
 
@@ -82,6 +83,10 @@ self.onmessage = async (event: MessageEvent<FileWorkerMessage>) => {
     let result: any;
 
     switch (type) {
+      case 'ping':
+        result = await handlePing(data);
+        break;
+
       case 'chunkFile':
         result = await handleChunkFile(data, id);
         break;
@@ -179,12 +184,36 @@ self.onmessage = async (event: MessageEvent<FileWorkerMessage>) => {
 };
 
 /**
+ * Handle ping operation for health checks
+ */
+async function handlePing(_data: any): Promise<FileOperationResult & { data?: any }> {
+  return {
+    success: true,
+    data: {
+      status: 'healthy',
+      timestamp: Date.now(),
+    },
+    metrics: {
+      duration: 0,
+      bytesProcessed: 0,
+      processingSpeed: 0,
+      memoryUsed: 0,
+      cpuUsage: 0,
+      networkUsage: 0,
+    },
+  };
+}
+
+/**
  * Handle file chunking operations
  */
-async function handleChunkFile(data: {
-  fileData: Uint8Array;
-  config: Partial<ChunkConfig>;
-}, operationId: string): Promise<FileOperationResult & { chunks?: FileChunk[] }> {
+async function handleChunkFile(
+  data: {
+    fileData: Uint8Array;
+    config: Partial<ChunkConfig>;
+  },
+  operationId: string
+): Promise<FileOperationResult & { chunks?: FileChunk[] }> {
   const { fileData, config } = data;
   const finalConfig: ChunkConfig = {
     size: config.size ?? 4 * 1024 * 1024, // 4MB default
@@ -288,17 +317,20 @@ async function handleChunkFile(data: {
 /**
  * Handle file encryption operations
  */
-async function handleEncryptFile(data: {
-  fileData: Uint8Array;
-  filename: string;
-  mimeType: string;
-  accountKey: Uint8Array;
-  itemId: string;
-  options?: {
-    chunkSize?: number;
-    context?: EncryptionContext;
-  };
-}, operationId: string): Promise<FileOperationResult> {
+async function handleEncryptFile(
+  data: {
+    fileData: Uint8Array;
+    filename: string;
+    mimeType: string;
+    accountKey: Uint8Array;
+    itemId: string;
+    options?: {
+      chunkSize?: number;
+      context?: EncryptionContext;
+    };
+  },
+  operationId: string
+): Promise<FileOperationResult> {
   const { fileData, filename, mimeType, accountKey, itemId, options = {} } = data;
 
   try {
@@ -317,11 +349,11 @@ async function handleEncryptFile(data: {
     const encryptOptions: any = {
       progressCallback,
     };
-    
+
     if (options.chunkSize !== undefined) {
       encryptOptions.chunkSize = options.chunkSize;
     }
-    
+
     if (options.context !== undefined) {
       encryptOptions.context = options.context;
     }
@@ -349,7 +381,9 @@ async function handleEncryptFile(data: {
       metrics: {
         duration: result.metrics?.duration ?? 0,
         bytesProcessed: fileData.length,
-        processingSpeed: result.metrics?.duration ? fileData.length / (result.metrics.duration / 1000) : 0,
+        processingSpeed: result.metrics?.duration
+          ? fileData.length / (result.metrics.duration / 1000)
+          : 0,
         memoryUsed: result.metrics?.memoryUsed ?? 0,
         cpuUsage: result.metrics?.cpuUsage ?? 0,
         networkUsage: 0,
@@ -367,13 +401,16 @@ async function handleEncryptFile(data: {
 /**
  * Handle file decryption operations
  */
-async function handleDecryptFile(data: {
-  encryptedFile: any;
-  accountKey: Uint8Array;
-  itemId: string;
-  context?: DecryptionContext;
-}, operationId: string): Promise<FileOperationResult> {
-  const { } = data; // Destructure to acknowledge we receive the data
+async function handleDecryptFile(
+  data: {
+    encryptedFile: any;
+    accountKey: Uint8Array;
+    itemId: string;
+    context?: DecryptionContext;
+  },
+  operationId: string
+): Promise<FileOperationResult> {
+  const {} = data; // Destructure to acknowledge we receive the data
 
   try {
     const progressCallback = (progress: any) => {
@@ -391,7 +428,7 @@ async function handleDecryptFile(data: {
 
     // Note: FileEncryption.decryptFile doesn't exist in the interface shown
     // This would need to be implemented or we use individual chunk decryption
-    
+
     return {
       success: false,
       error: 'File decryption not yet implemented',
@@ -470,7 +507,9 @@ async function handleCreateManifest(data: {
 
   try {
     // Calculate overall file hash
-    const fileHash = await calculateSHA256(new TextEncoder().encode(chunks.map(c => c.hash).join('')));
+    const fileHash = await calculateSHA256(
+      new TextEncoder().encode(chunks.map(c => c.hash).join(''))
+    );
 
     const manifest: FileManifest = {
       id: crypto.randomUUID(),
@@ -609,11 +648,14 @@ async function handleOptimizeChunks(data: {
 /**
  * Handle file assembly from chunks
  */
-async function handleAssembleFile(data: {
-  chunks: FileChunk[];
-  expectedSize: number;
-  decompression?: 'gzip' | 'brotli' | 'none';
-}, operationId: string): Promise<FileOperationResult & { fileData?: Uint8Array }> {
+async function handleAssembleFile(
+  data: {
+    chunks: FileChunk[];
+    expectedSize: number;
+    decompression?: 'gzip' | 'brotli' | 'none';
+  },
+  operationId: string
+): Promise<FileOperationResult & { fileData?: Uint8Array }> {
   const { chunks, expectedSize, decompression = 'gzip' } = data;
 
   try {
@@ -697,14 +739,17 @@ async function handleAssembleFile(data: {
 /**
  * Handle upload processing pipeline
  */
-async function handleProcessUpload(data: {
-  fileData: Uint8Array;
-  filename: string;
-  mimeType: string;
-  accountKey: Uint8Array;
-  itemId: string;
-  config: Partial<ChunkConfig>;
-}, operationId: string): Promise<FileOperationResult> {
+async function handleProcessUpload(
+  data: {
+    fileData: Uint8Array;
+    filename: string;
+    mimeType: string;
+    accountKey: Uint8Array;
+    itemId: string;
+    config: Partial<ChunkConfig>;
+  },
+  operationId: string
+): Promise<FileOperationResult> {
   const { fileData, filename, mimeType, accountKey, itemId, config } = data;
 
   try {
@@ -749,11 +794,14 @@ async function handleProcessUpload(data: {
 /**
  * Handle download processing pipeline
  */
-async function handleProcessDownload(data: {
-  manifest: FileManifest;
-  chunks: FileChunk[];
-  decompression?: 'gzip' | 'brotli' | 'none';
-}, operationId: string): Promise<FileOperationResult> {
+async function handleProcessDownload(
+  data: {
+    manifest: FileManifest;
+    chunks: FileChunk[];
+    decompression?: 'gzip' | 'brotli' | 'none';
+  },
+  operationId: string
+): Promise<FileOperationResult> {
   const { manifest, chunks, decompression } = data;
 
   try {
@@ -761,11 +809,11 @@ async function handleProcessDownload(data: {
       chunks,
       expectedSize: manifest.size,
     };
-    
+
     if (decompression !== undefined) {
       assembleOptions.decompression = decompression;
     }
-    
+
     const assembleResult = await handleAssembleFile(assembleOptions, operationId);
 
     return assembleResult;
@@ -836,7 +884,10 @@ async function reorderChunks(chunks: FileChunk[]): Promise<FileChunk[]> {
   return chunks.sort((a, b) => a.index - b.index);
 }
 
-function updateProgress(operationId: string, progress: FileUploadProgress | FileDownloadProgress): void {
+function updateProgress(
+  operationId: string,
+  progress: FileUploadProgress | FileDownloadProgress
+): void {
   activeOperations.set(operationId, progress);
 
   // Send progress update

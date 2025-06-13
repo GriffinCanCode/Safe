@@ -164,14 +164,14 @@ export const useVaultStore = defineStore('vault', () => {
 
     try {
       const cursor = loadMore ? nextCursor.value : undefined;
-      
+
       // Use enhanced search that leverages workers when available
       let result: SearchResult;
       try {
         result = await vaultIntegration.search(filters.value, {
           maxResults: 50,
         });
-        
+
         // Convert to VaultSearchResult format for compatibility
         const vaultResult: VaultSearchResult = {
           items: result.items,
@@ -179,7 +179,7 @@ export const useVaultStore = defineStore('vault', () => {
           hasMore: result.items.length >= 50, // Simplified hasMore logic
           nextCursor: result.items.length >= 50 ? '50' : undefined,
         };
-        
+
         if (loadMore && nextCursor.value) {
           items.value = [...items.value, ...vaultResult.items];
         } else {
@@ -190,7 +190,7 @@ export const useVaultStore = defineStore('vault', () => {
         nextCursor.value = vaultResult.nextCursor || null;
       } catch (workerError) {
         console.warn('Enhanced search failed, falling back to vault service:', workerError);
-        
+
         // Fallback to original vault service search
         const vaultResult: VaultSearchResult = await vaultService.searchItems(filters.value, {
           limit: 50,
@@ -414,11 +414,14 @@ export const useVaultStore = defineStore('vault', () => {
   };
 
   // Enhanced search methods using workers
-  const performFuzzySearch = async (query: string, options?: {
-    threshold?: number;
-    limit?: number;
-    includeMatches?: boolean;
-  }): Promise<VaultItem[]> => {
+  const performFuzzySearch = async (
+    query: string,
+    options?: {
+      threshold?: number;
+      limit?: number;
+      includeMatches?: boolean;
+    }
+  ): Promise<VaultItem[]> => {
     try {
       return await vaultIntegration.fuzzySearch(query, options);
     } catch (error: any) {

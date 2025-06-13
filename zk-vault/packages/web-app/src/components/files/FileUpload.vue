@@ -117,13 +117,13 @@
           
           <div class="progress-bar">
             <div
-              class="progress-fill"
+              class="progress-fill dynamic-progress"
               :class="{
                 'bg-primary-600': progress.status === 'completed',
                 'bg-red-600': progress.status === 'error',
                 'bg-blue-600': progress.status === 'uploading' || progress.status === 'encrypting'
               }"
-              :style="{ width: `${progress.progress}%` }"
+              :style="{ '--progress-width': `${progress.progress}%` }"
             />
           </div>
 

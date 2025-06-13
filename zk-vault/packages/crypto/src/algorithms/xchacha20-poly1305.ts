@@ -20,23 +20,33 @@ let stableLibXChaCha20: any = null;
 
 // Initialize crypto libraries
 async function initializeCrypto() {
-  // Try libsodium-wrappers first (most comprehensive)
-  try {
-    libsodium = await import('libsodium-wrappers');
-    await libsodium.ready();
-    console.log('Libsodium initialized successfully');
-  } catch (error) {
-    console.warn('Libsodium not available, trying StableLib fallback');
-  }
-
-  // Try StableLib as fallback
-  if (!libsodium) {
+  // Skip libsodium in browser environment to avoid compatibility issues
+  if (typeof window !== 'undefined') {
+    console.log('Browser environment detected, using StableLib for XChaCha20-Poly1305');
     try {
       const stableLib = await import('@stablelib/xchacha20poly1305');
       stableLibXChaCha20 = stableLib.XChaCha20Poly1305;
       console.log('StableLib XChaCha20-Poly1305 initialized successfully');
     } catch (error) {
-      console.warn('StableLib XChaCha20-Poly1305 not available');
+      console.warn('StableLib XChaCha20-Poly1305 not available:', error);
+    }
+  } else {
+    // Try libsodium-wrappers first in Node.js environment
+    try {
+      libsodium = await import('libsodium-wrappers');
+      await libsodium.ready();
+      console.log('Libsodium initialized successfully');
+    } catch (error) {
+      console.warn('Libsodium not available, trying StableLib fallback');
+
+      // Try StableLib as fallback
+      try {
+        const stableLib = await import('@stablelib/xchacha20poly1305');
+        stableLibXChaCha20 = stableLib.XChaCha20Poly1305;
+        console.log('StableLib XChaCha20-Poly1305 initialized successfully');
+      } catch (fallbackError) {
+        console.warn('StableLib XChaCha20-Poly1305 not available:', fallbackError);
+      }
     }
   }
 }

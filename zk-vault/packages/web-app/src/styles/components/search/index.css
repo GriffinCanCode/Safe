@@ -1,0 +1,13 @@
+/**
+ * Search Components Styles
+ * Comprehensive search functionality styling
+ */
+
+/* Search Bar Component */
+@import './search-bar.css';
+
+/* Search Results Component */
+@import './search-results.css';
+
+/* Search View Component */
+@import './search-view.css'; 

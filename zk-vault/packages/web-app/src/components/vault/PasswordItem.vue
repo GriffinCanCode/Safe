@@ -35,7 +35,10 @@
       <div class="item-indicators">
         <div v-if="passwordStrength" class="strength-indicator" :class="strengthClasses">
           <div class="strength-bar">
-            <div class="strength-fill" :style="{ width: `${passwordStrength}%` }" />
+            <div 
+              class="strength-fill dynamic-progress" 
+              :style="{ '--progress-width': `${passwordStrength}%` }" 
+            />
           </div>
           <span class="strength-text">{{ strengthLabel }}</span>
         </div>

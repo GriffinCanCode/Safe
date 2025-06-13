@@ -25,7 +25,17 @@
     },
     "types": ["vite/client", "node"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "src/**/*.d.ts"],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue",
+    "src/**/*.d.ts",
+    "../../tests/web-app-crypto-integration.spec.ts",
+    "../../tests/worker-initialization.spec.ts",
+    "../../tests/auth-test.ts",
+    "../../tests/crypto-integration-test.spec.ts",
+    "../../tests/crypto-integration-test.ts"
+  ],
   "exclude": ["node_modules", "dist"],
   "references": [
     {

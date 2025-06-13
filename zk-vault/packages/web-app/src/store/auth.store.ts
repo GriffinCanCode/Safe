@@ -10,12 +10,12 @@ import {
   type UserProfile,
   type AuthResult,
   type RegistrationData,
+  type ZKUser,
 } from '@/services/auth.service';
-import type { User } from 'firebase/auth';
 
 export const useAuthStore = defineStore('auth', () => {
   // State
-  const user = ref<User | null>(null);
+  const user = ref<ZKUser | null>(null);
   const profile = ref<UserProfile | null>(null);
   const isLoading = ref(false);
   const error = ref<string | null>(null);
@@ -67,13 +67,16 @@ export const useAuthStore = defineStore('auth', () => {
   // Actions
   const initialize = async (): Promise<void> => {
     try {
-      // Set up auth state listener
-      authService.addAuthStateListener(async firebaseUser => {
-        user.value = firebaseUser;
+      // Initialize auth state from storage
+      await authService.initializeAuthState();
 
-        if (firebaseUser) {
+      // Set up auth state listener
+      authService.addAuthStateListener(async zkUser => {
+        user.value = zkUser;
+
+        if (zkUser) {
           try {
-            profile.value = await authService.getUserProfile(firebaseUser.uid);
+            profile.value = await authService.getUserProfile(zkUser.uid);
             setupSessionTimeout();
           } catch (error) {
             console.error('Failed to load user profile:', error);

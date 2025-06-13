@@ -243,7 +243,11 @@ async function handleDeriveAccountKey(data: {
   keyIndex?: number;
 }): Promise<CryptoOperationResult<Uint8Array>> {
   const { masterKey, userId } = data;
-  return await MasterKeyDerivation.deriveAccountKey(masterKey, MasterKeyDerivation.generateSalt(), userId);
+  return await MasterKeyDerivation.deriveAccountKey(
+    masterKey,
+    MasterKeyDerivation.generateSalt(),
+    userId
+  );
 }
 
 /**
@@ -292,7 +296,8 @@ async function handleSelectAlgorithm(data: {
 
   try {
     // Check for hardware acceleration
-    const hasAESHardware = hardwareFeatures.includes('aes-ni') ||
+    const hasAESHardware =
+      hardwareFeatures.includes('aes-ni') ||
       (typeof window !== 'undefined' && 'crypto' in window && 'subtle' in window.crypto);
 
     // Get benchmark scores
@@ -381,9 +386,7 @@ async function handleQuantumResistantDecrypt(data: {
 /**
  * Handle memory clearing operations
  */
-async function handleClearMemory(data: {
-  keys?: object[];
-}): Promise<CryptoOperationResult<void>> {
+async function handleClearMemory(data: { keys?: object[] }): Promise<CryptoOperationResult<void>> {
   try {
     const { keys } = data;
 
@@ -421,7 +424,11 @@ async function handleBenchmark(data: {
   dataSize: number;
   iterations: number;
 }): Promise<CryptoOperationResult<Record<string, number>>> {
-  const { algorithms = ['AES-256-GCM', 'XChaCha20-Poly1305'], dataSize = 1024, iterations = 10 } = data;
+  const {
+    algorithms = ['AES-256-GCM', 'XChaCha20-Poly1305'],
+    dataSize = 1024,
+    iterations = 10,
+  } = data;
 
   try {
     const results: Record<string, number> = {};
@@ -475,7 +482,7 @@ handleBenchmark({
   algorithms: ['AES-256-GCM', 'XChaCha20-Poly1305'],
   dataSize: 1024,
   iterations: 5,
-}).then((result) => {
+}).then(result => {
   if (result.success) {
     console.log('Initial algorithm benchmark completed:', result.data);
   }

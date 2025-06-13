@@ -1,0 +1,499 @@
+/**
+ * Input Component Styles
+ * Form input elements with modern design patterns
+ */
+
+/* === INPUT WRAPPER === */
+.input-wrapper {
+  width: 100%;
+}
+
+/* === INPUT WRAPPER STATES === */
+.input-wrapper-disabled {
+  /* Disabled wrapper styles */
+}
+
+.input-wrapper-error {
+  /* Error wrapper styles */
+}
+
+.input-wrapper-focused {
+  /* Focused wrapper styles */
+}
+
+/* === INPUT LABEL === */
+.input-label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-1);
+  line-height: var(--line-height-tight);
+}
+
+.input-label.required::after {
+  content: '*';
+  color: var(--color-danger-500);
+  margin-left: var(--space-1);
+}
+
+/* === INPUT CONTAINER === */
+.input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* === INPUT CONTAINER SIZES === */
+.input-container-sm {
+  /* Size-specific container styles for small inputs */
+}
+
+.input-container-md {
+  /* Size-specific container styles for medium inputs */
+}
+
+.input-container-lg {
+  /* Size-specific container styles for large inputs */
+}
+
+/* === INPUT CONTAINER STATES === */
+.input-container-disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.input-container-readonly {
+  /* Readonly container styles */
+}
+
+.input-container-error {
+  /* Error container styles */
+}
+
+.input-container-focused {
+  /* Focused container styles */
+}
+
+/* === BASE INPUT === */
+.input,
+.input-base {
+  width: 100%;
+  border: 1px solid var(--color-neutral-300);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-primary);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  transition: var(--transition-input);
+  outline: none;
+}
+
+.input:focus,
+.input-base:focus {
+  border-color: var(--color-primary-500);
+  box-shadow: 0 0 0 1px var(--color-primary-500);
+}
+
+.input::placeholder,
+.input-base::placeholder {
+  color: var(--color-neutral-500);
+}
+
+.input:disabled,
+.input-base:disabled {
+  background-color: var(--color-neutral-50);
+  color: var(--color-neutral-500);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.input:read-only,
+.input-base:read-only {
+  background-color: var(--color-neutral-50);
+  cursor: default;
+}
+
+/* === INPUT SIZES === */
+.input-xs {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-xs);
+  border-radius: var(--radius-sm);
+}
+
+.input-sm {
+  padding: var(--space-1-5) var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+.input-md {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+.input-lg {
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--font-size-base);
+  border-radius: var(--radius-lg);
+}
+
+/* === INPUT WITH ICONS === */
+.input-with-prefix-icon,
+.input-with-prefix {
+  padding-left: var(--space-10);
+}
+
+.input-with-suffix-icon,
+.input-with-suffix {
+  padding-right: var(--space-10);
+}
+
+.input-xs.input-with-prefix-icon,
+.input-xs.input-with-prefix {
+  padding-left: var(--space-8);
+}
+
+.input-xs.input-with-suffix-icon,
+.input-xs.input-with-suffix {
+  padding-right: var(--space-8);
+}
+
+.input-lg.input-with-prefix-icon,
+.input-lg.input-with-prefix {
+  padding-left: var(--space-12);
+}
+
+.input-lg.input-with-suffix-icon,
+.input-lg.input-with-suffix {
+  padding-right: var(--space-12);
+}
+
+/* === INPUT ICONS === */
+.input-icon {
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-neutral-500);
+  pointer-events: none;
+}
+
+.input-icon-prefix {
+  left: var(--space-3);
+}
+
+.input-icon-suffix {
+  right: var(--space-3);
+}
+
+.input-xs .input-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.input-xs .input-icon-prefix {
+  left: var(--space-2);
+}
+
+.input-xs .input-icon-suffix {
+  right: var(--space-2);
+}
+
+.input-lg .input-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.input-lg .input-icon-prefix {
+  left: var(--space-4);
+}
+
+.input-lg .input-icon-suffix {
+  right: var(--space-4);
+}
+
+/* === INTERACTIVE ICONS === */
+.input-clear,
+.input-toggle-password {
+  position: absolute;
+  right: var(--space-3);
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-neutral-400);
+  cursor: pointer;
+  transition: var(--transition-colors-smooth);
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.input-clear:hover,
+.input-toggle-password:hover {
+  color: var(--color-neutral-600);
+}
+
+.input-xs .input-clear,
+.input-xs .input-toggle-password {
+  right: var(--space-2);
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.input-lg .input-clear,
+.input-lg .input-toggle-password {
+  right: var(--space-4);
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* === INPUT FEEDBACK === */
+.input-feedback {
+  margin-top: var(--space-1);
+}
+
+.input-error {
+  font-size: var(--font-size-sm);
+  color: var(--color-danger-600);
+  line-height: var(--line-height-tight);
+}
+
+.input-help {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-500);
+  line-height: var(--line-height-tight);
+}
+
+/* === INPUT STATES === */
+.input-focused {
+  border-color: var(--color-primary-500);
+  box-shadow: 0 0 0 1px var(--color-primary-500);
+}
+
+.input-error-state {
+  border-color: var(--color-danger-500);
+}
+
+.input-error-state:focus {
+  border-color: var(--color-danger-500);
+  box-shadow: 0 0 0 1px var(--color-danger-500);
+}
+
+.input-success-state {
+  border-color: var(--color-success-500);
+}
+
+.input-success-state:focus {
+  border-color: var(--color-success-500);
+  box-shadow: 0 0 0 1px var(--color-success-500);
+}
+
+/* === TEXTAREA === */
+.textarea {
+  resize: vertical;
+  min-height: 5rem;
+  line-height: var(--line-height-relaxed);
+}
+
+.textarea-no-resize {
+  resize: none;
+}
+
+.textarea-auto-resize {
+  resize: none;
+  overflow: hidden;
+}
+
+/* === SELECT === */
+.select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right var(--space-3) center;
+  background-repeat: no-repeat;
+  background-size: 1rem;
+  padding-right: var(--space-10);
+  appearance: none;
+}
+
+.select:focus {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%233b82f6' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+}
+
+/* === CHECKBOX & RADIO === */
+.checkbox,
+.radio {
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-primary-600);
+  border: 1px solid var(--color-neutral-300);
+  background-color: var(--color-background-primary);
+  cursor: pointer;
+  transition: var(--transition-input);
+}
+
+.checkbox {
+  border-radius: var(--radius-sm);
+}
+
+.radio {
+  border-radius: 50%;
+}
+
+.checkbox:focus,
+.radio:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-primary-500) 20%, transparent);
+  border-color: var(--color-primary-500);
+}
+
+.checkbox:checked,
+.radio:checked {
+  background-color: var(--color-primary-600);
+  border-color: var(--color-primary-600);
+}
+
+/* === INPUT GROUPS === */
+.input-group {
+  display: flex;
+  align-items: stretch;
+}
+
+.input-group .input {
+  border-radius: 0;
+  border-right-width: 0;
+}
+
+.input-group .input:first-child {
+  border-top-left-radius: var(--radius-md);
+  border-bottom-left-radius: var(--radius-md);
+}
+
+.input-group .input:last-child {
+  border-top-right-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+  border-right-width: 1px;
+}
+
+.input-group .input:focus {
+  z-index: 1;
+  border-right-width: 1px;
+}
+
+.input-addon {
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-3);
+  background-color: var(--color-neutral-50);
+  border: 1px solid var(--color-neutral-300);
+  color: var(--color-neutral-600);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+
+.input-addon:first-child {
+  border-top-left-radius: var(--radius-md);
+  border-bottom-left-radius: var(--radius-md);
+  border-right-width: 0;
+}
+
+.input-addon:last-child {
+  border-top-right-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+  border-left-width: 0;
+}
+
+/* === DARK MODE ADAPTATIONS === */
+@media (prefers-color-scheme: dark) {
+  .input-label {
+    color: var(--color-neutral-200);
+  }
+  
+  .input,
+  .input-base {
+    background-color: var(--color-neutral-800);
+    border-color: var(--color-neutral-600);
+    color: var(--color-neutral-100);
+  }
+  
+  .input::placeholder,
+  .input-base::placeholder {
+    color: var(--color-neutral-400);
+  }
+  
+  .input:disabled,
+  .input-base:disabled {
+    background-color: var(--color-neutral-900);
+    color: var(--color-neutral-600);
+  }
+  
+  .input:read-only,
+  .input-base:read-only {
+    background-color: var(--color-neutral-900);
+  }
+  
+  .input-icon {
+    color: var(--color-neutral-400);
+  }
+  
+  .input-clear,
+  .input-toggle-password {
+    color: var(--color-neutral-400);
+  }
+  
+  .input-clear:hover,
+  .input-toggle-password:hover {
+    color: var(--color-neutral-300);
+  }
+  
+  .input-error {
+    color: var(--color-danger-400);
+  }
+  
+  .input-help {
+    color: var(--color-neutral-400);
+  }
+  
+  .checkbox,
+  .radio {
+    background-color: var(--color-neutral-800);
+    border-color: var(--color-neutral-600);
+  }
+  
+  .input-addon {
+    background-color: var(--color-neutral-800);
+    border-color: var(--color-neutral-600);
+    color: var(--color-neutral-300);
+  }
+}
+
+/* === HIGH CONTRAST MODE === */
+@media (prefers-contrast: high) {
+  .input,
+  .input-base {
+    border-width: 2px;
+  }
+  
+  .input:focus,
+  .input-base:focus {
+    border-width: 2px;
+    box-shadow: 0 0 0 2px var(--color-primary-500);
+  }
+  
+  .input-error-state {
+    border-width: 2px;
+  }
+  
+  .checkbox,
+  .radio {
+    border-width: 2px;
+  }
+}
+
+/* === REDUCED MOTION === */
+@media (prefers-reduced-motion: reduce) {
+  .input,
+  .input-base,
+  .checkbox,
+  .radio,
+  .input-clear,
+  .input-toggle-password {
+    transition: none;
+  }
+} 

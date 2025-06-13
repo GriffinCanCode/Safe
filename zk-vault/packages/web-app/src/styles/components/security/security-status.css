@@ -1,0 +1,563 @@
+/**
+ * Security Status Component Styles
+ * Modern security status indicators and cards
+ * Tailwind CSS v4 with OKLCH colors and modern CSS features
+ */
+
+/* === SECURITY STATUS OVERVIEW === */
+.security-status {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.security-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.security-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-neutral-900);
+  margin-bottom: var(--space-1);
+}
+
+.security-description {
+  color: var(--color-neutral-600);
+  line-height: var(--line-height-relaxed);
+}
+
+.security-actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+/* === SECURITY SCORE === */
+.security-score-card {
+  background: linear-gradient(135deg, var(--color-primary-50), var(--color-primary-100));
+  border: 1px solid var(--color-primary-200);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.security-score-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--color-success-500), var(--color-warning-500), var(--color-danger-500));
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.security-score {
+  font-size: var(--font-size-5xl);
+  font-weight: var(--font-weight-black);
+  color: var(--color-primary-700);
+  margin-bottom: var(--space-2);
+  line-height: 1;
+}
+
+.security-score-label {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-primary-600);
+  margin-bottom: var(--space-4);
+}
+
+.security-score-description {
+  color: var(--color-primary-700);
+  font-size: var(--font-size-sm);
+}
+
+/* === STATUS GRID === */
+.security-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-6);
+}
+
+.status-card {
+  background-color: var(--color-white);
+  border: 1px solid var(--color-neutral-200);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  transition: all var(--duration-200) var(--ease-out);
+  position: relative;
+}
+
+.status-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.status-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+/* Status variants */
+.status-card.status-secure::before {
+  background-color: var(--color-success-500);
+}
+
+.status-card.status-warning::before {
+  background-color: var(--color-warning-500);
+}
+
+.status-card.status-danger::before {
+  background-color: var(--color-danger-500);
+}
+
+.status-card.status-info::before {
+  background-color: var(--color-primary-500);
+}
+
+.status-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.status-icon {
+  width: var(--space-10);
+  height: var(--space-10);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.status-icon.status-secure {
+  background-color: var(--color-success-100);
+  color: var(--color-success-600);
+}
+
+.status-icon.status-warning {
+  background-color: var(--color-warning-100);
+  color: var(--color-warning-600);
+}
+
+.status-icon.status-danger {
+  background-color: var(--color-danger-100);
+  color: var(--color-danger-600);
+}
+
+.status-icon.status-info {
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-600);
+}
+
+.status-content {
+  flex: 1;
+}
+
+.status-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-neutral-900);
+  margin-bottom: var(--space-1);
+}
+
+.status-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-600);
+  margin-bottom: var(--space-3);
+}
+
+.status-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.status-detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-sm);
+}
+
+.status-detail-label {
+  color: var(--color-neutral-600);
+}
+
+.status-detail-value {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-neutral-900);
+}
+
+.status-actions {
+  margin-top: var(--space-4);
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* === SECURITY BADGES === */
+.security-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+.security-badge.badge-secure {
+  background-color: var(--color-success-100);
+  color: var(--color-success-800);
+}
+
+.security-badge.badge-warning {
+  background-color: var(--color-warning-100);
+  color: var(--color-warning-800);
+}
+
+.security-badge.badge-danger {
+  background-color: var(--color-danger-100);
+  color: var(--color-danger-800);
+}
+
+.security-badge.badge-info {
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-800);
+}
+
+/* === PROGRESS INDICATORS === */
+.security-progress {
+  margin-top: var(--space-4);
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-sm);
+}
+
+.progress-text {
+  color: var(--color-neutral-700);
+  font-weight: var(--font-weight-medium);
+}
+
+.progress-value {
+  color: var(--color-neutral-600);
+}
+
+.progress-bar {
+  width: 100%;
+  height: var(--space-2);
+  background-color: var(--color-neutral-200);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width var(--duration-500) var(--ease-out);
+}
+
+.progress-fill.progress-secure {
+  background: linear-gradient(90deg, var(--color-success-500), var(--color-success-400));
+}
+
+.progress-fill.progress-warning {
+  background: linear-gradient(90deg, var(--color-warning-500), var(--color-warning-400));
+}
+
+.progress-fill.progress-danger {
+  background: linear-gradient(90deg, var(--color-danger-500), var(--color-danger-400));
+}
+
+/* === SECURITY RECOMMENDATIONS === */
+.security-recommendations {
+  background-color: var(--color-neutral-50);
+  border: 1px solid var(--color-neutral-200);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+}
+
+.recommendations-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.recommendations-icon {
+  width: var(--space-8);
+  height: var(--space-8);
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-600);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.recommendations-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-neutral-900);
+}
+
+.recommendations-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.recommendation-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background-color: var(--color-white);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-neutral-200);
+}
+
+.recommendation-priority {
+  width: var(--space-6);
+  height: var(--space-6);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  flex-shrink: 0;
+}
+
+.recommendation-priority.priority-high {
+  background-color: var(--color-danger-500);
+  color: var(--color-white);
+}
+
+.recommendation-priority.priority-medium {
+  background-color: var(--color-warning-500);
+  color: var(--color-white);
+}
+
+.recommendation-priority.priority-low {
+  background-color: var(--color-success-500);
+  color: var(--color-white);
+}
+
+.recommendation-content {
+  flex: 1;
+}
+
+.recommendation-title {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-neutral-900);
+  margin-bottom: var(--space-1);
+}
+
+.recommendation-description {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-600);
+  line-height: var(--line-height-relaxed);
+}
+
+/* === DARK MODE SUPPORT === */
+@media (prefers-color-scheme: dark) {
+  .security-title {
+    color: var(--color-neutral-100);
+  }
+
+  .security-description {
+    color: var(--color-neutral-400);
+  }
+
+  .security-score-card {
+    background: linear-gradient(135deg, var(--color-primary-900), var(--color-primary-800));
+    border-color: var(--color-primary-700);
+  }
+
+  .security-score {
+    color: var(--color-primary-300);
+  }
+
+  .security-score-label {
+    color: var(--color-primary-400);
+  }
+
+  .security-score-description {
+    color: var(--color-primary-300);
+  }
+
+  .status-card {
+    background-color: var(--color-neutral-800);
+    border-color: var(--color-neutral-700);
+  }
+
+  .status-title {
+    color: var(--color-neutral-100);
+  }
+
+  .status-subtitle {
+    color: var(--color-neutral-400);
+  }
+
+  .status-detail-label {
+    color: var(--color-neutral-400);
+  }
+
+  .status-detail-value {
+    color: var(--color-neutral-200);
+  }
+
+  .status-icon.status-secure {
+    background-color: var(--color-success-900);
+    color: var(--color-success-400);
+  }
+
+  .status-icon.status-warning {
+    background-color: var(--color-warning-900);
+    color: var(--color-warning-400);
+  }
+
+  .status-icon.status-danger {
+    background-color: var(--color-danger-900);
+    color: var(--color-danger-400);
+  }
+
+  .status-icon.status-info {
+    background-color: var(--color-primary-900);
+    color: var(--color-primary-400);
+  }
+
+  .security-badge.badge-secure {
+    background-color: var(--color-success-900);
+    color: var(--color-success-200);
+  }
+
+  .security-badge.badge-warning {
+    background-color: var(--color-warning-900);
+    color: var(--color-warning-200);
+  }
+
+  .security-badge.badge-danger {
+    background-color: var(--color-danger-900);
+    color: var(--color-danger-200);
+  }
+
+  .security-badge.badge-info {
+    background-color: var(--color-primary-900);
+    color: var(--color-primary-200);
+  }
+
+  .progress-text {
+    color: var(--color-neutral-300);
+  }
+
+  .progress-value {
+    color: var(--color-neutral-400);
+  }
+
+  .progress-bar {
+    background-color: var(--color-neutral-700);
+  }
+
+  .security-recommendations {
+    background-color: var(--color-neutral-800);
+    border-color: var(--color-neutral-700);
+  }
+
+  .recommendations-icon {
+    background-color: var(--color-primary-900);
+    color: var(--color-primary-400);
+  }
+
+  .recommendations-title {
+    color: var(--color-neutral-100);
+  }
+
+  .recommendation-item {
+    background-color: var(--color-neutral-700);
+    border-color: var(--color-neutral-600);
+  }
+
+  .recommendation-title {
+    color: var(--color-neutral-100);
+  }
+
+  .recommendation-description {
+    color: var(--color-neutral-400);
+  }
+}
+
+/* === RESPONSIVE DESIGN === */
+@container (max-width: 768px) {
+  .security-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .security-actions {
+    justify-content: stretch;
+  }
+
+  .security-status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .security-score-card {
+    padding: var(--space-6);
+  }
+
+  .security-score {
+    font-size: var(--font-size-4xl);
+  }
+}
+
+/* === REDUCED MOTION === */
+@media (prefers-reduced-motion: reduce) {
+  .status-card {
+    transition: none;
+  }
+
+  .status-card:hover {
+    transform: none;
+  }
+
+  .progress-fill {
+    transition: none;
+  }
+}
+
+/* === HIGH CONTRAST === */
+@media (prefers-contrast: high) {
+  .status-card {
+    border-width: 2px;
+  }
+
+  .security-badge {
+    border: 1px solid currentColor;
+  }
+
+  .recommendation-item {
+    border-width: 2px;
+  }
+} 

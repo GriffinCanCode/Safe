@@ -11,11 +11,7 @@ import { resolve } from 'path';
  * @returns {Object} Vitest configuration
  */
 export function createVitestConfig(options = {}) {
-  const {
-    rootDir,
-    packageName = 'package',
-    alias = {},
-  } = options;
+  const { rootDir, packageName = 'package', alias = {} } = options;
 
   if (!rootDir) {
     throw new Error('rootDir is required for Vitest configuration');
@@ -39,7 +35,7 @@ export function createVitestConfig(options = {}) {
       globals: true,
       environment: 'jsdom',
       setupFiles: ['./vitest.setup.ts'],
-      
+
       // Coverage configuration
       coverage: {
         provider: 'v8',
@@ -64,10 +60,7 @@ export function createVitestConfig(options = {}) {
       },
 
       // Test file patterns
-      include: [
-        'src/**/*.{test,spec}.{js,ts,tsx,vue}',
-        '__tests__/**/*.{js,ts,tsx,vue}',
-      ],
+      include: ['src/**/*.{test,spec}.{js,ts,tsx,vue}', '__tests__/**/*.{js,ts,tsx,vue}'],
 
       // Mock CSS modules
       css: {
@@ -96,4 +89,4 @@ export function createVitestConfig(options = {}) {
   });
 }
 
-export default createVitestConfig; 
+export default createVitestConfig;

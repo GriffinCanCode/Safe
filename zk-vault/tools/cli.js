@@ -254,11 +254,12 @@ program
   .action((type, packageName, name, options) => {
     try {
       const { generateComponent } = require("./generators/component.generator");
-      
+
       if (type === "component") {
         const props = options.props
-          ? options.props.split(",").map(prop => {
-              const [propName, propType = "string", defaultValue] = prop.split(":");
+          ? options.props.split(",").map((prop) => {
+              const [propName, propType = "string", defaultValue] =
+                prop.split(":");
               return { name: propName, type: propType, default: defaultValue };
             })
           : [];
@@ -288,8 +289,11 @@ program
   .option("--clean", "Remove redundant configuration files", false)
   .action(async (options) => {
     try {
-      const { setupMinimalConfig, cleanRedundantConfigs } = require("./scripts/minimal-setup");
-      
+      const {
+        setupMinimalConfig,
+        cleanRedundantConfigs,
+      } = require("./scripts/minimal-setup");
+
       console.log("🚀 Initializing clean ZK-Vault configurations...\n");
 
       if (options.clean) {
@@ -318,7 +322,6 @@ program
    • npm run config generate component web-app MyComponent
    • npm run build:analyze (bundle analysis)
 `);
-
     } catch (error) {
       console.error("❌ Error during initialization:", error.message);
       process.exit(1);
@@ -365,7 +368,7 @@ program
         console.log("Run 'npm run build:analyze' in the package directory");
       }
 
-      if (!Object.keys(options).some(key => options[key])) {
+      if (!Object.keys(options).some((key) => options[key])) {
         console.log(`
 🛠️  Development Utilities
 
@@ -403,6 +406,7 @@ program
 🔧 Available Configurations:
    • ESLint (code linting)
    • Prettier (code formatting)
+   • Stylelint (CSS linting)
    • Jest/Vitest (testing)
    • TypeScript (type checking)
    • Webpack/Vite (bundling)
@@ -418,6 +422,7 @@ ${Object.keys(PACKAGES)
    • npm run config generate component web-app Button
    • npm run config dev --init      - Initialize dev environment
    • npm run lint:fix               - Lint and fix all packages
+   • npm run lint:css:fix           - Lint and fix CSS files
    • npm run test:coverage          - Run tests with coverage
    • npm run validate               - Run full validation
 

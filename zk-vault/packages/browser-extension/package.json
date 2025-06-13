@@ -32,7 +32,12 @@
     "clean:full": "npm run clean && rm -rf node_modules package-lock.json && npm install"
   },
   "dependencies": {},
-  "devDependencies": {},
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "typescript": "^5.0.0"
+  },
   "author": "ZK-Vault Team",
   "license": "MIT"
 }

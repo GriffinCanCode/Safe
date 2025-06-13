@@ -1,11 +1,12 @@
 <template>
   <MainLayout>
-    <div class="vault-view">
+    <div class="main-single-column">
+      <div class="vault-dashboard">
     <!-- Header -->
-    <div class="vault-header">
+    <div class="dashboard-header">
       <div class="header-content">
-        <h1 class="page-title">Password Vault</h1>
-        <p class="page-subtitle">
+        <h1 class="dashboard-title">Password Vault</h1>
+        <p class="dashboard-subtitle">
           {{ filteredItems.length }} of {{ items.length }} passwords
         </p>
       </div>
@@ -30,8 +31,8 @@
     </div>
 
     <!-- Search and Filter Bar -->
-    <div class="search-section">
-      <div class="search-bar">
+    <div class="search-bar-container">
+      <div class="search-input-container">
         <BaseInput
           v-model="searchQuery"
           type="search"
@@ -52,8 +53,8 @@
       </div>
 
       <!-- Advanced Filters -->
-      <div v-if="showFilters" class="filter-panel">
-        <div class="filter-row">
+      <div v-if="showFilters" class="search-filters-dropdown">
+        <div class="grid-responsive-md">
           <div class="filter-group">
             <label class="filter-label">Category</label>
             <select v-model="selectedCategory" class="filter-select">
@@ -329,6 +330,7 @@
         </BaseButton>
       </template>
     </BaseModal>
+      </div>
     </div>
   </MainLayout>
 </template>
@@ -668,232 +670,4 @@ watch([searchQuery, selectedCategory, securityFilter], () => {
 </script>
 
 <style scoped>
-.vault-view {
-  @apply flex flex-col h-full bg-neutral-50;
-}
-
-.vault-header {
-  @apply flex items-center justify-between p-6 bg-white border-b border-neutral-200;
-}
-
-.header-content h1 {
-  @apply text-2xl font-bold text-neutral-900;
-}
-
-.header-content p {
-  @apply text-neutral-600 mt-1;
-}
-
-.header-actions {
-  @apply flex items-center gap-3;
-}
-
-.search-section {
-  @apply p-6 bg-white border-b border-neutral-200;
-}
-
-.search-bar {
-  @apply flex items-center gap-3;
-}
-
-.search-input {
-  @apply flex-1;
-}
-
-.filter-panel {
-  @apply mt-4 p-4 bg-neutral-50 rounded-lg;
-}
-
-.filter-row {
-  @apply grid grid-cols-1 md:grid-cols-3 gap-4;
-}
-
-.filter-group {
-  @apply space-y-2;
-}
-
-.filter-label {
-  @apply block text-sm font-medium text-neutral-700;
-}
-
-.filter-select {
-  @apply w-full px-3 py-2 border border-neutral-300 rounded-md text-sm;
-  @apply focus:ring-2 focus:ring-primary-500 focus:border-primary-500;
-}
-
-.stats-section {
-  @apply grid grid-cols-1 md:grid-cols-3 gap-4 p-6;
-}
-
-.stat-card {
-  @apply flex items-center gap-4 p-4 bg-white rounded-lg border border-neutral-200;
-}
-
-.stat-icon {
-  @apply w-10 h-10 rounded-lg flex items-center justify-center;
-}
-
-.stat-icon.success {
-  @apply bg-success-100 text-success-600;
-}
-
-.stat-icon.warning {
-  @apply bg-warning-100 text-warning-600;
-}
-
-.stat-icon.info {
-  @apply bg-info-100 text-info-600;
-}
-
-.stat-icon svg {
-  @apply w-5 h-5;
-}
-
-.stat-content {
-  @apply space-y-1;
-}
-
-.stat-value {
-  @apply block text-2xl font-bold text-neutral-900;
-}
-
-.stat-label {
-  @apply block text-sm text-neutral-600;
-}
-
-.vault-content {
-  @apply flex-1 p-6 overflow-auto;
-}
-
-.loading-state {
-  @apply flex flex-col items-center justify-center py-12 text-center;
-}
-
-.loading-text {
-  @apply mt-4 text-neutral-600;
-}
-
-.empty-state {
-  @apply flex flex-col items-center justify-center py-12 text-center;
-}
-
-.empty-icon {
-  @apply w-16 h-16 mx-auto mb-4 text-neutral-400;
-}
-
-.empty-icon svg {
-  @apply w-full h-full;
-}
-
-.empty-title {
-  @apply text-xl font-semibold text-neutral-900 mb-2;
-}
-
-.empty-description {
-  @apply text-neutral-600 mb-6 max-w-md;
-}
-
-.password-list {
-  @apply space-y-3;
-}
-
-.load-more {
-  @apply flex justify-center pt-6;
-}
-
-.password-form {
-  @apply space-y-6;
-}
-
-.form-row {
-  @apply relative;
-}
-
-.generate-button {
-  @apply absolute top-8 right-2;
-}
-
-.delete-content {
-  @apply py-4;
-}
-
-.delete-warning {
-  @apply flex gap-4;
-}
-
-.warning-icon {
-  @apply w-6 h-6 text-warning-600 shrink-0 mt-1;
-}
-
-.warning-content {
-  @apply space-y-2;
-}
-
-.warning-title {
-  @apply text-lg font-semibold text-neutral-900;
-}
-
-.warning-text {
-  @apply text-neutral-600;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .vault-view {
-    @apply bg-neutral-900;
-  }
-  
-  .vault-header,
-  .search-section {
-    @apply bg-neutral-800 border-neutral-700;
-  }
-  
-  .header-content h1 {
-    @apply text-neutral-100;
-  }
-  
-  .header-content p {
-    @apply text-neutral-400;
-  }
-  
-  .filter-panel {
-    @apply bg-neutral-700;
-  }
-  
-  .filter-label {
-    @apply text-neutral-300;
-  }
-  
-  .filter-select {
-    @apply bg-neutral-700 border-neutral-600 text-neutral-100;
-  }
-  
-  .stat-card {
-    @apply bg-neutral-800 border-neutral-700;
-  }
-  
-  .stat-value {
-    @apply text-neutral-100;
-  }
-  
-  .stat-label {
-    @apply text-neutral-400;
-  }
-  
-  .empty-title {
-    @apply text-neutral-100;
-  }
-  
-  .empty-description {
-    @apply text-neutral-400;
-  }
-  
-  .warning-title {
-    @apply text-neutral-100;
-  }
-  
-  .warning-text {
-    @apply text-neutral-400;
-  }
-}
 </style>

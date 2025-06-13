@@ -9,7 +9,7 @@ import {
   authService,
   type UserProfile,
   type RegistrationData,
-  type BiometricOptions,
+  type BiometricAuthResult,
 } from '@/services/auth.service';
 import { useAuthStore } from '@/store/auth.store';
 
@@ -23,11 +23,6 @@ export interface LoginCredentials {
   email: string;
   password: string;
   rememberMe?: boolean;
-}
-
-export interface BiometricAuthResult {
-  success: boolean;
-  error?: string;
 }
 
 export function useAuth(options: UseAuthOptions = {}) {

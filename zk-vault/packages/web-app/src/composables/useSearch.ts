@@ -118,7 +118,7 @@ export function useSearch(options: UseSearchOptions = {}): UseSearchReturn {
     try {
       searchError.value = null;
       searchStore.setQuery(newQuery);
-      
+
       if (options.autoSearch) {
         debouncedSearch();
       }
@@ -131,7 +131,7 @@ export function useSearch(options: UseSearchOptions = {}): UseSearchReturn {
     try {
       searchError.value = null;
       searchStore.setFilters(newFilters);
-      
+
       if (options.autoSearch) {
         search();
       }
@@ -140,14 +140,11 @@ export function useSearch(options: UseSearchOptions = {}): UseSearchReturn {
     }
   };
 
-  const updateFilter = <K extends keyof SearchFilters>(
-    key: K,
-    value: SearchFilters[K]
-  ): void => {
+  const updateFilter = <K extends keyof SearchFilters>(key: K, value: SearchFilters[K]): void => {
     try {
       searchError.value = null;
       searchStore.updateFilter(key, value);
-      
+
       if (options.autoSearch) {
         search();
       }
@@ -160,7 +157,7 @@ export function useSearch(options: UseSearchOptions = {}): UseSearchReturn {
     try {
       searchError.value = null;
       searchStore.removeFilter(key);
-      
+
       if (options.autoSearch) {
         search();
       }
@@ -322,10 +319,7 @@ export function useSearch(options: UseSearchOptions = {}): UseSearchReturn {
   const refresh = async (): Promise<void> => {
     try {
       searchError.value = null;
-      await Promise.all([
-        searchStore.refreshStats(),
-        searchStore.generateSuggestions(),
-      ]);
+      await Promise.all([searchStore.refreshStats(), searchStore.generateSuggestions()]);
     } catch (error: any) {
       searchError.value = error.message;
       throw error;

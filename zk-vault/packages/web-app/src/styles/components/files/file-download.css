@@ -1,0 +1,317 @@
+/* ===================================================================
+   FILE DOWNLOAD COMPONENT
+   ================================================================ */
+
+.file-download {
+  display: inline-block;
+}
+
+/* Download Progress Modal */
+.download-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.progress-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.file-icon {
+  flex-shrink: 0;
+}
+
+.file-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-name {
+  font-weight: var(--font-semibold);
+  color: var(--color-neutral-900);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-size {
+  font-size: var(--text-sm);
+  color: var(--color-neutral-600);
+}
+
+/* Progress Section */
+.progress-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.progress-bar {
+  width: 100%;
+  background-color: var(--color-neutral-200);
+  border-radius: var(--radius-full);
+  height: var(--space-3);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: var(--space-3);
+  background-color: var(--color-primary-600);
+  border-radius: var(--radius-full);
+  transition: all var(--duration-300) var(--ease-out);
+  transform-origin: left;
+}
+
+.progress-text {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--text-sm);
+}
+
+.progress-percentage {
+  font-weight: var(--font-medium);
+  color: var(--color-neutral-900);
+}
+
+.progress-status {
+  color: var(--color-neutral-600);
+}
+
+/* Error Message */
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background-color: var(--color-danger-50);
+  border: 1px solid var(--color-danger-200);
+  border-radius: var(--radius-lg);
+  color: var(--color-danger-700);
+}
+
+.error-icon {
+  width: var(--space-5);
+  height: var(--space-5);
+  flex-shrink: 0;
+}
+
+/* Modal Actions */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+/* Download States */
+.file-download.downloading {
+  pointer-events: none;
+}
+
+.file-download.downloading .download-button {
+  opacity: 0.7;
+}
+
+/* Progress Animation */
+.progress-fill {
+  animation: progress-shimmer 2s ease-in-out infinite;
+}
+
+@keyframes progress-shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.progress-fill.active {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-primary-600) 0%,
+    var(--color-primary-500) 50%,
+    var(--color-primary-600) 100%
+  );
+  background-size: 200px 100%;
+  animation: progress-shimmer 2s ease-in-out infinite;
+}
+
+/* Success State */
+.progress-fill.complete {
+  background-color: var(--color-success-600);
+  animation: none;
+}
+
+.progress-status.complete {
+  color: var(--color-success-600);
+  font-weight: var(--font-medium);
+}
+
+/* Error State */
+.progress-fill.error {
+  background-color: var(--color-danger-600);
+  animation: none;
+}
+
+.progress-status.error {
+  color: var(--color-danger-600);
+  font-weight: var(--font-medium);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .file-name {
+    color: var(--color-neutral-100);
+  }
+
+  .file-size {
+    color: var(--color-neutral-400);
+  }
+
+  .progress-bar {
+    background-color: var(--color-neutral-700);
+  }
+
+  .progress-percentage {
+    color: var(--color-neutral-100);
+  }
+
+  .progress-status {
+    color: var(--color-neutral-400);
+  }
+
+  .error-message {
+    background-color: color-mix(in oklch, var(--color-danger-900) 20%, transparent);
+    border-color: var(--color-danger-700);
+    color: var(--color-danger-400);
+  }
+
+  .progress-status.complete {
+    color: var(--color-success-400);
+  }
+
+  .progress-status.error {
+    color: var(--color-danger-400);
+  }
+}
+
+/* Responsive design */
+@container (max-width: 480px) {
+  .progress-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+
+  .file-details {
+    width: 100%;
+  }
+
+  .progress-text {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+    gap: var(--space-2);
+  }
+
+  .modal-actions > * {
+    width: 100%;
+  }
+}
+
+/* Accessibility improvements */
+.progress-bar {
+  position: relative;
+}
+
+.progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: var(--radius-full);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .progress-bar {
+    border: 1px solid var(--color-neutral-400);
+  }
+
+  .progress-fill {
+    border: 1px solid var(--color-primary-700);
+  }
+
+  .error-message {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .progress-fill {
+    animation: none;
+    transition: width var(--duration-300) var(--ease-out);
+  }
+
+  .progress-fill.active {
+    background-image: none;
+    animation: none;
+  }
+}
+
+/* File type specific styling */
+.file-download[data-file-type="image"] .file-icon {
+  color: var(--color-blue-600);
+}
+
+.file-download[data-file-type="document"] .file-icon {
+  color: var(--color-green-600);
+}
+
+.file-download[data-file-type="archive"] .file-icon {
+  color: var(--color-orange-600);
+}
+
+.file-download[data-file-type="video"] .file-icon {
+  color: var(--color-purple-600);
+}
+
+.file-download[data-file-type="audio"] .file-icon {
+  color: var(--color-pink-600);
+}
+
+/* Loading skeleton for file info */
+.file-details.loading .file-name,
+.file-details.loading .file-size {
+  background-color: var(--color-neutral-200);
+  border-radius: var(--radius-sm);
+  color: transparent;
+  animation: skeleton-pulse 2s ease-in-out infinite;
+}
+
+@media (prefers-color-scheme: dark) {
+  .file-details.loading .file-name,
+  .file-details.loading .file-size {
+    background-color: var(--color-neutral-700);
+  }
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+} 

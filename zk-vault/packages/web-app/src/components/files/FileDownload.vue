@@ -33,8 +33,8 @@
         <div class="progress-section">
           <div class="progress-bar">
             <div
-              class="progress-fill"
-              :style="{ width: `${downloadProgress}%` }"
+              class="progress-fill dynamic-progress"
+              :style="{ '--progress-width': `${downloadProgress}%` }"
             />
           </div>
           <div class="progress-text">
@@ -264,96 +264,3 @@ if (props.autoDownload && (props.file || props.fileId)) {
   handleDownload()
 }
 </script>
-
-<style scoped>
-.file-download {
-  @apply inline-block;
-}
-
-.download-progress {
-  @apply space-y-6;
-}
-
-.progress-info {
-  @apply flex items-center gap-4;
-}
-
-.file-icon {
-  @apply flex-shrink-0;
-}
-
-.file-details {
-  @apply flex-1 min-w-0;
-}
-
-.file-name {
-  @apply font-semibold text-neutral-900 truncate;
-}
-
-.file-size {
-  @apply text-sm text-neutral-600;
-}
-
-.progress-section {
-  @apply space-y-3;
-}
-
-.progress-bar {
-  @apply w-full bg-neutral-200 rounded-full h-3;
-}
-
-.progress-fill {
-  @apply h-3 bg-primary-600 rounded-full transition-all duration-300;
-}
-
-.progress-text {
-  @apply flex justify-between items-center text-sm;
-}
-
-.progress-percentage {
-  @apply font-medium text-neutral-900;
-}
-
-.progress-status {
-  @apply text-neutral-600;
-}
-
-.error-message {
-  @apply flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700;
-}
-
-.error-icon {
-  @apply w-5 h-5 flex-shrink-0;
-}
-
-.modal-actions {
-  @apply flex justify-end gap-3;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .file-name {
-    @apply text-neutral-100;
-  }
-
-  .file-size {
-    @apply text-neutral-400;
-  }
-
-  .progress-bar {
-    @apply bg-neutral-700;
-  }
-
-  .progress-percentage {
-    @apply text-neutral-100;
-  }
-
-  .progress-status {
-    @apply text-neutral-400;
-  }
-
-  .error-message {
-    @apply bg-red-900/20 border-red-700 text-red-400;
-  }
-}
-</style>

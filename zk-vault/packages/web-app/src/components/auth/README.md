@@ -1,6 +1,7 @@
 # Authentication Components
 
-This directory contains components related to user authentication and authorization.
+This directory contains components related to user authentication and
+authorization.
 
 ### BiometricAuth.vue
 
@@ -24,5 +25,6 @@ This directory contains components related to user authentication and authorizat
 ### RegisterForm.vue
 
 - A registration form for new users to create an account.
-- Includes fields for email, master password (with strength meter), and password hint.
-- Handles terms of service agreement. 
+- Includes fields for email, master password (with strength meter), and password
+  hint.
+- Handles terms of service agreement.

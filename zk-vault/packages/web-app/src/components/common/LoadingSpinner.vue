@@ -1,16 +1,16 @@
 <template>
   <div 
-    class="loading-spinner"
     :class="[
+      'loading-spinner-container',
+      { 'loading-spinner-inline': inline },
       sizeClass,
-      colorClass,
-      { 'inline': inline }
+      colorClass
     ]"
-    :aria-label="label"
+    :aria-label="label || 'Loading...'"
     role="status"
   >
-    <div class="spinner-circle" />
-    <span v-if="text && !hideText" class="spinner-text">{{ text }}</span>
+    <div class="loading-spinner" />
+    <span v-if="text && !hideText" class="loading-text" :class="textSizeClass">{{ text }}</span>
     <span class="sr-only">{{ label }}</span>
   </div>
 </template>
@@ -37,111 +37,35 @@ const props = withDefaults(defineProps<Props>(), {
 
 const sizeClass = computed(() => {
   const sizeMap = {
-    xs: 'spinner-xs',
-    sm: 'spinner-sm', 
-    md: 'spinner-md',
-    lg: 'spinner-lg',
-    xl: 'spinner-xl'
+    xs: 'loading-spinner-xs',
+    sm: 'loading-spinner-sm', 
+    md: 'loading-spinner-md',
+    lg: 'loading-spinner-lg',
+    xl: 'loading-spinner-xl'
   }
   return sizeMap[props.size]
 })
 
 const colorClass = computed(() => {
   const colorMap = {
-    primary: 'spinner-primary',
-    secondary: 'spinner-secondary',
-    white: 'spinner-white',
-    current: 'spinner-current'
+    primary: 'loading-spinner-primary',
+    secondary: 'loading-spinner-neutral',
+    white: 'loading-spinner-white',
+    current: 'loading-spinner-current'
   }
   return colorMap[props.color]
 })
+
+const textSizeClass = computed(() => {
+  const textSizeMap = {
+    xs: 'loading-text-xs',
+    sm: 'loading-text-xs',
+    md: 'loading-text',
+    lg: 'loading-text-base',
+    xl: 'loading-text-base'
+  }
+  return textSizeMap[props.size]
+})
 </script>
 
-<style scoped>
-.loading-spinner {
-  @apply flex items-center justify-center gap-3;
-}
-
-.loading-spinner.inline {
-  @apply inline-flex;
-}
-
-.spinner-circle {
-  @apply rounded-full border-2 border-solid animate-spin;
-  border-color: currentColor transparent currentColor transparent;
-  animation-duration: 1s;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-}
-
-/* Size variants */
-.spinner-xs .spinner-circle {
-  @apply w-3 h-3;
-}
-
-.spinner-sm .spinner-circle {
-  @apply w-4 h-4;
-}
-
-.spinner-md .spinner-circle {
-  @apply w-6 h-6;
-}
-
-.spinner-lg .spinner-circle {
-  @apply w-8 h-8;
-}
-
-.spinner-xl .spinner-circle {
-  @apply w-12 h-12;
-}
-
-/* Color variants */
-.spinner-primary {
-  @apply text-primary-600;
-}
-
-.spinner-secondary {
-  @apply text-neutral-600;
-}
-
-.spinner-white {
-  @apply text-white;
-}
-
-.spinner-current {
-  @apply text-current;
-}
-
-/* Text styles */
-.spinner-text {
-  @apply text-sm font-medium text-neutral-700;
-}
-
-.spinner-xs .spinner-text,
-.spinner-sm .spinner-text {
-  @apply text-xs;
-}
-
-.spinner-lg .spinner-text,
-.spinner-xl .spinner-text {
-  @apply text-base;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .spinner-text {
-    @apply text-neutral-300;
-  }
-  
-  .spinner-secondary {
-    @apply text-neutral-400;
-  }
-}
-
-/* Reduce motion for accessibility */
-@media (prefers-reduced-motion: reduce) {
-  .spinner-circle {
-    animation-duration: 2s;
-  }
-}
-</style>
+<!-- Styles handled by /src/styles/components/common/loading-spinner.css -->

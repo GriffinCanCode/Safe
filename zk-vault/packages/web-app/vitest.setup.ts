@@ -63,18 +63,20 @@ global.Worker = class Worker {
   onmessage: ((this: Worker, ev: MessageEvent) => any) | null = null;
   onerror: ((this: AbstractWorker, ev: ErrorEvent) => any) | null = null;
   onmessageerror: ((this: Worker, ev: MessageEvent) => any) | null = null;
-  
+
   postMessage(message: any): void {
     // Mock implementation
   }
-  
+
   terminate(): void {
     // Mock implementation
   }
-  
+
   addEventListener() {}
   removeEventListener() {}
-  dispatchEvent() { return true; }
+  dispatchEvent() {
+    return true;
+  }
 };
 
 // Mock Firebase
@@ -125,13 +127,17 @@ vi.mock('firebase/storage', () => ({
 }));
 
 // Mock crypto packages
-vi.mock('@zk-vault/crypto', () => ({
-  ZeroKnowledgeVault: vi.fn(),
-  ZeroKnowledgeAuth: vi.fn(),
-  FileEncryption: vi.fn(),
-  SRPClient: vi.fn(),
-  SRPServer: vi.fn(),
-}));
+// Note: Only mock crypto packages for unit tests, not integration tests
+// Integration tests should use the real crypto implementation
+if (!process.env.VITEST_INTEGRATION_TEST) {
+  vi.mock('@zk-vault/crypto', () => ({
+    ZeroKnowledgeVault: vi.fn(),
+    ZeroKnowledgeAuth: vi.fn(),
+    FileEncryption: vi.fn(),
+    SRPClient: vi.fn(),
+    SRPServer: vi.fn(),
+  }));
+}
 
 // Mock Web Crypto API
 Object.defineProperty(global, 'crypto', {
@@ -239,15 +245,17 @@ global.FileReader = class FileReader {
   onload: ((this: FileReader, ev: ProgressEvent<FileReader>) => any) | null = null;
   onerror: ((this: FileReader, ev: ProgressEvent<FileReader>) => any) | null = null;
   onprogress: ((this: FileReader, ev: ProgressEvent<FileReader>) => any) | null = null;
-  
+
   readAsText(): void {}
   readAsDataURL(): void {}
   readAsArrayBuffer(): void {}
   abort(): void {}
   addEventListener(): void {}
   removeEventListener(): void {}
-  dispatchEvent(): boolean { return true; }
-  
+  dispatchEvent(): boolean {
+    return true;
+  }
+
   static readonly EMPTY = 0;
   static readonly LOADING = 1;
   static readonly DONE = 2;

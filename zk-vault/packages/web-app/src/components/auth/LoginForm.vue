@@ -184,6 +184,12 @@ const validateForm = () => {
   return !errors.email && !errors.password
 }
 
+const emit = defineEmits<{
+  success: [data: { email: string; requiresUnlock?: boolean }]
+  biometric: []
+  error: [message: string]
+}>()
+
 const handleLogin = async () => {
   if (!validateForm()) return
   
@@ -191,17 +197,17 @@ const handleLogin = async () => {
   generalError.value = ''
   
   try {
-    await authStore.signIn({
-      email: form.email,
-      password: form.password,
-      rememberMe: form.rememberMe
-    })
+    await authStore.login(form.email, form.password)
     
-    // Redirect to dashboard or intended route
-    const redirectTo = router.currentRoute.value.query.redirect as string || '/dashboard'
-    await router.push(redirectTo)
+    // Emit success event to parent
+    emit('success', { 
+      email: form.email,
+      requiresUnlock: false // In a real app, this would depend on vault state
+    })
   } catch (error: any) {
-    generalError.value = error.message || 'An error occurred during sign in'
+    const errorMessage = error.message || 'An error occurred during sign in'
+    generalError.value = errorMessage
+    emit('error', errorMessage)
   } finally {
     loading.value = false
   }
@@ -212,12 +218,12 @@ const handleBiometricLogin = async () => {
   generalError.value = ''
   
   try {
-    await authStore.signInWithBiometric()
-    
-    const redirectTo = router.currentRoute.value.query.redirect as string || '/dashboard'
-    await router.push(redirectTo)
+    // Emit biometric event to parent to handle the authentication
+    emit('biometric')
   } catch (error: any) {
-    generalError.value = error.message || 'Biometric authentication failed'
+    const errorMessage = error.message || 'Biometric authentication failed'
+    generalError.value = errorMessage
+    emit('error', errorMessage)
   } finally {
     biometricLoading.value = false
   }
@@ -228,10 +234,8 @@ const handleGoogleLogin = async () => {
   generalError.value = ''
   
   try {
-    await authStore.signInWithGoogle()
-    
-    const redirectTo = router.currentRoute.value.query.redirect as string || '/dashboard'
-    await router.push(redirectTo)
+    // Google login not implemented in ZK auth system
+    generalError.value = 'Google login not available with zero-knowledge authentication'
   } catch (error: any) {
     generalError.value = error.message || 'Google sign in failed'
   } finally {
@@ -241,7 +245,7 @@ const handleGoogleLogin = async () => {
 
 const checkBiometricSupport = async () => {
   try {
-    biometricSupported.value = await authStore.isBiometricSupported()
+    biometricSupported.value = await authStore.checkBiometricAvailability()
   } catch {
     biometricSupported.value = false
   }
@@ -253,137 +257,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.login-form {
-  @apply w-full max-w-md mx-auto p-8 bg-white rounded-xl shadow-lg;
-}
-
-.login-header {
-  @apply text-center mb-8;
-}
-
-.login-title {
-  @apply text-2xl font-bold text-neutral-900 mb-2;
-}
-
-.login-subtitle {
-  @apply text-neutral-600;
-}
-
-.login-form-content {
-  @apply space-y-6;
-}
-
-.login-options {
-  @apply flex items-center justify-between;
-}
-
-.remember-me {
-  @apply flex items-center gap-2 cursor-pointer;
-}
-
-.remember-checkbox {
-  @apply w-4 h-4 text-primary-600 border-neutral-300 rounded;
-  @apply focus:ring-primary-500 focus:ring-2;
-}
-
-.remember-label {
-  @apply text-sm text-neutral-700;
-}
-
-.forgot-password {
-  @apply text-sm text-primary-600 hover:text-primary-700;
-  @apply transition-colors duration-200;
-}
-
-.divider {
-  @apply relative flex items-center justify-center;
-}
-
-.divider::before {
-  content: '';
-  @apply flex-1 h-px bg-neutral-300;
-}
-
-.divider::after {
-  content: '';
-  @apply flex-1 h-px bg-neutral-300;
-}
-
-.divider-text {
-  @apply px-4 text-sm text-neutral-500 bg-white;
-}
-
-.social-login {
-  @apply space-y-3;
-}
-
-.login-footer {
-  @apply mt-8 text-center;
-}
-
-.signup-prompt {
-  @apply text-sm text-neutral-600;
-}
-
-.signup-link {
-  @apply text-primary-600 hover:text-primary-700 font-medium;
-  @apply transition-colors duration-200;
-}
-
-.error-alert {
-  @apply mt-4 p-4 bg-danger-50 border border-danger-200 rounded-lg;
-  @apply flex items-center gap-3 text-danger-700;
-}
-
-.error-icon {
-  @apply w-5 h-5 shrink-0;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .login-form {
-    @apply bg-neutral-800;
-  }
-  
-  .login-title {
-    @apply text-neutral-100;
-  }
-  
-  .login-subtitle {
-    @apply text-neutral-400;
-  }
-  
-  .remember-label {
-    @apply text-neutral-300;
-  }
-  
-  .signup-prompt {
-    @apply text-neutral-400;
-  }
-  
-  .divider::before,
-  .divider::after {
-    @apply bg-neutral-600;
-  }
-  
-  .divider-text {
-    @apply text-neutral-400 bg-neutral-800;
-  }
-  
-  .error-alert {
-    @apply bg-danger-900 border-danger-700 text-danger-300;
-  }
-}
-
-/* Focus styles */
-.remember-checkbox:focus {
-  @apply ring-offset-2 ring-offset-white;
-}
-
-@media (prefers-color-scheme: dark) {
-  .remember-checkbox:focus {
-    @apply ring-offset-neutral-800;
-  }
-}
-</style>
+<!-- Styles are now handled by the comprehensive CSS architecture in /src/styles/components/auth/login-form.css -->

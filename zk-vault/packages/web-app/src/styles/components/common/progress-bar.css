@@ -1,0 +1,244 @@
+/**
+ * Progress Bar Component Styles
+ * Accessible progress indicators with multiple variants
+ */
+
+/* === PROGRESS WRAPPER === */
+.progress-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.progress-wrapper.progress-indeterminate .progress-fill {
+  animation: progress-indeterminate 2s infinite linear;
+}
+
+/* === PROGRESS SIZES === */
+.progress-xs .progress-track {
+  height: var(--space-1);
+}
+
+.progress-sm .progress-track {
+  height: var(--space-2);
+}
+
+.progress-md .progress-track {
+  height: var(--space-3);
+}
+
+.progress-lg .progress-track {
+  height: var(--space-4);
+}
+
+.progress-xl .progress-track {
+  height: var(--space-6);
+}
+
+/* === PROGRESS LABEL === */
+.progress-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.progress-percentage {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* === PROGRESS TRACK === */
+.progress-track {
+  position: relative;
+  width: 100%;
+  background-color: var(--color-neutral-200);
+  overflow: hidden;
+  border-radius: var(--radius-full);
+}
+
+.progress-track-rounded {
+  border-radius: var(--radius-full);
+}
+
+.progress-track-striped {
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.15) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.15) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 1rem 1rem;
+}
+
+.progress-track-animated {
+  animation: progress-stripes 1s linear infinite;
+}
+
+/* === PROGRESS FILL === */
+.progress-fill {
+  height: 100%;
+  background-color: var(--color-primary-600);
+  border-radius: inherit;
+  transition: width var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Use the dynamic-progress utility for width */
+.progress-fill.dynamic-progress {
+  width: var(--progress-width, 0%);
+}
+
+/* === PROGRESS VARIANTS === */
+.progress-fill-primary {
+  background-color: var(--color-primary-600);
+}
+
+.progress-fill-secondary {
+  background-color: var(--color-neutral-600);
+}
+
+.progress-fill-success {
+  background-color: var(--color-success-600);
+}
+
+.progress-fill-warning {
+  background-color: var(--color-warning-600);
+}
+
+.progress-fill-danger {
+  background-color: var(--color-danger-600);
+}
+
+.progress-fill-info {
+  background-color: var(--color-info-600);
+}
+
+/* === PROGRESS ANIMATIONS === */
+.progress-animation {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background-image: linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.2) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.2) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 1rem 1rem;
+  animation: progress-stripes 1s linear infinite;
+}
+
+.progress-fill-striped {
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.15) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.15) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 1rem 1rem;
+}
+
+.progress-fill-animated {
+  animation: progress-stripes 1s linear infinite;
+}
+
+.progress-fill-indeterminate {
+  width: 30% !important;
+  animation: progress-indeterminate 2s infinite linear;
+}
+
+/* === PROGRESS TEXT === */
+.progress-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.progress-text-xs {
+  font-size: var(--font-size-xs);
+}
+
+.progress-text-sm {
+  font-size: var(--font-size-xs);
+}
+
+.progress-text-md {
+  font-size: var(--font-size-sm);
+}
+
+.progress-text-lg {
+  font-size: var(--font-size-base);
+}
+
+.progress-text-xl {
+  font-size: var(--font-size-lg);
+}
+
+/* === ANIMATIONS === */
+@keyframes progress-stripes {
+  0% {
+    background-position: 1rem 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
+
+@keyframes progress-indeterminate {
+  0% {
+    left: -30%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* === DARK MODE === */
+@media (prefers-color-scheme: dark) {
+  .progress-track {
+    background-color: var(--color-neutral-700);
+  }
+  
+  .progress-label {
+    color: var(--color-neutral-100);
+  }
+  
+  .progress-percentage {
+    color: var(--color-neutral-400);
+  }
+  
+  .progress-text {
+    color: var(--color-neutral-400);
+  }
+}
+
+/* === REDUCED MOTION === */
+@media (prefers-reduced-motion: reduce) {
+  .progress-fill,
+  .progress-animation,
+  .progress-fill-animated,
+  .progress-fill-indeterminate {
+    animation: none;
+    transition: none;
+  }
+} 

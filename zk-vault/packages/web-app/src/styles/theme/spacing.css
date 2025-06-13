@@ -1,0 +1,66 @@
+/**
+ * Spacing System
+ * Consistent spacing scale based on 0.25rem (4px) base unit
+ * Tailwind CSS v4 @theme directive
+ */
+
+@theme {
+  /* === BASE SPACING UNIT === */
+  --spacing: 0.25rem; /* 4px base unit */
+
+  /* === SPACING SCALE === */
+  --spacing-0: 0;
+  --spacing-px: 1px;
+  --spacing-0_5: calc(var(--spacing) * 0.5); /* 2px */
+  --spacing-1: var(--spacing); /* 4px */
+  --spacing-1_5: calc(var(--spacing) * 1.5); /* 6px */
+  --spacing-2: calc(var(--spacing) * 2); /* 8px */
+  --spacing-2_5: calc(var(--spacing) * 2.5); /* 10px */
+  --spacing-3: calc(var(--spacing) * 3); /* 12px */
+  --spacing-3_5: calc(var(--spacing) * 3.5); /* 14px */
+  --spacing-4: calc(var(--spacing) * 4); /* 16px */
+  --spacing-5: calc(var(--spacing) * 5); /* 20px */
+  --spacing-6: calc(var(--spacing) * 6); /* 24px */
+  --spacing-7: calc(var(--spacing) * 7); /* 28px */
+  --spacing-8: calc(var(--spacing) * 8); /* 32px */
+  --spacing-9: calc(var(--spacing) * 9); /* 36px */
+  --spacing-10: calc(var(--spacing) * 10); /* 40px */
+  --spacing-11: calc(var(--spacing) * 11); /* 44px */
+  --spacing-12: calc(var(--spacing) * 12); /* 48px */
+  --spacing-14: calc(var(--spacing) * 14); /* 56px */
+  --spacing-16: calc(var(--spacing) * 16); /* 64px */
+  --spacing-20: calc(var(--spacing) * 20); /* 80px */
+  --spacing-24: calc(var(--spacing) * 24); /* 96px */
+  --spacing-28: calc(var(--spacing) * 28); /* 112px */
+  --spacing-32: calc(var(--spacing) * 32); /* 128px */
+  --spacing-36: calc(var(--spacing) * 36); /* 144px */
+  --spacing-40: calc(var(--spacing) * 40); /* 160px */
+  --spacing-44: calc(var(--spacing) * 44); /* 176px */
+  --spacing-48: calc(var(--spacing) * 48); /* 192px */
+  --spacing-52: calc(var(--spacing) * 52); /* 208px */
+  --spacing-56: calc(var(--spacing) * 56); /* 224px */
+  --spacing-60: calc(var(--spacing) * 60); /* 240px */
+  --spacing-64: calc(var(--spacing) * 64); /* 256px */
+  --spacing-72: calc(var(--spacing) * 72); /* 288px */
+  --spacing-80: calc(var(--spacing) * 80); /* 320px */
+  --spacing-96: calc(var(--spacing) * 96); /* 384px */
+
+  /* === SEMANTIC SPACING === */
+  --spacing-section: var(--spacing-16); /* 64px */
+  --spacing-component: var(--spacing-8); /* 32px */
+  --spacing-element: var(--spacing-4); /* 16px */
+  --spacing-tight: var(--spacing-2); /* 8px */
+  --spacing-loose: var(--spacing-12); /* 48px */
+
+  /* === CONTAINER SPACING === */
+  --container-padding-sm: var(--spacing-4); /* 16px */
+  --container-padding-md: var(--spacing-6); /* 24px */
+  --container-padding-lg: var(--spacing-8); /* 32px */
+  --container-padding-xl: var(--spacing-12); /* 48px */
+
+  /* === RESPONSIVE SPACING (using clamp) === */
+  --spacing-responsive-sm: clamp(var(--spacing-2), 2vw, var(--spacing-4));
+  --spacing-responsive-md: clamp(var(--spacing-4), 4vw, var(--spacing-8));
+  --spacing-responsive-lg: clamp(var(--spacing-8), 6vw, var(--spacing-16));
+  --spacing-responsive-xl: clamp(var(--spacing-12), 8vw, var(--spacing-24));
+} 

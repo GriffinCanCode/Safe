@@ -1,0 +1,303 @@
+/**
+ * Login Form Component Styles
+ * Authentication form styling with modern design patterns
+ */
+
+/* === FORM CONTAINER === */
+.login-form {
+  width: 100%;
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: var(--space-8);
+  background-color: var(--color-background-secondary);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-subtle);
+}
+
+/* === HEADER SECTION === */
+.login-header {
+  text-align: center;
+  margin-bottom: var(--space-8);
+}
+
+.login-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-2);
+  line-height: var(--line-height-tight);
+}
+
+.login-subtitle {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+}
+
+/* === FORM CONTENT === */
+.login-form-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* === FORM OPTIONS === */
+.login-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  user-select: none;
+}
+
+.remember-checkbox {
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-primary-600);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-background-primary);
+  cursor: pointer;
+  transition: var(--transition-input);
+}
+
+.remember-checkbox:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-primary-500) 20%, transparent);
+  border-color: var(--border-focus);
+}
+
+.remember-checkbox:checked {
+  background-color: var(--color-primary-600);
+  border-color: var(--color-primary-600);
+}
+
+.remember-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.forgot-password {
+  font-size: var(--font-size-sm);
+  color: var(--color-primary-600);
+  text-decoration: none;
+  font-weight: var(--font-weight-medium);
+  transition: var(--transition-colors-smooth);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+}
+
+.forgot-password:hover {
+  color: var(--color-primary-700);
+  background-color: var(--color-primary-50);
+}
+
+.forgot-password:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+/* === DIVIDER === */
+.divider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: var(--space-6) 0;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: var(--border-muted);
+}
+
+.divider-text {
+  padding: 0 var(--space-4);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+  background-color: var(--color-background-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+/* === SOCIAL LOGIN === */
+.social-login {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* === FOOTER SECTION === */
+.login-footer {
+  margin-top: var(--space-8);
+  text-align: center;
+}
+
+.signup-prompt {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-normal);
+}
+
+.signup-link {
+  color: var(--color-primary-600);
+  text-decoration: none;
+  font-weight: var(--font-weight-medium);
+  transition: var(--transition-colors-smooth);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1);
+}
+
+.signup-link:hover {
+  color: var(--color-primary-700);
+  text-decoration: underline;
+  text-underline-offset: 0.125em;
+}
+
+.signup-link:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+/* === ERROR ALERT === */
+.error-alert {
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  background-color: var(--color-danger-50);
+  border: 1px solid var(--color-danger-200);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-danger-700);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+}
+
+.error-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  color: var(--color-danger-500);
+}
+
+/* === RESPONSIVE DESIGN === */
+@container (max-width: 480px) {
+  .login-form {
+    padding: var(--space-6);
+    margin: var(--space-4);
+  }
+  
+  .login-options {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+  
+  .login-title {
+    font-size: var(--font-size-xl);
+  }
+}
+
+/* === DARK MODE ADAPTATIONS === */
+@media (prefers-color-scheme: dark) {
+  .login-form {
+    background-color: var(--color-neutral-800);
+    border-color: var(--border-muted);
+  }
+  
+  .login-title {
+    color: var(--color-neutral-100);
+  }
+  
+  .login-subtitle {
+    color: var(--color-neutral-400);
+  }
+  
+  .remember-label {
+    color: var(--color-neutral-300);
+  }
+  
+  .signup-prompt {
+    color: var(--color-neutral-400);
+  }
+  
+  .divider::before,
+  .divider::after {
+    background-color: var(--border-muted);
+  }
+  
+  .divider-text {
+    color: var(--color-neutral-400);
+    background-color: var(--color-neutral-800);
+  }
+  
+  .error-alert {
+    background-color: var(--color-danger-900);
+    border-color: var(--color-danger-700);
+    color: var(--color-danger-300);
+  }
+  
+  .forgot-password:hover {
+    background-color: var(--color-primary-900);
+  }
+}
+
+/* === HIGH CONTRAST MODE === */
+@media (prefers-contrast: high) {
+  .login-form {
+    border-width: 2px;
+    border-color: var(--color-neutral-900);
+  }
+  
+  .remember-checkbox {
+    border-width: 2px;
+  }
+  
+  .error-alert {
+    border-width: 2px;
+  }
+}
+
+/* === REDUCED MOTION === */
+@media (prefers-reduced-motion: reduce) {
+  .remember-checkbox,
+  .forgot-password,
+  .signup-link {
+    transition: none;
+  }
+}
+
+/* === FOCUS MANAGEMENT === */
+.login-form:focus-within {
+  box-shadow: var(--shadow-lg), 0 0 0 1px color-mix(in oklch, var(--color-primary-500) 20%, transparent);
+}
+
+/* === LOADING STATES === */
+.login-form.loading {
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.login-form.loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: color-mix(in oklch, var(--color-background-secondary) 50%, transparent);
+  backdrop-filter: blur(2px);
+  border-radius: var(--radius-card);
+} 

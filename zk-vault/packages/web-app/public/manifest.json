@@ -1,0 +1,26 @@
+{
+  "name": "ZK-Vault",
+  "short_name": "ZK-Vault",
+  "description": "Zero-Knowledge Password & File Storage System",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "16x16 32x32",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["security", "productivity", "utilities"],
+  "lang": "en",
+  "dir": "ltr"
+}

@@ -69,11 +69,11 @@ export const useSettingsStore = defineStore('settings', () => {
         Object.assign(settings, JSON.parse(storedSettings));
       }
       originalSettings.value = JSON.parse(JSON.stringify(settings));
-      
+
       // Simulate checking for biometric support
       // biometricSupported.value = await authService.isBiometricAvailable();
-      biometricSupported.value = 'credentials' in navigator && typeof (navigator.credentials as any).create === 'function';
-
+      biometricSupported.value =
+        'credentials' in navigator && typeof (navigator.credentials as any).create === 'function';
     } catch (e) {
       error.value = 'Failed to load settings.';
       console.error(e);
@@ -88,11 +88,10 @@ export const useSettingsStore = defineStore('settings', () => {
     try {
       // In a real app, this would be an API call
       // await authService.updateUserProfile(uid, { preferences: newSettings });
-      
+
       Object.assign(settings, newSettings);
       localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
       originalSettings.value = JSON.parse(JSON.stringify(settings));
-
     } catch (e) {
       error.value = 'Failed to update settings.';
       console.error(e);
@@ -118,7 +117,7 @@ export const useSettingsStore = defineStore('settings', () => {
     },
     { deep: true }
   );
-  
+
   // Apply theme to the document
   watch(
     () => settings.theme,

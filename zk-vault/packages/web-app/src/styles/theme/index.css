@@ -1,0 +1,12 @@
+/**
+ * Theme Configuration Index
+ * Tailwind CSS v4 Theme System
+ */
+
+@import "./variables.css";
+@import "./colors.css";
+@import "./typography.css";
+@import "./spacing.css";
+@import "./borders.css";
+@import "./shadows.css";
+@import "./transitions.css"; 

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
-const { PACKAGES } = require('../config/paths.config');
+const fs = require("fs");
+const path = require("path");
+const { PACKAGES } = require("../config/paths.config");
 
 /**
  * Component Generator
@@ -23,17 +23,20 @@ const COMPONENT_TEMPLATES = {
 <script setup lang="ts">
 interface ${name}Props {
   title?: string;
-  ${props.map(prop => `${prop.name}?: ${prop.type};`).join('\n  ')}
+  ${props.map((prop) => `${prop.name}?: ${prop.type};`).join("\n  ")}
 }
 
 withDefaults(defineProps<${name}Props>(), {
   title: '',
-  ${props.map(prop => `${prop.name}: ${prop.default || `undefined`},`).join('\n  ')}
+  ${props.map((prop) => `${prop.name}: ${prop.default || `undefined`},`).join("\n  ")}
 });
 
 const emit = defineEmits<{
   click: [event: MouseEvent];
-  ${props.filter(p => p.event).map(prop => `${prop.event}: [value: ${prop.type}];`).join('\n  ')}
+  ${props
+    .filter((p) => p.event)
+    .map((prop) => `${prop.event}: [value: ${prop.type}];`)
+    .join("\n  ")}
 }>();
 
 // Component logic here
@@ -130,14 +133,14 @@ import { cn } from '@/utils/cn';
 interface ${name}Props {
   className?: string;
   title?: string;
-  ${props.map(prop => `${prop.name}?: ${prop.type};`).join('\n  ')}
+  ${props.map((prop) => `${prop.name}?: ${prop.type};`).join("\n  ")}
   children?: React.ReactNode;
 }
 
 export const ${name}: React.FC<${name}Props> = ({
   className,
   title,
-  ${props.map(prop => prop.name).join(',\n  ')},
+  ${props.map((prop) => prop.name).join(",\n  ")},
   children,
   ...props
 }) => {
@@ -156,7 +159,9 @@ export const ${name}: React.FC<${name}Props> = ({
 
 export default ${name};`,
 
-    test: (name) => `import { render, screen, fireEvent } from '@testing-library/react';
+    test: (
+      name,
+    ) => `import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect } from '@jest/globals';
 import { ${name} } from './${name}';
 
@@ -228,7 +233,7 @@ function generateComponent(packageName, componentName, options = {}) {
     props = [],
     withTest = true,
     withStory = true,
-    outputDir = 'src/components',
+    outputDir = "src/components",
   } = options;
 
   if (!PACKAGES[packageName]) {
@@ -236,9 +241,13 @@ function generateComponent(packageName, componentName, options = {}) {
   }
 
   // Determine component type based on package
-  const componentType = packageName === 'web-app' ? 'vue' : 
-                       packageName === 'mobile-app' ? 'react' : 'vue';
-  
+  const componentType =
+    packageName === "web-app"
+      ? "vue"
+      : packageName === "mobile-app"
+        ? "react"
+        : "vue";
+
   const packageDir = PACKAGES[packageName];
   const componentDir = path.resolve(packageDir, outputDir, componentName);
 
@@ -248,17 +257,24 @@ function generateComponent(packageName, componentName, options = {}) {
   }
 
   const templates = COMPONENT_TEMPLATES[componentType];
-  
+
   // Generate component file
-  const componentExt = componentType === 'vue' ? '.vue' : 
-                      componentType === 'react' ? '.tsx' : '.ts';
-  const componentPath = path.resolve(componentDir, `${componentName}${componentExt}`);
+  const componentExt =
+    componentType === "vue"
+      ? ".vue"
+      : componentType === "react"
+        ? ".tsx"
+        : ".ts";
+  const componentPath = path.resolve(
+    componentDir,
+    `${componentName}${componentExt}`,
+  );
   fs.writeFileSync(componentPath, templates.component(componentName, props));
   console.log(`✓ Created ${componentName}${componentExt}`);
 
   // Generate test file
   if (withTest) {
-    const testExt = componentType === 'vue' ? '.spec.ts' : '.test.tsx';
+    const testExt = componentType === "vue" ? ".spec.ts" : ".test.tsx";
     const testPath = path.resolve(componentDir, `${componentName}${testExt}`);
     fs.writeFileSync(testPath, templates.test(componentName));
     console.log(`✓ Created ${componentName}${testExt}`);
@@ -272,16 +288,21 @@ function generateComponent(packageName, componentName, options = {}) {
   }
 
   // Generate index file for easier imports
-  const indexPath = path.resolve(componentDir, 'index.ts');
-  const indexContent = componentType === 'vue' 
-    ? `export { default as ${componentName} } from './${componentName}.vue';`
-    : `export { ${componentName} } from './${componentName}';`;
+  const indexPath = path.resolve(componentDir, "index.ts");
+  const indexContent =
+    componentType === "vue"
+      ? `export { default as ${componentName} } from './${componentName}.vue';`
+      : `export { ${componentName} } from './${componentName}';`;
   fs.writeFileSync(indexPath, indexContent);
   console.log(`✓ Created index.ts`);
 
-  console.log(`\n✅ Component ${componentName} generated successfully in ${packageName}!`);
+  console.log(
+    `\n✅ Component ${componentName} generated successfully in ${packageName}!`,
+  );
   console.log(`   Location: ${componentDir}`);
-  console.log(`   Import: import { ${componentName} } from '@/components/${componentName}';`);
+  console.log(
+    `   Import: import { ${componentName} } from '@/components/${componentName}';`,
+  );
 }
 
 // CLI interface
@@ -295,7 +316,7 @@ Usage: node component.generator.js <package-name> <component-name> [props...]
 
 Arguments:
   package-name     Name of the package where component should be created
-                   Available: ${Object.keys(PACKAGES).join(', ')}
+                   Available: ${Object.keys(PACKAGES).join(", ")}
   component-name   Name of the component (PascalCase)
   props           Optional props in format: name:type:default
 
@@ -314,25 +335,25 @@ Examples:
 
   // Parse props
   const props = propArgs
-    .filter(arg => !arg.startsWith('--'))
-    .map(prop => {
-      const [name, type = 'string', defaultValue] = prop.split(':');
+    .filter((arg) => !arg.startsWith("--"))
+    .map((prop) => {
+      const [name, type = "string", defaultValue] = prop.split(":");
       return { name, type, default: defaultValue };
     });
 
   const options = {
     props,
-    withTest: !args.includes('--no-test'),
-    withStory: !args.includes('--no-story'),
-    outputDir: args.includes('--dir') 
-      ? args[args.indexOf('--dir') + 1] 
-      : 'src/components',
+    withTest: !args.includes("--no-test"),
+    withStory: !args.includes("--no-story"),
+    outputDir: args.includes("--dir")
+      ? args[args.indexOf("--dir") + 1]
+      : "src/components",
   };
 
   try {
     generateComponent(packageName, componentName, options);
   } catch (error) {
-    console.error('❌ Error generating component:', error.message);
+    console.error("❌ Error generating component:", error.message);
     process.exit(1);
   }
 }

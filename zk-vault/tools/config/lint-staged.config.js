@@ -15,8 +15,9 @@ module.exports = {
   // YAML files
   '*.{yml,yaml}': ['prettier --write'],
 
-  // CSS/SCSS files
+  // CSS/SCSS files and Vue SFCs
   '*.{css,scss,sass}': ['stylelint --fix', 'prettier --write'],
+  '*.vue': ['stylelint --fix', 'prettier --write'],
 
   // Package.json files
   'package.json': ['sort-package-json', 'prettier --write'],

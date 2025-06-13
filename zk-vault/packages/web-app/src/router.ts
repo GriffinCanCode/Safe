@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
+import { authService } from '@/services/auth.service';
 
 // Lazy load components
 const DashboardView = () => import('@/views/DashboardView.vue');
@@ -20,11 +21,37 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/auth',
-    name: 'Auth',
     component: AuthView,
     meta: {
       requiresGuest: true,
     },
+    children: [
+      {
+        path: '',
+        name: 'Auth',
+        redirect: '/auth/login',
+      },
+      {
+        path: 'login',
+        name: 'auth-login',
+        component: AuthView,
+      },
+      {
+        path: 'register',
+        name: 'auth-register',
+        component: AuthView,
+      },
+      {
+        path: 'unlock',
+        name: 'auth-unlock',
+        component: AuthView,
+      },
+      {
+        path: 'biometric',
+        name: 'auth-biometric',
+        component: AuthView,
+      },
+    ],
   },
   {
     path: '/dashboard',
@@ -89,14 +116,38 @@ const router = createRouter({
 
 // Navigation guards
 router.beforeEach(async (to: any, _from: any, next: any) => {
+  const isAuthenticated = authService.isAuthenticated();
+  const currentUser = authService.getCurrentUser();
+
   // Check authentication requirements
   if (to.meta.requiresAuth) {
-    // This would check auth state from store/service
-    // For now, allow through - implement auth check later
+    if (!isAuthenticated) {
+      // Redirect to auth page if not authenticated
+      next({ name: 'Auth', query: { redirect: to.fullPath } });
+      return;
+    }
+
+    // Check admin requirements
+    if (to.meta.requiresAdmin) {
+      // For now, allow all authenticated users to access admin
+      // In a real app, you'd check user roles/permissions
+      next();
+      return;
+    }
+
+    // Check email verification if required
+    if (to.meta.requiresEmailVerification && !authService.isEmailVerified()) {
+      next({ name: 'Auth', query: { action: 'verify-email' } });
+      return;
+    }
+
     next();
   } else if (to.meta.requiresGuest) {
-    // Check if user is already authenticated
-    // For now, allow through - implement auth check later
+    // Redirect authenticated users away from guest-only pages
+    if (isAuthenticated) {
+      next({ name: 'Dashboard' });
+      return;
+    }
     next();
   } else {
     next();

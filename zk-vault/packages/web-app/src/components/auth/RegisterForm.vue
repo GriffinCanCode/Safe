@@ -1,8 +1,8 @@
 <template>
   <div class="register-form">
-    <div class="register-header">
-      <h2 class="register-title">Create Your Account</h2>
-      <p class="register-subtitle">Start securing your digital life today</p>
+    <div class="register-form-header">
+      <h2 class="register-form-title">Create Your Account</h2>
+      <p class="register-form-subtitle">Start securing your digital life today</p>
     </div>
 
     <form @submit.prevent="handleRegister" class="register-form-content">
@@ -20,7 +20,7 @@
       />
 
       <!-- Password Field -->
-      <div class="password-section">
+      <div class="register-form-section">
         <BaseInput
           v-model="form.password"
           type="password"
@@ -34,10 +34,10 @@
         />
         
         <!-- Password Strength Meter -->
-        <div v-if="form.password" class="password-strength">
-          <div class="strength-header">
-            <span class="strength-label">Password Strength</span>
-            <span class="strength-score" :class="passwordStrengthClass">
+        <div v-if="form.password" class="register-form-field">
+          <div class="password-strength-header">
+            <span class="password-strength-label">Password Strength</span>
+            <span class="password-strength-indicator" :class="passwordStrengthClass">
               {{ passwordStrengthText }}
             </span>
           </div>
@@ -48,25 +48,25 @@
             size="sm"
             animated
           />
-          <div class="strength-requirements">
-            <div class="requirement" :class="{ 'met': form.password.length >= 12 }">
-              <span class="requirement-icon">{{ form.password.length >= 12 ? '✓' : '○' }}</span>
+          <div class="password-requirements">
+            <div class="password-requirement" :class="{ 'met': form.password.length >= 12 }">
+              <span class="password-requirement-icon">{{ form.password.length >= 12 ? '✓' : '○' }}</span>
               At least 12 characters
             </div>
-            <div class="requirement" :class="{ 'met': /[A-Z]/.test(form.password) }">
-              <span class="requirement-icon">{{ /[A-Z]/.test(form.password) ? '✓' : '○' }}</span>
+            <div class="password-requirement" :class="{ 'met': /[A-Z]/.test(form.password) }">
+              <span class="password-requirement-icon">{{ /[A-Z]/.test(form.password) ? '✓' : '○' }}</span>
               Uppercase letter
             </div>
-            <div class="requirement" :class="{ 'met': /[a-z]/.test(form.password) }">
-              <span class="requirement-icon">{{ /[a-z]/.test(form.password) ? '✓' : '○' }}</span>
+            <div class="password-requirement" :class="{ 'met': /[a-z]/.test(form.password) }">
+              <span class="password-requirement-icon">{{ /[a-z]/.test(form.password) ? '✓' : '○' }}</span>
               Lowercase letter
             </div>
-            <div class="requirement" :class="{ 'met': /[0-9]/.test(form.password) }">
-              <span class="requirement-icon">{{ /[0-9]/.test(form.password) ? '✓' : '○' }}</span>
+            <div class="password-requirement" :class="{ 'met': /[0-9]/.test(form.password) }">
+              <span class="password-requirement-icon">{{ /[0-9]/.test(form.password) ? '✓' : '○' }}</span>
               Number
             </div>
-            <div class="requirement" :class="{ 'met': /[^A-Za-z0-9]/.test(form.password) }">
-              <span class="requirement-icon">{{ /[^A-Za-z0-9]/.test(form.password) ? '✓' : '○' }}</span>
+            <div class="password-requirement" :class="{ 'met': /[^A-Za-z0-9]/.test(form.password) }">
+              <span class="password-requirement-icon">{{ /[^A-Za-z0-9]/.test(form.password) ? '✓' : '○' }}</span>
               Special character
             </div>
           </div>
@@ -98,36 +98,36 @@
       />
 
       <!-- Terms and Privacy -->
-      <div class="terms-section">
-        <label class="terms-checkbox">
+      <div class="form-agreements">
+        <label class="form-agreement">
           <input
             v-model="form.acceptTerms"
             type="checkbox"
             :disabled="loading"
-            class="terms-input"
+            class="form-agreement-checkbox"
           >
-          <span class="terms-label">
+          <span class="form-agreement-text">
             I agree to the 
-            <a href="/terms" target="_blank" class="terms-link">Terms of Service</a>
+            <a href="/terms" target="_blank" class="form-agreement-link">Terms of Service</a>
             and 
-            <a href="/privacy" target="_blank" class="terms-link">Privacy Policy</a>
+            <a href="/privacy" target="_blank" class="form-agreement-link">Privacy Policy</a>
           </span>
         </label>
-        <div v-if="errors.acceptTerms" class="terms-error">
+        <div v-if="errors.acceptTerms" class="form-error">
           {{ errors.acceptTerms }}
         </div>
       </div>
 
       <!-- Marketing Opt-in -->
-      <div class="marketing-section">
-        <label class="marketing-checkbox">
+      <div class="form-error-offset">
+        <label class="form-agreement">
           <input
             v-model="form.acceptMarketing"
             type="checkbox"
             :disabled="loading"
-            class="marketing-input"
+            class="form-agreement-checkbox"
           >
-          <span class="marketing-label">
+          <span class="form-agreement-text">
             Send me security tips and product updates (optional)
           </span>
         </label>
@@ -146,15 +146,15 @@
       </BaseButton>
 
       <!-- Security Notice -->
-      <div class="security-notice">
-        <div class="notice-icon">
+      <div class="biometric-warning">
+        <div class="biometric-warning-icon">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
         </div>
-        <div class="notice-content">
-          <p class="notice-title">Your master password cannot be recovered</p>
-          <p class="notice-text">
+        <div class="biometric-warning-content">
+          <p class="biometric-warning-title">Your master password cannot be recovered</p>
+          <p class="biometric-warning-text">
             We use zero-knowledge encryption. If you forget your master password, 
             we cannot recover your data. Please store it safely.
           </p>
@@ -339,6 +339,11 @@ const validateForm = () => {
   return !Object.values(errors).some(error => error)
 }
 
+const emit = defineEmits<{
+  success: [data: { email: string; isNewUser: boolean }]
+  error: [message: string]
+}>()
+
 const handleRegister = async () => {
   if (!validateForm()) return
   
@@ -346,239 +351,27 @@ const handleRegister = async () => {
   generalError.value = ''
   
   try {
-    await authStore.signUp({
+    await authStore.register({
       email: form.email,
       password: form.password,
-      passwordHint: form.passwordHint || undefined,
+      displayName: form.email.split('@')[0], // Use email prefix as display name
+      acceptTerms: form.acceptTerms,
       acceptMarketing: form.acceptMarketing
     })
     
-    // Redirect to verification or dashboard
-    await router.push('/auth/verify-email')
+    // Emit success event to parent
+    emit('success', { 
+      email: form.email,
+      isNewUser: true
+    })
   } catch (error: any) {
-    generalError.value = error.message || 'An error occurred during registration'
+    const errorMessage = error.message || 'An error occurred during registration'
+    generalError.value = errorMessage
+    emit('error', errorMessage)
   } finally {
     loading.value = false
   }
 }
 </script>
 
-<style scoped>
-.register-form {
-  @apply w-full max-w-lg mx-auto p-8 bg-white rounded-xl shadow-lg;
-}
-
-.register-header {
-  @apply text-center mb-8;
-}
-
-.register-title {
-  @apply text-2xl font-bold text-neutral-900 mb-2;
-}
-
-.register-subtitle {
-  @apply text-neutral-600;
-}
-
-.register-form-content {
-  @apply space-y-6;
-}
-
-.password-section {
-  @apply space-y-3;
-}
-
-.password-strength {
-  @apply space-y-2;
-}
-
-.strength-header {
-  @apply flex items-center justify-between;
-}
-
-.strength-label {
-  @apply text-sm font-medium text-neutral-700;
-}
-
-.strength-score {
-  @apply text-sm font-semibold;
-}
-
-.strength-very-weak { @apply text-danger-600; }
-.strength-weak { @apply text-danger-500; }
-.strength-fair { @apply text-warning-500; }
-.strength-good { @apply text-info-600; }
-.strength-strong { @apply text-success-600; }
-
-.strength-requirements {
-  @apply grid grid-cols-1 gap-1 text-xs;
-}
-
-.requirement {
-  @apply flex items-center gap-2 text-neutral-600;
-}
-
-.requirement.met {
-  @apply text-success-600;
-}
-
-.requirement-icon {
-  @apply w-4 text-center font-mono;
-}
-
-.terms-section {
-  @apply space-y-2;
-}
-
-.terms-checkbox {
-  @apply flex items-start gap-3 cursor-pointer;
-}
-
-.terms-input {
-  @apply mt-0.5 w-4 h-4 text-primary-600 border-neutral-300 rounded;
-  @apply focus:ring-primary-500 focus:ring-2;
-}
-
-.terms-label {
-  @apply text-sm text-neutral-700;
-}
-
-.terms-link {
-  @apply text-primary-600 hover:text-primary-700 underline;
-}
-
-.terms-error {
-  @apply text-sm text-danger-600;
-}
-
-.marketing-section {
-  @apply -mt-2;
-}
-
-.marketing-checkbox {
-  @apply flex items-start gap-3 cursor-pointer;
-}
-
-.marketing-input {
-  @apply mt-0.5 w-4 h-4 text-primary-600 border-neutral-300 rounded;
-  @apply focus:ring-primary-500 focus:ring-2;
-}
-
-.marketing-label {
-  @apply text-sm text-neutral-600;
-}
-
-.security-notice {
-  @apply flex gap-3 p-4 bg-warning-50 border border-warning-200 rounded-lg;
-}
-
-.notice-icon {
-  @apply text-warning-600 shrink-0 mt-0.5;
-}
-
-.notice-content {
-  @apply space-y-1;
-}
-
-.notice-title {
-  @apply text-sm font-semibold text-warning-800;
-}
-
-.notice-text {
-  @apply text-sm text-warning-700;
-}
-
-.register-footer {
-  @apply mt-8 text-center;
-}
-
-.login-prompt {
-  @apply text-sm text-neutral-600;
-}
-
-.login-link {
-  @apply text-primary-600 hover:text-primary-700 font-medium;
-  @apply transition-colors duration-200;
-}
-
-.error-alert {
-  @apply mt-4 p-4 bg-danger-50 border border-danger-200 rounded-lg;
-  @apply flex items-center gap-3 text-danger-700;
-}
-
-.error-icon {
-  @apply w-5 h-5 shrink-0;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .register-form {
-    @apply bg-neutral-800;
-  }
-  
-  .register-title {
-    @apply text-neutral-100;
-  }
-  
-  .register-subtitle {
-    @apply text-neutral-400;
-  }
-  
-  .strength-label {
-    @apply text-neutral-300;
-  }
-  
-  .requirement {
-    @apply text-neutral-400;
-  }
-  
-  .requirement.met {
-    @apply text-success-400;
-  }
-  
-  .terms-label {
-    @apply text-neutral-300;
-  }
-  
-  .marketing-label {
-    @apply text-neutral-400;
-  }
-  
-  .security-notice {
-    @apply bg-warning-900 border-warning-700;
-  }
-  
-  .notice-title {
-    @apply text-warning-300;
-  }
-  
-  .notice-text {
-    @apply text-warning-400;
-  }
-  
-  .notice-icon {
-    @apply text-warning-400;
-  }
-  
-  .login-prompt {
-    @apply text-neutral-400;
-  }
-  
-  .error-alert {
-    @apply bg-danger-900 border-danger-700 text-danger-300;
-  }
-}
-
-/* Focus styles */
-.terms-input:focus,
-.marketing-input:focus {
-  @apply ring-offset-2 ring-offset-white;
-}
-
-@media (prefers-color-scheme: dark) {
-  .terms-input:focus,
-  .marketing-input:focus {
-    @apply ring-offset-neutral-800;
-  }
-}
-</style>
+<!-- Styles handled by /src/styles/components/auth/register-form.css -->

@@ -11,22 +11,17 @@ const path = require('path');
  * @returns {Object} Tailwind configuration
  */
 function createTailwindConfig(options = {}) {
-  const {
-    packagePath = process.cwd(),
-    content = [],
-    theme = {},
-    plugins = [],
-  } = options;
+  const { packagePath = process.cwd(), content = [], theme = {}, plugins = [] } = options;
 
   return {
     content: [
       // Default content paths
       path.resolve(packagePath, 'src/**/*.{js,ts,jsx,tsx,vue,html}'),
       path.resolve(packagePath, 'public/index.html'),
-      
+
       // Shared components
       path.resolve(packagePath, '../../packages/shared/src/**/*.{js,ts,jsx,tsx,vue}'),
-      
+
       // Additional content paths
       ...content,
     ],
@@ -150,11 +145,11 @@ function createTailwindConfig(options = {}) {
 
         fontSize: {
           '2xs': ['0.625rem', { lineHeight: '0.75rem' }],
-          'xs': ['0.75rem', { lineHeight: '1rem' }],
-          'sm': ['0.875rem', { lineHeight: '1.25rem' }],
-          'base': ['1rem', { lineHeight: '1.5rem' }],
-          'lg': ['1.125rem', { lineHeight: '1.75rem' }],
-          'xl': ['1.25rem', { lineHeight: '1.75rem' }],
+          xs: ['0.75rem', { lineHeight: '1rem' }],
+          sm: ['0.875rem', { lineHeight: '1.25rem' }],
+          base: ['1rem', { lineHeight: '1.5rem' }],
+          lg: ['1.125rem', { lineHeight: '1.75rem' }],
+          xl: ['1.25rem', { lineHeight: '1.75rem' }],
           '2xl': ['1.5rem', { lineHeight: '2rem' }],
           '3xl': ['1.875rem', { lineHeight: '2.25rem' }],
           '4xl': ['2.25rem', { lineHeight: '2.5rem' }],
@@ -167,37 +162,37 @@ function createTailwindConfig(options = {}) {
 
         // Spacing
         spacing: {
-          '4.5': '1.125rem',
-          '5.5': '1.375rem',
-          '6.5': '1.625rem',
-          '7.5': '1.875rem',
-          '8.5': '2.125rem',
-          '9.5': '2.375rem',
-          '13': '3.25rem',
-          '15': '3.75rem',
-          '17': '4.25rem',
-          '18': '4.5rem',
-          '19': '4.75rem',
-          '21': '5.25rem',
-          '22': '5.5rem',
-          '25': '6.25rem',
-          '26': '6.5rem',
-          '30': '7.5rem',
-          '34': '8.5rem',
-          '42': '10.5rem',
-          '50': '12.5rem',
-          '54': '13.5rem',
-          '58': '14.5rem',
-          '62': '15.5rem',
-          '66': '16.5rem',
-          '70': '17.5rem',
-          '74': '18.5rem',
-          '78': '19.5rem',
-          '82': '20.5rem',
-          '86': '21.5rem',
-          '90': '22.5rem',
-          '94': '23.5rem',
-          '98': '24.5rem',
+          4.5: '1.125rem',
+          5.5: '1.375rem',
+          6.5: '1.625rem',
+          7.5: '1.875rem',
+          8.5: '2.125rem',
+          9.5: '2.375rem',
+          13: '3.25rem',
+          15: '3.75rem',
+          17: '4.25rem',
+          18: '4.5rem',
+          19: '4.75rem',
+          21: '5.25rem',
+          22: '5.5rem',
+          25: '6.25rem',
+          26: '6.5rem',
+          30: '7.5rem',
+          34: '8.5rem',
+          42: '10.5rem',
+          50: '12.5rem',
+          54: '13.5rem',
+          58: '14.5rem',
+          62: '15.5rem',
+          66: '16.5rem',
+          70: '17.5rem',
+          74: '18.5rem',
+          78: '19.5rem',
+          82: '20.5rem',
+          86: '21.5rem',
+          90: '22.5rem',
+          94: '23.5rem',
+          98: '24.5rem',
         },
 
         // Border radius
@@ -209,15 +204,15 @@ function createTailwindConfig(options = {}) {
 
         // Box shadows
         boxShadow: {
-          'xs': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
-          'sm': '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
-          'DEFAULT': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-          'md': '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
-          'lg': '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
-          'xl': '0 25px 50px -12px rgb(0 0 0 / 0.25)',
+          xs: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+          sm: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+          DEFAULT: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+          md: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+          lg: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+          xl: '0 25px 50px -12px rgb(0 0 0 / 0.25)',
           '2xl': '0 50px 100px -20px rgb(0 0 0 / 0.25)',
-          'inner': 'inset 0 2px 4px 0 rgb(0 0 0 / 0.05)',
-          'glow': '0 0 20px rgb(59 130 246 / 0.3)',
+          inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.05)',
+          glow: '0 0 20px rgb(59 130 246 / 0.3)',
           'glow-sm': '0 0 10px rgb(59 130 246 / 0.2)',
           'glow-lg': '0 0 40px rgb(59 130 246 / 0.4)',
         },
@@ -232,8 +227,8 @@ function createTailwindConfig(options = {}) {
           'pulse-slow': 'pulse 3s infinite',
           'spin-slow': 'spin 3s linear infinite',
           'ping-slow': 'ping 3s cubic-bezier(0, 0, 0.2, 1) infinite',
-          'wiggle': 'wiggle 1s ease-in-out infinite',
-          'shimmer': 'shimmer 2s linear infinite',
+          wiggle: 'wiggle 1s ease-in-out infinite',
+          shimmer: 'shimmer 2s linear infinite',
         },
 
         keyframes: {
@@ -271,15 +266,15 @@ function createTailwindConfig(options = {}) {
     plugins: [
       // Form plugin for better form styling
       require('@tailwindcss/forms'),
-      
+
       // Typography plugin for prose content
       require('@tailwindcss/typography'),
-      
+
       // Aspect ratio plugin
       require('@tailwindcss/aspect-ratio'),
 
       // Custom plugin for ZK Vault utilities
-      function({ addUtilities, addComponents, theme }) {
+      function ({ addUtilities, addComponents, theme }) {
         // Custom utilities
         addUtilities({
           '.safe-area': {
@@ -296,7 +291,8 @@ function createTailwindConfig(options = {}) {
             },
           },
           '.text-gradient': {
-            'background': 'linear-gradient(135deg, theme("colors.primary.500"), theme("colors.secondary.500"))',
+            background:
+              'linear-gradient(135deg, theme("colors.primary.500"), theme("colors.secondary.500"))',
             '-webkit-background-clip': 'text',
             '-webkit-text-fill-color': 'transparent',
             'background-clip': 'text',
@@ -383,4 +379,4 @@ function createTailwindConfig(options = {}) {
 
 module.exports = {
   createTailwindConfig,
-}; 
+};

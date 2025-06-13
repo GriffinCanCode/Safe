@@ -1,0 +1,217 @@
+/**
+ * Metric Card Component Styles
+ * Admin dashboard metric display cards
+ */
+
+/* === METRIC CARD CONTAINER === */
+.metric-card {
+  background-color: var(--color-background-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-all);
+}
+
+.metric-card:hover {
+  border-color: var(--color-primary-300);
+  box-shadow: var(--shadow-md);
+}
+
+/* === METRIC CARD HEADER === */
+.metric-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.metric-card-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metric-card-icon {
+  width: var(--space-10);
+  height: var(--space-10);
+  background-color: var(--color-primary-100);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary-600);
+}
+
+/* === METRIC CARD CONTENT === */
+.metric-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.metric-card-value {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-tight);
+}
+
+.metric-card-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.metric-card-change {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* === METRIC CARD VARIANTS === */
+.metric-card-success .metric-card-icon {
+  background-color: var(--color-success-100);
+  color: var(--color-success-600);
+}
+
+.metric-card-warning .metric-card-icon {
+  background-color: var(--color-warning-100);
+  color: var(--color-warning-600);
+}
+
+.metric-card-danger .metric-card-icon {
+  background-color: var(--color-danger-100);
+  color: var(--color-danger-600);
+}
+
+.metric-card-info .metric-card-icon {
+  background-color: var(--color-info-100);
+  color: var(--color-info-600);
+}
+
+/* === CHANGE INDICATORS === */
+.metric-change-positive {
+  color: var(--color-success-600);
+}
+
+.metric-change-negative {
+  color: var(--color-danger-600);
+}
+
+.metric-change-neutral {
+  color: var(--color-text-tertiary);
+}
+
+/* === METRIC CARD SIZES === */
+.metric-card-sm {
+  padding: var(--space-4);
+}
+
+.metric-card-sm .metric-card-icon {
+  width: var(--space-8);
+  height: var(--space-8);
+}
+
+.metric-card-sm .metric-card-value {
+  font-size: var(--font-size-xl);
+}
+
+.metric-card-lg {
+  padding: var(--space-8);
+}
+
+.metric-card-lg .metric-card-icon {
+  width: var(--space-12);
+  height: var(--space-12);
+}
+
+.metric-card-lg .metric-card-value {
+  font-size: var(--font-size-3xl);
+}
+
+/* === DARK MODE === */
+@media (prefers-color-scheme: dark) {
+  .metric-card:hover {
+    border-color: var(--color-primary-600);
+  }
+
+  .metric-card-success .metric-card-icon {
+    background-color: color-mix(in oklch, var(--color-success-500) 20%, var(--color-background-secondary));
+    color: var(--color-success-400);
+  }
+
+  .metric-card-warning .metric-card-icon {
+    background-color: color-mix(in oklch, var(--color-warning-500) 20%, var(--color-background-secondary));
+    color: var(--color-warning-400);
+  }
+
+  .metric-card-danger .metric-card-icon {
+    background-color: color-mix(in oklch, var(--color-danger-500) 20%, var(--color-background-secondary));
+    color: var(--color-danger-400);
+  }
+
+  .metric-card-info .metric-card-icon {
+    background-color: color-mix(in oklch, var(--color-info-500) 20%, var(--color-background-secondary));
+    color: var(--color-info-400);
+  }
+
+  .metric-change-positive {
+    color: var(--color-success-400);
+  }
+
+  .metric-change-negative {
+    color: var(--color-danger-400);
+  }
+}
+
+/* === RESPONSIVE === */
+@container (max-width: 16rem) {
+  .metric-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .metric-card-icon {
+    width: var(--space-8);
+    height: var(--space-8);
+  }
+
+  .metric-card-value {
+    font-size: var(--font-size-xl);
+  }
+}
+
+/* === LOADING STATE === */
+.metric-card-loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.metric-card-loading .metric-card-value {
+  background: linear-gradient(90deg, var(--color-neutral-200) 25%, var(--color-neutral-100) 50%, var(--color-neutral-200) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+  color: transparent;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .metric-card-loading .metric-card-value {
+    background: linear-gradient(90deg, var(--color-neutral-700) 25%, var(--color-neutral-600) 50%, var(--color-neutral-700) 75%);
+    background-size: 200% 100%;
+  }
+} 

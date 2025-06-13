@@ -215,15 +215,17 @@ import LoginForm from '@/components/auth/LoginForm.vue'
 import RegisterForm from '@/components/auth/RegisterForm.vue'
 import MasterPasswordPrompt from '@/components/auth/MasterPasswordPrompt.vue'
 import BiometricAuth from '@/components/auth/BiometricAuth.vue'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/store/auth.store'
+import { useAuth } from '@/composables/useAuth'
 
 type AuthView = 'login' | 'register' | 'unlock' | 'biometric'
 type BiometricMode = 'authentication' | 'setup' | 'management'
 
-// Router
+// Router & Auth
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const auth = useAuth({ autoRedirect: false })
 
 // State
 const currentView = ref<AuthView>('login')
@@ -234,11 +236,11 @@ const loadingSubtext = ref('')
 const errorMessage = ref('')
 const showSuccessModal = ref(false)
 
-// User data (would come from store/props)
-const userEmail = ref('user@example.com')
-const passwordHint = ref('Your favorite childhood pet')
-const lastLogin = ref(new Date(Date.now() - 24 * 60 * 60 * 1000))
-const biometricAvailable = ref(true)
+// User data from auth store
+const userEmail = computed(() => authStore.user?.email || '')
+const passwordHint = ref('') // This would come from user preferences
+const lastLogin = computed(() => authStore.profile?.lastLoginAt || new Date())
+const biometricAvailable = ref(false)
 
 // Computed
 const showWelcome = computed(() => {
@@ -284,13 +286,9 @@ const handleLoginSuccess = async (data: any) => {
   loadingSubtext.value = 'Preparing your secure vault'
   
   try {
-    // Simulate authentication process
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
     // Check if vault needs to be unlocked
     if (data.requiresUnlock) {
       currentView.value = 'unlock'
-      userEmail.value = data.email
     } else {
       // Direct access - redirect to vault
       await router.push('/vault')
@@ -308,9 +306,6 @@ const handleRegisterSuccess = async (data: any) => {
   loadingSubtext.value = 'Setting up your secure vault'
   
   try {
-    // Simulate registration process
-    await new Promise(resolve => setTimeout(resolve, 3000))
-    
     globalLoading.value = false
     showSuccessModal.value = true
   } catch (error: any) {
@@ -325,9 +320,8 @@ const handleVaultUnlock = async (masterPassword: string) => {
   loadingSubtext.value = 'Decrypting your secure data'
   
   try {
-    // Simulate vault unlock
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
+    // In a real implementation, this would unlock the vault with the master password
+    // For now, we'll just redirect to the vault
     await router.push('/vault')
   } catch (error: any) {
     handleAuthError(error.message)
@@ -347,8 +341,12 @@ const handleBiometricUnlock = async () => {
   loadingSubtext.value = 'Verifying your biometric data'
   
   try {
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    await router.push('/vault')
+    const result = await auth.authenticateWithBiometric()
+    if (result.success) {
+      await router.push('/vault')
+    } else {
+      throw new Error(result.error || 'Biometric authentication failed')
+    }
   } catch (error: any) {
     handleAuthError(error.message)
   } finally {
@@ -411,7 +409,7 @@ const clearError = () => {
 // Watch route changes
 watch(
   () => route.name,
-  (newRoute) => {
+  (newRoute: string | symbol | null | undefined) => {
     switch (newRoute) {
       case 'auth-login':
         currentView.value = 'login'
@@ -433,292 +431,23 @@ watch(
 )
 
 // Lifecycle
-onMounted(() => {
+onMounted(async () => {
   // Check if user needs to unlock vault
   const needsUnlock = route.query.unlock === 'true'
   if (needsUnlock) {
     currentView.value = 'unlock'
   }
+  
+  // Check biometric availability
+  try {
+    biometricAvailable.value = await auth.checkBiometricAvailability()
+  } catch (error) {
+    console.warn('Failed to check biometric availability:', error)
+    biometricAvailable.value = false
+  }
 })
 </script>
 
 <style scoped>
-.auth-view {
-  @apply min-h-screen flex flex-col relative;
-}
-
-.auth-background {
-  @apply absolute inset-0 overflow-hidden;
-}
-
-.background-pattern {
-  @apply absolute inset-0 opacity-5;
-  background-image: radial-gradient(circle at 25% 25%, #6366f1 0%, transparent 50%),
-                    radial-gradient(circle at 75% 75%, #8b5cf6 0%, transparent 50%);
-}
-
-.background-gradient {
-  @apply absolute inset-0 bg-gradient-to-br from-primary-50 via-white to-purple-50;
-}
-
-.auth-header {
-  @apply relative z-10 border-b border-neutral-200 bg-white/80 backdrop-blur-sm;
-}
-
-.header-content {
-  @apply container mx-auto px-6 py-4 flex items-center justify-between;
-}
-
-.logo {
-  @apply flex items-center gap-3;
-}
-
-.logo-icon {
-  @apply w-8 h-8 text-primary-600;
-}
-
-.logo-text {
-  @apply text-xl font-bold text-neutral-900;
-}
-
-.auth-nav {
-  @apply flex items-center gap-3;
-}
-
-.auth-main {
-  @apply relative z-10 flex-1 flex items-center justify-center px-6 py-12;
-}
-
-.auth-container {
-  @apply w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center;
-}
-
-.welcome-section {
-  @apply space-y-8;
-}
-
-.welcome-title {
-  @apply text-4xl lg:text-5xl font-bold text-neutral-900 leading-tight;
-}
-
-.welcome-description {
-  @apply text-xl text-neutral-600 leading-relaxed;
-}
-
-.feature-highlights {
-  @apply space-y-6;
-}
-
-.feature-item {
-  @apply flex gap-4;
-}
-
-.feature-icon {
-  @apply w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center shrink-0;
-}
-
-.feature-icon svg {
-  @apply w-6 h-6 text-primary-600;
-}
-
-.feature-content {
-  @apply space-y-2;
-}
-
-.feature-title {
-  @apply text-lg font-semibold text-neutral-900;
-}
-
-.feature-text {
-  @apply text-neutral-600;
-}
-
-.auth-forms {
-  @apply flex justify-center;
-}
-
-.auth-footer {
-  @apply relative z-10 border-t border-neutral-200 bg-white/80 backdrop-blur-sm;
-}
-
-.footer-content {
-  @apply container mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4;
-}
-
-.footer-links {
-  @apply flex items-center gap-6;
-}
-
-.footer-link {
-  @apply text-sm text-neutral-600 hover:text-neutral-900 transition-colors duration-200;
-}
-
-.footer-copyright {
-  @apply text-sm text-neutral-500;
-}
-
-.loading-overlay {
-  @apply fixed inset-0 bg-neutral-900/50 backdrop-blur-sm flex items-center justify-center z-50;
-}
-
-.loading-content {
-  @apply text-center space-y-4 max-w-sm mx-auto px-6;
-}
-
-.loading-title {
-  @apply text-xl font-semibold text-white;
-}
-
-.loading-text {
-  @apply text-neutral-300;
-}
-
-.success-content {
-  @apply text-center space-y-6 py-6;
-}
-
-.success-icon {
-  @apply w-16 h-16 mx-auto bg-success-100 rounded-full flex items-center justify-center;
-}
-
-.success-icon svg {
-  @apply w-8 h-8 text-success-600;
-}
-
-.success-title {
-  @apply text-xl font-semibold text-neutral-900;
-}
-
-.success-description {
-  @apply text-neutral-600;
-}
-
-.error-toast {
-  @apply fixed bottom-6 right-6 bg-danger-600 text-white rounded-lg shadow-lg p-4 flex items-center gap-3 z-50;
-  @apply animate-slide-in-right;
-}
-
-.toast-content {
-  @apply flex items-center gap-3;
-}
-
-.toast-icon {
-  @apply w-5 h-5 shrink-0;
-}
-
-.toast-message {
-  @apply text-sm font-medium;
-}
-
-.toast-close {
-  @apply p-1 hover:bg-danger-700 rounded transition-colors duration-200;
-}
-
-.toast-close svg {
-  @apply w-4 h-4;
-}
-
-/* Transitions */
-.form-enter-active,
-.form-leave-active {
-  @apply transition-all duration-300;
-}
-
-.form-enter-from {
-  @apply opacity-0 translate-x-8;
-}
-
-.form-leave-to {
-  @apply opacity-0 -translate-x-8;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .background-gradient {
-    @apply bg-gradient-to-br from-neutral-900 via-neutral-900 to-neutral-800;
-  }
-  
-  .auth-header {
-    @apply border-neutral-700 bg-neutral-900/80;
-  }
-  
-  .logo-text {
-    @apply text-neutral-100;
-  }
-  
-  .welcome-title {
-    @apply text-neutral-100;
-  }
-  
-  .welcome-description {
-    @apply text-neutral-400;
-  }
-  
-  .feature-icon {
-    @apply bg-primary-900;
-  }
-  
-  .feature-icon svg {
-    @apply text-primary-400;
-  }
-  
-  .feature-title {
-    @apply text-neutral-100;
-  }
-  
-  .feature-text {
-    @apply text-neutral-400;
-  }
-  
-  .auth-footer {
-    @apply border-neutral-700 bg-neutral-900/80;
-  }
-  
-  .footer-link {
-    @apply text-neutral-400 hover:text-neutral-300;
-  }
-  
-  .footer-copyright {
-    @apply text-neutral-500;
-  }
-  
-  .success-title {
-    @apply text-neutral-100;
-  }
-  
-  .success-description {
-    @apply text-neutral-400;
-  }
-}
-
-/* Animations */
-@keyframes slide-in-right {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-.animate-slide-in-right {
-  animation: slide-in-right 0.3s ease-out;
-}
-
-/* Responsive */
-@media (max-width: 1024px) {
-  .auth-container {
-    @apply grid-cols-1 text-center;
-  }
-  
-  .welcome-section {
-    @apply order-2;
-  }
-  
-  .auth-forms {
-    @apply order-1;
-  }
-}
+/* Component styles are handled by /src/styles/components/auth/auth-view.css */
 </style>

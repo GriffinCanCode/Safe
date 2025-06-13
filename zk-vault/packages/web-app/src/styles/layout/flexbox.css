@@ -1,0 +1,281 @@
+/**
+ * Flexbox Layout Utilities
+ * Modern flexbox patterns with semantic naming
+ */
+
+/* === FLEX CONTAINERS === */
+.flex-container {
+  display: flex;
+}
+
+.flex-inline {
+  display: inline-flex;
+}
+
+/* === FLEX DIRECTION === */
+.flex-row {
+  flex-direction: row;
+}
+
+.flex-row-reverse {
+  flex-direction: row-reverse;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.flex-col-reverse {
+  flex-direction: column-reverse;
+}
+
+/* === FLEX WRAP === */
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.flex-nowrap {
+  flex-wrap: nowrap;
+}
+
+.flex-wrap-reverse {
+  flex-wrap: wrap-reverse;
+}
+
+/* === JUSTIFY CONTENT === */
+.justify-start {
+  justify-content: flex-start;
+}
+
+.justify-end {
+  justify-content: flex-end;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.justify-around {
+  justify-content: space-around;
+}
+
+.justify-evenly {
+  justify-content: space-evenly;
+}
+
+/* === ALIGN ITEMS === */
+.items-start {
+  align-items: flex-start;
+}
+
+.items-end {
+  align-items: flex-end;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.items-baseline {
+  align-items: baseline;
+}
+
+.items-stretch {
+  align-items: stretch;
+}
+
+/* === ALIGN CONTENT === */
+.content-start {
+  align-content: flex-start;
+}
+
+.content-end {
+  align-content: flex-end;
+}
+
+.content-center {
+  align-content: center;
+}
+
+.content-between {
+  align-content: space-between;
+}
+
+.content-around {
+  align-content: space-around;
+}
+
+.content-evenly {
+  align-content: space-evenly;
+}
+
+/* === FLEX ITEM UTILITIES === */
+.flex-1 {
+  flex: 1 1 0%;
+}
+
+.flex-auto {
+  flex: 1 1 auto;
+}
+
+.flex-initial {
+  flex: 0 1 auto;
+}
+
+.flex-none {
+  flex: none;
+}
+
+.flex-shrink-0 {
+  flex-shrink: 0;
+}
+
+.flex-shrink {
+  flex-shrink: 1;
+}
+
+.flex-grow-0 {
+  flex-grow: 0;
+}
+
+.flex-grow {
+  flex-grow: 1;
+}
+
+/* === COMMON FLEX PATTERNS === */
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flex-start {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.flex-end {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.flex-col-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-col-start {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.flex-col-end {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+/* === RESPONSIVE FLEX UTILITIES === */
+@container (max-width: 640px) {
+  .flex-col-sm {
+    flex-direction: column;
+  }
+  
+  .flex-wrap-sm {
+    flex-wrap: wrap;
+  }
+}
+
+@container (max-width: 768px) {
+  .flex-col-md {
+    flex-direction: column;
+  }
+  
+  .flex-wrap-md {
+    flex-wrap: wrap;
+  }
+}
+
+/* === GAP UTILITIES === */
+.gap-1 {
+  gap: var(--space-1);
+}
+
+.gap-2 {
+  gap: var(--space-2);
+}
+
+.gap-3 {
+  gap: var(--space-3);
+}
+
+.gap-4 {
+  gap: var(--space-4);
+}
+
+.gap-5 {
+  gap: var(--space-5);
+}
+
+.gap-6 {
+  gap: var(--space-6);
+}
+
+.gap-8 {
+  gap: var(--space-8);
+}
+
+.gap-x-1 {
+  column-gap: var(--space-1);
+}
+
+.gap-x-2 {
+  column-gap: var(--space-2);
+}
+
+.gap-x-3 {
+  column-gap: var(--space-3);
+}
+
+.gap-x-4 {
+  column-gap: var(--space-4);
+}
+
+.gap-x-6 {
+  column-gap: var(--space-6);
+}
+
+.gap-y-1 {
+  row-gap: var(--space-1);
+}
+
+.gap-y-2 {
+  row-gap: var(--space-2);
+}
+
+.gap-y-3 {
+  row-gap: var(--space-3);
+}
+
+.gap-y-4 {
+  row-gap: var(--space-4);
+}
+
+.gap-y-6 {
+  row-gap: var(--space-6);
+} 

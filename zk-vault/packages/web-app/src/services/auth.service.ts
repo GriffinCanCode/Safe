@@ -7,12 +7,7 @@
  */
 
 import { ZeroKnowledgeAuth, ZeroKnowledgeVault } from '@zk-vault/crypto';
-import type { 
-  SRPAuthProof, 
-  MasterKeyStructure, 
-  CryptoOperationResult,
-  AuthenticationResult 
-} from '@zk-vault/shared';
+import type { SRPAuthProof, MasterKeyStructure, CryptoOperationResult } from '@zk-vault/shared';
 
 // User profile interface matching system patterns
 export interface UserProfile {
@@ -193,7 +188,9 @@ class AuthService {
         const lockTimeRemaining = Math.ceil(
           (profile.security.lockedUntil.getTime() - Date.now()) / (1000 * 60)
         );
-        throw new Error(`Account is temporarily locked. Try again in ${lockTimeRemaining} minutes.`);
+        throw new Error(
+          `Account is temporarily locked. Try again in ${lockTimeRemaining} minutes.`
+        );
       }
 
       // Initialize ZK vault with password
@@ -419,7 +416,10 @@ class AuthService {
   /**
    * Generate authentication proof using ZK Auth
    */
-  async generateAuthProof(email: string, password: string): Promise<CryptoOperationResult<SRPAuthProof>> {
+  async generateAuthProof(
+    email: string,
+    password: string
+  ): Promise<CryptoOperationResult<SRPAuthProof>> {
     try {
       const challenge = ZeroKnowledgeAuth.generateChallenge();
       return await ZeroKnowledgeAuth.generateAuthProof(email, password, challenge);
@@ -573,6 +573,96 @@ class AuthService {
     // Actual error handling is done through exceptions
   }
 
+  /**
+   * Send email verification (simulated)
+   */
+  async sendEmailVerification(): Promise<void> {
+    try {
+      if (!this.currentUser) {
+        throw new Error('No authenticated user');
+      }
+
+      // In a real implementation, this would send a verification email
+      console.log(`Email verification sent to: ${this.currentUser.email}`);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    } catch (error: any) {
+      console.error('Email verification failed:', error);
+      throw this.handleAuthError(error);
+    }
+  }
+
+  /**
+   * Check email verification status
+   */
+  checkEmailVerification(): boolean {
+    return this.currentUser?.emailVerified ?? false;
+  }
+
+  /**
+   * Enable two-factor authentication
+   */
+  async enable2FA(): Promise<string[]> {
+    try {
+      if (!this.currentUser) {
+        throw new Error('No authenticated user');
+      }
+
+      // Generate backup codes
+      const backupCodes = Array.from({ length: 10 }, () =>
+        Math.random().toString(36).substring(2, 8).toUpperCase()
+      );
+
+      // Update profile
+      if (this.currentProfile) {
+        this.currentProfile.security.twoFactorEnabled = true;
+        this.currentProfile.security.backupCodesCount = backupCodes.length;
+        this.updateStoredProfile(this.currentUser.uid, this.currentProfile);
+      }
+
+      return backupCodes;
+    } catch (error: any) {
+      console.error('2FA enable failed:', error);
+      throw this.handleAuthError(error);
+    }
+  }
+
+  /**
+   * Disable two-factor authentication
+   */
+  async disable2FA(): Promise<void> {
+    try {
+      if (!this.currentUser) {
+        throw new Error('No authenticated user');
+      }
+
+      // Update profile
+      if (this.currentProfile) {
+        this.currentProfile.security.twoFactorEnabled = false;
+        this.currentProfile.security.backupCodesCount = 0;
+        this.updateStoredProfile(this.currentUser.uid, this.currentProfile);
+      }
+    } catch (error: any) {
+      console.error('2FA disable failed:', error);
+      throw this.handleAuthError(error);
+    }
+  }
+
+  /**
+   * Refresh user profile from storage
+   */
+  async refreshProfile(): Promise<void> {
+    try {
+      if (!this.currentUser) {
+        throw new Error('No authenticated user');
+      }
+
+      this.currentProfile = await this.getUserProfile(this.currentUser.uid);
+    } catch (error: any) {
+      console.error('Profile refresh failed:', error);
+      throw this.handleAuthError(error);
+    }
+  }
+
   // Private helper methods
 
   private generateUserId(email: string): string {
@@ -657,7 +747,7 @@ class AuthService {
 
   private setupSessionTimeout(): void {
     this.clearSessionTimeout();
-    
+
     if (this.currentProfile?.preferences.autoLockTimeout) {
       const timeoutMs = this.currentProfile.preferences.autoLockTimeout * 60 * 1000;
       this.sessionTimeout = window.setTimeout(() => {
@@ -759,7 +849,7 @@ class AuthService {
     this.storeUserProfile(uid, profile);
   }
 
-  private updateStoredUserAuth(uid: string, masterKeyStructure: MasterKeyStructure): void {
+  private updateStoredUserAuth(_uid: string, masterKeyStructure: MasterKeyStructure): void {
     // Store updated auth data
     const session = this.getStoredSession();
     if (session) {
@@ -793,11 +883,11 @@ class AuthService {
     }
   }
 
-  private dateReplacer(key: string, value: any): any {
+  private dateReplacer(_key: string, value: any): any {
     return value instanceof Date ? { __date: value.toISOString() } : value;
   }
 
-  private dateReviver(key: string, value: any): any {
+  private dateReviver(_key: string, value: any): any {
     return value?.__date ? new Date(value.__date) : value;
   }
 

@@ -413,4 +413,4 @@ export interface StoreDevtools {
   logSubscriptions: boolean;
   inspector: boolean;
   timeline: boolean;
-} 
+}

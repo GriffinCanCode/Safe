@@ -89,6 +89,7 @@
     <!-- Upload Modal -->
     <BaseModal
       v-if="showUploadModal"
+      :model-value="showUploadModal"
       title="Upload Files"
       size="lg"
       @close="showUploadModal = false"
@@ -103,6 +104,7 @@
     <!-- File Preview Modal -->
     <BaseModal
       v-if="showPreviewModal && selectedFile"
+      :model-value="showPreviewModal"
       :title="selectedFile.name"
       size="xl"
       @close="closePreview"
@@ -405,128 +407,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.files-view {
-  @apply min-h-screen bg-neutral-50;
-}
-
-.files-header {
-  @apply bg-white border-b border-neutral-200 px-6 py-8;
-}
-
-.header-content {
-  @apply flex items-start justify-between mb-8;
-}
-
-.header-info {
-  @apply flex-1;
-}
-
-.page-title {
-  @apply text-3xl font-bold text-neutral-900 mb-2;
-}
-
-.page-description {
-  @apply text-neutral-600 max-w-2xl;
-}
-
-.header-actions {
-  @apply flex gap-3;
-}
-
-.stats-grid {
-  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6;
-}
-
-.stat-card {
-  @apply bg-white p-6 rounded-lg border border-neutral-200 shadow-sm;
-}
-
-.stat-icon {
-  @apply mb-4;
-}
-
-.stat-content {
-  @apply space-y-1;
-}
-
-.stat-value {
-  @apply text-2xl font-bold text-neutral-900;
-}
-
-.stat-label {
-  @apply text-sm text-neutral-600;
-}
-
-.files-content {
-  @apply p-6;
-}
-
-.preview-container {
-  @apply space-y-6;
-}
-
-.preview-actions {
-  @apply flex justify-end gap-3 pt-4 border-t border-neutral-200;
-}
-
-.bulk-actions-bar {
-  @apply fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white border border-neutral-200 rounded-lg shadow-lg px-6 py-4 flex items-center justify-between gap-6 z-40;
-  @apply min-w-96;
-}
-
-.bulk-info {
-  @apply flex items-center;
-}
-
-.selected-count {
-  @apply text-sm font-medium text-neutral-700;
-}
-
-.bulk-actions {
-  @apply flex gap-3;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .files-view {
-    @apply bg-neutral-900;
-  }
-
-  .files-header {
-    @apply bg-neutral-800 border-neutral-700;
-  }
-
-  .page-title {
-    @apply text-neutral-100;
-  }
-
-  .page-description {
-    @apply text-neutral-400;
-  }
-
-  .stat-card {
-    @apply bg-neutral-800 border-neutral-700;
-  }
-
-  .stat-value {
-    @apply text-neutral-100;
-  }
-
-  .stat-label {
-    @apply text-neutral-400;
-  }
-
-  .preview-actions {
-    @apply border-neutral-700;
-  }
-
-  .bulk-actions-bar {
-    @apply bg-neutral-800 border-neutral-700;
-  }
-
-  .selected-count {
-    @apply text-neutral-300;
-  }
-}
-</style>
+<!-- Styles handled by /src/styles/components/files/files-view.css -->

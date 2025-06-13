@@ -11,11 +11,7 @@ import { resolve } from 'path';
  * @returns {Object} Vite configuration
  */
 export function createViteConfig(options = {}) {
-  const {
-    rootDir,
-    alias = {},
-    isProduction = process.env.NODE_ENV === 'production',
-  } = options;
+  const { rootDir, alias = {}, isProduction = process.env.NODE_ENV === 'production' } = options;
 
   if (!rootDir) {
     throw new Error('rootDir is required for Vite configuration');
@@ -28,7 +24,7 @@ export function createViteConfig(options = {}) {
       vue({
         template: {
           compilerOptions: {
-            isCustomElement: (tag) => tag.startsWith('ion-'),
+            isCustomElement: tag => tag.startsWith('ion-'),
           },
         },
       }),
@@ -80,4 +76,4 @@ export function createViteConfig(options = {}) {
   });
 }
 
-export default createViteConfig; 
+export default createViteConfig;

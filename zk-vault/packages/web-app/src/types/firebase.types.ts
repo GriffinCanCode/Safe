@@ -192,16 +192,27 @@ export interface FirestoreQuery {
 /**
  * Firestore where filter operator
  */
-export type FirestoreWhereFilterOp = 
-  | '<' | '<=' | '==' | '!=' | '>=' | '>'
-  | 'array-contains' | 'in' | 'array-contains-any' | 'not-in';
+export type FirestoreWhereFilterOp =
+  | '<'
+  | '<='
+  | '=='
+  | '!='
+  | '>='
+  | '>'
+  | 'array-contains'
+  | 'in'
+  | 'array-contains-any'
+  | 'not-in';
 
 /**
  * Firestore batch
  */
 export interface FirestoreBatch {
   set(documentRef: FirestoreDocumentReference, data: FirestoreDocumentData): FirestoreBatch;
-  update(documentRef: FirestoreDocumentReference, data: Partial<FirestoreDocumentData>): FirestoreBatch;
+  update(
+    documentRef: FirestoreDocumentReference,
+    data: Partial<FirestoreDocumentData>
+  ): FirestoreBatch;
   delete(documentRef: FirestoreDocumentReference): FirestoreBatch;
   commit(): Promise<void>;
 }
@@ -212,7 +223,10 @@ export interface FirestoreBatch {
 export interface FirestoreTransaction {
   get(documentRef: FirestoreDocumentReference): Promise<FirestoreDocumentSnapshot>;
   set(documentRef: FirestoreDocumentReference, data: FirestoreDocumentData): FirestoreTransaction;
-  update(documentRef: FirestoreDocumentReference, data: Partial<FirestoreDocumentData>): FirestoreTransaction;
+  update(
+    documentRef: FirestoreDocumentReference,
+    data: Partial<FirestoreDocumentData>
+  ): FirestoreTransaction;
   delete(documentRef: FirestoreDocumentReference): FirestoreTransaction;
 }
 
@@ -246,8 +260,16 @@ export interface FirebaseStorageUploadTask {
   catch(onRejected: (error: FirebaseStorageError) => any): Promise<any>;
   pause(): boolean;
   resume(): boolean;
-  then(onFulfilled?: (snapshot: FirebaseStorageTaskSnapshot) => any, onRejected?: (error: FirebaseStorageError) => any): Promise<any>;
-  on(event: string, nextOrObserver?: any, error?: (error: FirebaseStorageError) => any, complete?: () => any): Function;
+  then(
+    onFulfilled?: (snapshot: FirebaseStorageTaskSnapshot) => any,
+    onRejected?: (error: FirebaseStorageError) => any
+  ): Promise<any>;
+  on(
+    event: string,
+    nextOrObserver?: any,
+    error?: (error: FirebaseStorageError) => any,
+    complete?: () => any
+  ): Function;
 }
 
 /**
@@ -462,4 +484,4 @@ export interface FirebaseServiceConfig {
   experimentalForceLongPolling?: boolean;
   experimentalAutoDetectLongPolling?: boolean;
   ignoreUndefinedProperties?: boolean;
-} 
+}

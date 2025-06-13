@@ -1,0 +1,239 @@
+/**
+ * Modern CSS Reset
+ * Based on modern reset practices with ZK-Vault specific defaults
+ */
+
+/* === BOX SIZING === */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* === REMOVE DEFAULT MARGINS === */
+* {
+  margin: 0;
+}
+
+/* === ROOT DEFAULTS === */
+html {
+  /* Improve text rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  
+  /* Prevent font size inflation */
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  
+  /* Smooth scrolling */
+  scroll-behavior: smooth;
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* === BODY DEFAULTS === */
+body {
+  line-height: 1.5;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  background-color: var(--color-background-primary);
+  
+  /* Prevent horizontal scroll */
+  overflow-x: hidden;
+  
+  /* Better font rendering on Windows */
+  font-feature-settings: 'kern' 1;
+  font-kerning: normal;
+}
+
+/* === MEDIA DEFAULTS === */
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* === FORM ELEMENTS === */
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+/* Remove default button styles */
+button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* === TEXT ELEMENTS === */
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+/* === LISTS === */
+ul,
+ol {
+  list-style: none;
+  padding: 0;
+}
+
+/* === LINKS === */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* === TABLES === */
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+/* === FOCUS STYLES === */
+:focus {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+/* === SELECTION STYLES === */
+::selection {
+  background-color: color-mix(in oklch, var(--color-primary-500) 30%, transparent);
+  color: var(--color-text-primary);
+}
+
+::-moz-selection {
+  background-color: color-mix(in oklch, var(--color-primary-500) 30%, transparent);
+  color: var(--color-text-primary);
+}
+
+/* === SCROLLBAR STYLES === */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-neutral-100);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-neutral-400);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-neutral-500);
+}
+
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-track {
+    background: var(--color-neutral-800);
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-neutral-600);
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-neutral-500);
+  }
+}
+
+/* === PRINT STYLES === */
+@media print {
+  *,
+  *::before,
+  *::after {
+    background: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  
+  a,
+  a:visited {
+    text-decoration: underline;
+  }
+  
+  img {
+    page-break-inside: avoid;
+  }
+  
+  p,
+  h2,
+  h3 {
+    orphans: 3;
+    widows: 3;
+  }
+  
+  h2,
+  h3 {
+    page-break-after: avoid;
+  }
+}
+
+/* === UTILITY CLASSES === */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.not-sr-only {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+} 

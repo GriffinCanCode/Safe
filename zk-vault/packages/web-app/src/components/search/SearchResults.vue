@@ -93,7 +93,7 @@
           :key="item.id"
           :item="item"
           :view-mode="viewMode"
-          :search-query="searchQuery"
+          :search-query="searchQuery || ''"
           :matches="getItemMatches(item.id)"
           @select="$emit('selectItem', item)"
           @edit="$emit('editItem', item)"
@@ -108,7 +108,7 @@
         <button
           class="load-more-button"
           @click="$emit('loadMore')"
-          :disabled="isLoadingMore"
+          :disabled="isLoadingMore || false"
         >
           <LoadingSpinner v-if="isLoadingMore" size="sm" />
           <span>{{ isLoadingMore ? 'Loading...' : 'Load More Results' }}</span>
@@ -121,21 +121,21 @@
       <div class="stats-grid">
         <div class="stat-item">
           <span class="stat-label">Search Time</span>
-          <span class="stat-value">{{ formatSearchTime(searchTime) }}</span>
+          <span class="stat-value">{{ formatSearchTime(searchTime || 0) }}</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">Items Searched</span>
-          <span class="stat-value">{{ itemsSearched.toLocaleString() }}</span>
+          <span class="stat-value">{{ (itemsSearched || 0).toLocaleString() }}</span>
         </div>
-        <div class="stat-item" v-if="indexSize > 0">
+        <div class="stat-item" v-if="(indexSize || 0) > 0">
           <span class="stat-label">Index Size</span>
-          <span class="stat-value">{{ formatBytes(indexSize) }}</span>
+          <span class="stat-value">{{ formatBytes(indexSize || 0) }}</span>
         </div>
       </div>
     </div>
 
     <!-- Export Dialog -->
-    <BaseModal v-if="showExportDialog" @close="showExportDialog = false">
+    <BaseModal v-model="showExportDialog">
       <template #header>
         <h3>Export Search Results</h3>
       </template>
@@ -338,252 +338,4 @@ const formatBytes = (bytes: number): string => {
 }
 </script>
 
-<style scoped>
-.search-results {
-  @apply space-y-6;
-}
-
-.results-header {
-  @apply flex items-start justify-between gap-4 flex-wrap;
-}
-
-.results-info {
-  @apply flex-1 min-w-0;
-}
-
-.results-title {
-  @apply text-2xl font-bold text-neutral-900;
-}
-
-.results-subtitle {
-  @apply text-neutral-600 mt-1;
-}
-
-.results-actions {
-  @apply flex items-center gap-3;
-}
-
-.view-mode-toggle {
-  @apply flex border border-neutral-300 rounded-lg overflow-hidden;
-}
-
-.view-mode-button {
-  @apply px-3 py-2 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50;
-  @apply transition-colors border-r border-neutral-300 last:border-r-0;
-}
-
-.view-mode-button.active {
-  @apply bg-primary-100 text-primary-700;
-}
-
-.sort-select {
-  @apply px-3 py-2 border border-neutral-300 rounded-lg bg-white text-neutral-900;
-  @apply focus:ring-2 focus:ring-primary-500 focus:border-primary-500;
-}
-
-.export-button {
-  @apply p-2 border border-neutral-300 rounded-lg text-neutral-600;
-  @apply hover:text-neutral-900 hover:bg-neutral-50 transition-colors;
-}
-
-/* Loading State */
-.loading-state {
-  @apply flex flex-col items-center justify-center py-16 space-y-4;
-}
-
-.loading-text {
-  @apply text-neutral-600 text-lg;
-}
-
-/* Empty State */
-.empty-state {
-  @apply flex flex-col items-center justify-center py-16 space-y-6;
-}
-
-.empty-icon {
-  @apply text-neutral-400;
-}
-
-.empty-title {
-  @apply text-2xl font-semibold text-neutral-900;
-}
-
-.empty-description {
-  @apply text-neutral-600 text-center max-w-md;
-}
-
-.empty-actions {
-  @apply flex items-center gap-3;
-}
-
-.clear-search-button {
-  @apply px-4 py-2 border border-neutral-300 rounded-lg text-neutral-700;
-  @apply hover:bg-neutral-50 transition-colors;
-}
-
-.add-item-button {
-  @apply px-4 py-2 bg-primary-600 text-white rounded-lg;
-  @apply hover:bg-primary-700 transition-colors;
-}
-
-/* Results Container */
-.results-container {
-  @apply space-y-6;
-}
-
-.results-grid {
-  @apply space-y-3;
-}
-
-.results-grid.results-grid-view {
-  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 space-y-0;
-}
-
-.load-more-container {
-  @apply flex justify-center pt-6;
-}
-
-.load-more-button {
-  @apply flex items-center gap-2 px-6 py-3 border border-neutral-300 rounded-lg;
-  @apply hover:bg-neutral-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
-}
-
-/* Search Statistics */
-.search-stats {
-  @apply mt-8 p-4 bg-neutral-50 rounded-lg border border-neutral-200;
-}
-
-.stats-grid {
-  @apply grid grid-cols-1 sm:grid-cols-3 gap-4;
-}
-
-.stat-item {
-  @apply text-center;
-}
-
-.stat-label {
-  @apply block text-xs text-neutral-500 font-medium uppercase tracking-wider;
-}
-
-.stat-value {
-  @apply block text-lg font-semibold text-neutral-900 mt-1;
-}
-
-/* Export Dialog */
-.export-options {
-  @apply space-y-6;
-}
-
-.export-format {
-  @apply space-y-3;
-}
-
-.export-label {
-  @apply block text-sm font-medium text-neutral-700;
-}
-
-.format-options {
-  @apply space-y-3;
-}
-
-.format-option {
-  @apply flex items-start gap-3 p-3 border border-neutral-200 rounded-lg cursor-pointer;
-  @apply hover:border-neutral-300 transition-colors;
-}
-
-.format-option input[type="radio"] {
-  @apply mt-0.5;
-}
-
-.format-option span {
-  @apply font-medium text-neutral-900;
-}
-
-.format-option small {
-  @apply block text-neutral-500 text-xs mt-1;
-}
-
-.export-info {
-  @apply p-3 bg-neutral-50 rounded-lg;
-}
-
-.export-description {
-  @apply text-sm text-neutral-600;
-}
-
-.modal-actions {
-  @apply flex items-center justify-end gap-3;
-}
-
-.cancel-button {
-  @apply px-4 py-2 border border-neutral-300 rounded-lg text-neutral-700;
-  @apply hover:bg-neutral-50 transition-colors;
-}
-
-.export-confirm-button {
-  @apply flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg;
-  @apply hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .results-title {
-    @apply text-neutral-100;
-  }
-  
-  .results-subtitle {
-    @apply text-neutral-400;
-  }
-  
-  .view-mode-toggle {
-    @apply border-neutral-600;
-  }
-  
-  .view-mode-button {
-    @apply text-neutral-400 hover:text-neutral-200 hover:bg-neutral-700 border-neutral-600;
-  }
-  
-  .view-mode-button.active {
-    @apply bg-primary-900 text-primary-100;
-  }
-  
-  .sort-select,
-  .export-button {
-    @apply bg-neutral-800 border-neutral-600 text-neutral-100;
-    @apply focus:border-primary-400 focus:ring-primary-400;
-  }
-  
-  .loading-text {
-    @apply text-neutral-400;
-  }
-  
-  .empty-icon {
-    @apply text-neutral-500;
-  }
-  
-  .empty-title {
-    @apply text-neutral-100;
-  }
-  
-  .empty-description {
-    @apply text-neutral-400;
-  }
-  
-  .clear-search-button {
-    @apply bg-neutral-700 border-neutral-600 text-neutral-300;
-    @apply hover:bg-neutral-600;
-  }
-  
-  .search-stats {
-    @apply bg-neutral-800 border-neutral-600;
-  }
-  
-  .stat-label {
-    @apply text-neutral-400;
-  }
-  
-  .stat-value {
-    @apply text-neutral-100;
-  }
-}
-</style> 
+<!-- CSS classes are now defined in /styles/components/search/search-results.css --> 

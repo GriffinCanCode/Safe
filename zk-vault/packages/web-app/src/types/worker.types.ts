@@ -6,7 +6,7 @@
 /**
  * Worker message types
  */
-export type WorkerMessageType = 
+export type WorkerMessageType =
   | 'encrypt'
   | 'decrypt'
   | 'deriveKey'
@@ -274,7 +274,7 @@ export interface WorkerPool {
   workers: Map<string, WorkerStatus>;
   queue: WorkerQueue;
   loadBalancer: WorkerLoadBalancer;
-  
+
   initialize: () => Promise<void>;
   execute: <T>(type: WorkerType, data: any, options?: WorkerRequestOptions) => Promise<T>;
   addWorker: (config: WorkerConfig) => Promise<string>;
@@ -283,7 +283,7 @@ export interface WorkerPool {
   resume: () => void;
   clear: () => void;
   shutdown: () => Promise<void>;
-  
+
   on: (event: string, listener: WorkerEventListener) => void;
   off: (event: string, listener: WorkerEventListener) => void;
   emit: (event: string, data: any) => void;
@@ -361,4 +361,4 @@ export interface WorkerInitializationError extends WorkerError {
 export interface WorkerTerminationError extends WorkerError {
   forced: boolean;
   reason: string;
-} 
+}

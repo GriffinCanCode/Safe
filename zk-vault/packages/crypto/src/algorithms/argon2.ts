@@ -16,10 +16,17 @@ import {
 // Dynamic imports for optional dependencies
 let argon2: any = null;
 let nodeCrypto: any = null;
+let webCrypto: any = null;
 
 // Initialize crypto libraries
 async function initializeCrypto() {
-  if (typeof window === 'undefined') {
+  if (typeof window !== 'undefined') {
+    // Browser environment - use Web Crypto API
+    webCrypto = window.crypto || (window as any).msCrypto;
+    if (!webCrypto) {
+      console.warn('Web Crypto API not available');
+    }
+  } else {
     // Node.js environment
     try {
       argon2 = await import('argon2');
@@ -168,7 +175,43 @@ export class Argon2idDerivation {
    * @returns Derived key
    */
   private static async deriveWithPBKDF2Fallback(params: KeyDerivationParams): Promise<Uint8Array> {
-    // Try Node.js crypto first
+    // Try Web Crypto API first (browser environment)
+    if (webCrypto && webCrypto.subtle) {
+      try {
+        // Use much higher iterations to compensate for PBKDF2 being weaker than Argon2
+        // OWASP recommends 600,000+ iterations for PBKDF2-SHA256 in 2025
+        const iterations = Math.max(600000, params.time! * 200000);
+
+        // Import password as key material
+        const passwordKey = await webCrypto.subtle.importKey(
+          'raw',
+          new TextEncoder().encode(params.password),
+          'PBKDF2',
+          false,
+          ['deriveBits']
+        );
+
+        // Derive key using PBKDF2
+        const derivedKeyBuffer = await webCrypto.subtle.deriveBits(
+          {
+            name: 'PBKDF2',
+            salt: params.salt,
+            iterations: iterations,
+            hash: 'SHA-256',
+          },
+          passwordKey,
+          params.outputLength! * 8 // Convert bytes to bits
+        );
+
+        return new Uint8Array(derivedKeyBuffer);
+      } catch (error) {
+        throw new Error(
+          `Web Crypto PBKDF2 failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
+    }
+
+    // Try Node.js crypto as fallback
     if (nodeCrypto) {
       try {
         // Use much higher iterations to compensate for PBKDF2 being weaker than Argon2

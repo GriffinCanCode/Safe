@@ -12,25 +12,13 @@ import {
   CryptoOperationResult,
   FILE_ENCRYPTION,
   DEFAULT_CONTEXTS,
+  FileChunk,
 } from '@zk-vault/shared';
 
 import { AESGCMCipher } from '../algorithms/aes-gcm';
 import { ItemKeyDerivation } from '../key-derivation/item-key';
 
-/**
- * File chunk metadata
- * @responsibility Contains information about a file chunk
- */
-export interface FileChunk {
-  /** Chunk index */
-  index: number;
-  /** Chunk size in bytes */
-  size: number;
-  /** Encrypted chunk data */
-  encryptedData: EncryptionResult;
-  /** Chunk hash for integrity verification */
-  hash: string;
-}
+// Using FileChunk from @zk-vault/shared
 
 /**
  * Encrypted file metadata
@@ -198,8 +186,19 @@ export class FileEncryption {
         chunks.push({
           index: i,
           size: chunkData.length,
-          encryptedData: encryptResult.data,
           hash: chunkHash,
+          encrypted: {
+            data: btoa(String.fromCharCode(...encryptResult.data.ciphertext)),
+            iv: btoa(String.fromCharCode(...encryptResult.data.nonce)),
+            authTag: encryptResult.data.authTag
+              ? btoa(String.fromCharCode(...encryptResult.data.authTag))
+              : '',
+            algorithm: encryptResult.data.algorithm,
+            version: 1,
+          },
+          storageRef: `chunk-${i}`,
+          uploadedAt: new Date(),
+          verified: true,
         });
 
         processedBytes += chunkData.length;
@@ -334,9 +333,33 @@ export class FileEncryption {
 
         const chunkKey = chunkKeyResult.data;
 
+        // Convert encrypted data back to EncryptionResult format
+        const encryptionResult: EncryptionResult = {
+          ciphertext: new Uint8Array(
+            atob(chunk.encrypted.data)
+              .split('')
+              .map(c => c.charCodeAt(0))
+          ),
+          nonce: new Uint8Array(
+            atob(chunk.encrypted.iv)
+              .split('')
+              .map(c => c.charCodeAt(0))
+          ),
+          algorithm: chunk.encrypted.algorithm as 'AES-256-GCM' | 'XChaCha20-Poly1305',
+          timestamp: Date.now(),
+        };
+
+        if (chunk.encrypted.authTag) {
+          encryptionResult.authTag = new Uint8Array(
+            atob(chunk.encrypted.authTag)
+              .split('')
+              .map(c => c.charCodeAt(0))
+          );
+        }
+
         // Decrypt chunk
         const decryptResult = await AESGCMCipher.decrypt(
-          chunk.encryptedData,
+          encryptionResult,
           chunkKey,
           decryptionContext
         );
@@ -477,7 +500,7 @@ export class FileEncryption {
         chunk =>
           typeof chunk.index === 'number' &&
           typeof chunk.size === 'number' &&
-          chunk.encryptedData &&
+          chunk.encrypted &&
           typeof chunk.hash === 'string'
       )
     );

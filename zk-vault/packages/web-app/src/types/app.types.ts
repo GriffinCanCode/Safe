@@ -160,7 +160,13 @@ export interface ToastConfig {
   title?: string;
   message: string;
   duration?: number;
-  position?: 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
+  position?:
+    | 'top-left'
+    | 'top-center'
+    | 'top-right'
+    | 'bottom-left'
+    | 'bottom-center'
+    | 'bottom-right';
   dismissible?: boolean;
   actions?: NotificationAction[];
 }
@@ -376,4 +382,4 @@ export interface SessionInfo {
   interactions: number;
   device: DeviceInfo;
   network: NetworkInfo;
-} 
+}

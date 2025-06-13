@@ -2,7 +2,7 @@
   <div id="app" class="app-container">
     <!-- Global Loading Bar -->
     <div v-if="isLoading" class="loading-bar">
-      <div class="loading-progress" :style="{ width: `${loadingProgress}%` }"></div>
+      <div class="loading-progress dynamic-progress" :style="{ '--progress-width': `${loadingProgress}%` }"></div>
     </div>
 
     <!-- Router View -->
@@ -184,6 +184,8 @@ import BaseModal from '@/components/common/BaseModal.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import { useAuthStore } from '@/store/auth.store'
 import { useSettingsStore } from '@/store/settings.store'
+import { integrationStatusService } from '@/services/integration-status'
+import { vaultIntegration } from '@/services/vault-integration.service'
 
 interface Notification {
   id: string
@@ -373,9 +375,44 @@ watch(
 )
 
 // Lifecycle
-onMounted(() => {
-  // Load settings
-  settingsStore.loadSettings()
+onMounted(async () => {
+  // Initialize stores and services in proper order
+  try {
+    console.log('🚀 Initializing App.vue services...');
+
+    // Load settings first (needed for theme, etc.)
+    await settingsStore.loadSettings()
+    console.log('✅ Settings loaded')
+    
+    // Ensure vault integration is initialized (in case main.ts failed)
+    if (!vaultIntegration.isServiceInitialized()) {
+      console.log('🔧 Vault integration not initialized, initializing now...');
+      await vaultIntegration.initialize({
+        autoIndexing: true,
+        searchWorker: true,
+        encryptionWorker: false, // Keep disabled for security by default
+        fileProcessingWorker: true,
+      });
+      console.log('✅ Vault integration initialized from App.vue');
+    } else {
+      console.log('✅ Vault integration already initialized');
+    }
+    
+    // Check integration status in development
+    if (import.meta.env.DEV) {
+      await integrationStatusService.logIntegrationStatus()
+      console.log('✅ Integration status checked')
+    }
+  } catch (error) {
+    console.error('❌ Failed to initialize app stores:', error)
+    addNotification({
+      type: 'error',
+      title: 'Initialization Error',
+      message: 'Some features may not work properly. Please refresh the page.',
+      dismissible: true,
+      duration: 0
+    })
+  }
 
   // Set up global event listeners
   window.addEventListener('online', handleOnlineStatusChange)
@@ -405,12 +442,20 @@ onMounted(() => {
   }, 1000)
 })
 
-onUnmounted(() => {
+onUnmounted(async () => {
   window.removeEventListener('online', handleOnlineStatusChange)
   window.removeEventListener('offline', handleOnlineStatusChange)
   
   if (loadingInterval) {
     clearInterval(loadingInterval)
+  }
+  
+  // Clean shutdown of services
+  try {
+    await vaultIntegration.shutdown()
+    console.log('✅ Vault integration shut down cleanly')
+  } catch (error) {
+    console.warn('⚠️ Error during vault integration shutdown:', error)
   }
 })
 
@@ -424,312 +469,5 @@ defineExpose({
 </script>
 
 <style scoped>
-.app-container {
-  @apply min-h-screen bg-neutral-50;
-}
-
-.loading-bar {
-  @apply fixed top-0 left-0 right-0 h-1 bg-neutral-200 z-50;
-}
-
-.loading-progress {
-  @apply h-full bg-primary-600 transition-all duration-300 ease-out;
-}
-
-.page-loading {
-  @apply flex flex-col items-center justify-center min-h-screen space-y-4;
-}
-
-.loading-title {
-  @apply text-lg font-medium text-neutral-600;
-}
-
-.maintenance-content {
-  @apply text-center space-y-6 py-6;
-}
-
-.maintenance-icon {
-  @apply w-16 h-16 mx-auto bg-warning-100 rounded-full flex items-center justify-center;
-}
-
-.maintenance-icon svg {
-  @apply w-8 h-8 text-warning-600;
-}
-
-.maintenance-title {
-  @apply text-xl font-semibold text-neutral-900;
-}
-
-.maintenance-description {
-  @apply text-neutral-600;
-}
-
-.maintenance-timer {
-  @apply flex flex-col space-y-1;
-}
-
-.timer-label {
-  @apply text-sm text-neutral-500;
-}
-
-.timer-value {
-  @apply text-lg font-semibold text-primary-600;
-}
-
-.network-error-content {
-  @apply text-center space-y-4 py-6;
-}
-
-.error-icon {
-  @apply w-16 h-16 mx-auto bg-danger-100 rounded-full flex items-center justify-center;
-}
-
-.error-icon svg {
-  @apply w-8 h-8 text-danger-600;
-}
-
-.error-title {
-  @apply text-xl font-semibold text-neutral-900;
-}
-
-.error-description {
-  @apply text-neutral-600;
-}
-
-.update-content {
-  @apply space-y-6 py-4;
-}
-
-.update-icon {
-  @apply w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center;
-}
-
-.update-icon svg {
-  @apply w-6 h-6 text-primary-600;
-}
-
-.update-title {
-  @apply text-lg font-semibold text-neutral-900;
-}
-
-.update-description {
-  @apply text-neutral-600;
-}
-
-.update-details {
-  @apply space-y-3;
-}
-
-.details-title {
-  @apply text-sm font-semibold text-neutral-900;
-}
-
-.update-list {
-  @apply list-disc list-inside space-y-1 text-sm text-neutral-600;
-}
-
-.update-actions {
-  @apply flex gap-3;
-}
-
-.notification-container {
-  @apply fixed top-6 right-6 z-50 space-y-3 max-w-sm;
-}
-
-.notification {
-  @apply flex items-start gap-3 p-4 rounded-lg shadow-lg backdrop-blur-sm;
-  @apply border border-opacity-20;
-}
-
-.notification-success {
-  @apply bg-success-50 border-success-200 text-success-800;
-}
-
-.notification-error {
-  @apply bg-danger-50 border-danger-200 text-danger-800;
-}
-
-.notification-warning {
-  @apply bg-warning-50 border-warning-200 text-warning-800;
-}
-
-.notification-info {
-  @apply bg-info-50 border-info-200 text-info-800;
-}
-
-.notification-icon {
-  @apply w-5 h-5 shrink-0 mt-0.5;
-}
-
-.notification-content {
-  @apply flex-1 space-y-1;
-}
-
-.notification-title {
-  @apply text-sm font-semibold;
-}
-
-.notification-message {
-  @apply text-sm;
-}
-
-.notification-close {
-  @apply p-1 hover:bg-black hover:bg-opacity-10 rounded transition-colors duration-200;
-}
-
-.notification-close svg {
-  @apply w-4 h-4;
-}
-
-/* Page Transitions */
-.page-enter-active,
-.page-leave-active {
-  @apply transition-all duration-300;
-}
-
-.page-enter-from {
-  @apply opacity-0 translate-y-4;
-}
-
-.page-leave-to {
-  @apply opacity-0 -translate-y-4;
-}
-
-.auth-enter-active,
-.auth-leave-active {
-  @apply transition-all duration-400;
-}
-
-.auth-enter-from {
-  @apply opacity-0 scale-95;
-}
-
-.auth-leave-to {
-  @apply opacity-0 scale-105;
-}
-
-.vault-enter-active,
-.vault-leave-active {
-  @apply transition-all duration-300;
-}
-
-.vault-enter-from {
-  @apply opacity-0 translate-x-8;
-}
-
-.vault-leave-to {
-  @apply opacity-0 -translate-x-8;
-}
-
-/* Notification Transitions */
-.notification-enter-active {
-  @apply transition-all duration-300;
-}
-
-.notification-leave-active {
-  @apply transition-all duration-200;
-}
-
-.notification-enter-from {
-  @apply opacity-0 translate-x-full;
-}
-
-.notification-leave-to {
-  @apply opacity-0 translate-x-full;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .app-container {
-    @apply bg-neutral-900;
-  }
-  
-  .loading-bar {
-    @apply bg-neutral-700;
-  }
-  
-  .loading-title {
-    @apply text-neutral-400;
-  }
-  
-  .maintenance-icon {
-    @apply bg-warning-900;
-  }
-  
-  .maintenance-icon svg {
-    @apply text-warning-400;
-  }
-  
-  .maintenance-title {
-    @apply text-neutral-100;
-  }
-  
-  .maintenance-description {
-    @apply text-neutral-400;
-  }
-  
-  .timer-label {
-    @apply text-neutral-500;
-  }
-  
-  .timer-value {
-    @apply text-primary-400;
-  }
-  
-  .error-icon {
-    @apply bg-danger-900;
-  }
-  
-  .error-icon svg {
-    @apply text-danger-400;
-  }
-  
-  .error-title {
-    @apply text-neutral-100;
-  }
-  
-  .error-description {
-    @apply text-neutral-400;
-  }
-  
-  .update-icon {
-    @apply bg-primary-900;
-  }
-  
-  .update-icon svg {
-    @apply text-primary-400;
-  }
-  
-  .update-title {
-    @apply text-neutral-100;
-  }
-  
-  .update-description {
-    @apply text-neutral-400;
-  }
-  
-  .details-title {
-    @apply text-neutral-100;
-  }
-  
-  .update-list {
-    @apply text-neutral-400;
-  }
-  
-  .notification-success {
-    @apply bg-success-900 border-success-700 text-success-200;
-  }
-  
-  .notification-error {
-    @apply bg-danger-900 border-danger-700 text-danger-200;
-  }
-  
-  .notification-warning {
-    @apply bg-warning-900 border-warning-700 text-warning-200;
-  }
-  
-  .notification-info {
-    @apply bg-info-900 border-info-700 text-info-200;
-  }
-}
+/* Component styles are handled by /src/styles/components/layout/app-layout.css */
 </style>

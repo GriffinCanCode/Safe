@@ -1,0 +1,9 @@
+/**
+ * Animations Index
+ * Custom animations and keyframes for ZK-Vault
+ */
+
+@import "./keyframes.css";
+@import "./page-transitions.css";
+@import "./loading-animations.css";
+@import "./micro-interactions.css"; 

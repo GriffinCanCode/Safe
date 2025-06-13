@@ -1,6 +1,5 @@
 export * from './admin.service';
 export * from './analytics.service';
-export * from './auth.service';
 export * from './backup.service';
 export * from './breach-monitor.service';
 export * from './crypto-vault.service';
@@ -8,6 +7,23 @@ export * from './firebase.service';
 export * from './search.service';
 export * from './vault-integration.service';
 export * from './worker-manager.service';
+
+// Auth service exports
+export type {
+  UserProfile,
+  AuthResult,
+  ZKUser,
+  RegistrationData,
+  BiometricOptions,
+  BiometricAuthResult,
+} from './auth.service';
+
+export { authService } from './auth.service';
+
+// Integration status service exports
+export type { IntegrationStatus, IntegrationDetails } from './integration-status';
+
+export { integrationStatusService } from './integration-status';
 
 export type {
   FileMetadata,
@@ -37,4 +53,4 @@ export type {
   VaultSearchResult,
 } from './vault.service';
 
-export { vaultService } from './vault.service'; 
+export { vaultService } from './vault.service';

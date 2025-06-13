@@ -33,7 +33,6 @@ export * from './memory/constant-time';
 // Export vault operations
 export * from './vault/password-encryption';
 export {
-  FileChunk as CryptoFileChunk,
   EncryptedFileMetadata,
   EncryptedFile,
   FileProgressCallback,

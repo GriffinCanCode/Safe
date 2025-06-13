@@ -26,6 +26,11 @@ const CONFIG_TEMPLATES = {
   prettier: () =>
     `module.exports = require('../../tools/config/prettier.config.js');`,
 
+  // Stylelint configuration for packages
+  stylelint: () => JSON.stringify({
+    extends: ['../../tools/config/stylelint.config.js']
+  }, null, 2),
+
   // Jest configuration for packages
   jest: (packageName) => {
     const packageInfo = getPackageInfo(packageName);
@@ -129,6 +134,8 @@ module.exports = {
     "test:coverage": "jest --coverage",
     lint: "eslint src/ --ext .ts,.tsx,.js,.jsx",
     "lint:fix": "eslint src/ --ext .ts,.tsx,.js,.jsx --fix",
+    "lint:css": "stylelint \"src/**/*.{css,vue}\" --cache",
+    "lint:css:fix": "stylelint \"src/**/*.{css,vue}\" --fix --cache",
     "type-check": "tsc --noEmit",
     format: 'prettier --write "src/**/*.{ts,tsx,js,jsx,json,md}"',
     clean: "rm -rf dist coverage",
@@ -226,7 +233,7 @@ function setupPackageConfig(packageName, options = {}) {
 
   // Create configuration files
   const configsToCreate = configs.includes("all")
-    ? ["eslint", "prettier", "jest", "tsconfig", "webpack", "jestSetup"]
+    ? ["eslint", "prettier", "stylelint", "jest", "tsconfig", "webpack", "jestSetup"]
     : configs;
 
   configsToCreate.forEach((configType) => {
@@ -284,6 +291,7 @@ function getConfigFileName(configType, packageName) {
   const fileNames = {
     eslint: isESModule ? ".eslintrc.cjs" : ".eslintrc.js",
     prettier: isESModule ? ".prettierrc.cjs" : ".prettierrc.js",
+    stylelint: ".stylelintrc.json",
     jest: "jest.config.js",
     tsconfig: "tsconfig.json",
     webpack: "webpack.config.js",
@@ -374,13 +382,14 @@ Arguments:
 Options:
   --force        Overwrite existing configuration files
   --configs      Comma-separated list of configs to create
-                 Available: eslint,prettier,jest,tsconfig,webpack,jestSetup
+                 Available: eslint,prettier,stylelint,jest,tsconfig,webpack,jestSetup
                  Default: all
 
 Examples:
   node setup-package-config.js web-app
   node setup-package-config.js all --force
   node setup-package-config.js crypto --configs eslint,jest,tsconfig
+  node setup-package-config.js web-app --configs stylelint
 `);
     process.exit(1);
   }

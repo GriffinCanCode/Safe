@@ -7,8 +7,8 @@
         <p class="setup-description">Add an extra layer of security to your account</p>
       </div>
       <div v-if="twoFactorEnabled" class="header-status">
-        <div class="status-badge enabled">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="status-indicator enabled">
+          <svg class="status-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           Enabled
@@ -17,16 +17,16 @@
     </div>
 
     <!-- Current Status -->
-    <div class="status-overview">
-      <div class="status-card" :class="twoFactorEnabled ? 'status-enabled' : 'status-disabled'">
-        <div class="status-icon">
-          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="current-status">
+      <div class="status-card" :class="twoFactorEnabled ? 'enabled' : 'disabled'">
+        <div class="status-icon" :class="twoFactorEnabled ? 'enabled' : 'disabled'">
+          <svg class="status-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="twoFactorEnabled ? enabledIcon : disabledIcon" />
           </svg>
         </div>
         <div class="status-content">
           <h3 class="status-title">{{ twoFactorEnabled ? 'Two-Factor Authentication Enabled' : 'Two-Factor Authentication Disabled' }}</h3>
-          <p class="status-description">
+          <p class="status-message">
             {{ twoFactorEnabled 
                ? 'Your account is protected with two-factor authentication.' 
                : 'Enable 2FA to add an extra layer of security to your account.' }}
@@ -46,19 +46,22 @@
     </div>
 
     <!-- Setup Process -->
-    <div v-if="!twoFactorEnabled" class="setup-process">
+    <div v-if="!twoFactorEnabled" class="setup-steps">
       <!-- Step 1: Introduction -->
       <div v-if="currentStep === 'intro'" class="setup-step">
         <div class="step-header">
+          <div class="step-number active">1</div>
           <h3 class="step-title">How Two-Factor Authentication Works</h3>
-          <div class="step-indicator">Step 1 of 3</div>
         </div>
         
         <div class="step-content">
+          <p class="step-description">
+            Two-factor authentication adds an extra layer of security to your account by requiring a second form of verification.
+          </p>
           <div class="info-grid">
             <div class="info-item">
               <div class="info-icon">
-                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="info-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
                 </svg>
               </div>
@@ -70,7 +73,7 @@
 
             <div class="info-item">
               <div class="info-icon">
-                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="info-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h4" />
                 </svg>
               </div>
@@ -82,7 +85,7 @@
 
             <div class="info-item">
               <div class="info-icon">
-                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="info-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
@@ -126,26 +129,29 @@
       <!-- Step 2: QR Code -->
       <div v-if="currentStep === 'qr'" class="setup-step">
         <div class="step-header">
+          <div class="step-number active">2</div>
           <h3 class="step-title">Scan QR Code</h3>
-          <div class="step-indicator">Step 2 of 3</div>
         </div>
 
         <div class="step-content">
-          <div class="qr-section">
-            <div class="qr-container">
+          <p class="step-description">
+            Scan the QR code below with your authenticator app to add your ZK-Vault account.
+          </p>
+          <div class="qr-code-section">
+            <div class="qr-code-container">
               <div class="qr-code">
                 <!-- QR Code would be generated here -->
                 <div class="qr-placeholder">
-                  <svg class="w-32 h-32 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="qr-placeholder-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h4" />
                   </svg>
                   <p class="qr-text">QR Code</p>
                 </div>
               </div>
-              <p class="qr-instructions">
-                Open your authenticator app and scan this QR code to add your ZK-Vault account.
-              </p>
             </div>
+            <p class="qr-code-instructions">
+              Open your authenticator app and scan this QR code to add your ZK-Vault account.
+            </p>
 
             <div class="manual-entry">
               <h4 class="manual-title">Can't scan? Enter manually</h4>
@@ -189,8 +195,8 @@
       <!-- Step 3: Verification -->
       <div v-if="currentStep === 'verify'" class="setup-step">
         <div class="step-header">
+          <div class="step-number active">3</div>
           <h3 class="step-title">Verify Setup</h3>
-          <div class="step-indicator">Step 3 of 3</div>
         </div>
 
         <div class="step-content">
@@ -212,7 +218,7 @@
             </div>
 
             <div v-if="verificationError" class="error-message">
-              <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="error-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
               {{ verificationError }}
@@ -241,19 +247,19 @@
       <!-- Step 4: Backup Codes -->
       <div v-if="currentStep === 'backup'" class="setup-step">
         <div class="step-header">
+          <div class="step-number completed">4</div>
           <h3 class="step-title">Save Your Backup Codes</h3>
-          <div class="step-indicator">Final Step</div>
         </div>
 
         <div class="step-content">
-          <div class="backup-section">
-            <div class="backup-warning">
-              <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="backup-codes-section">
+            <div class="backup-codes-warning">
+              <svg class="warning-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
               <div class="warning-content">
                 <h4 class="warning-title">Important: Save These Backup Codes</h4>
-                <p class="warning-description">
+                <p class="warning-message">
                   These codes can be used to access your account if you lose your authenticator device. 
                   Store them in a safe place - they won't be shown again.
                 </p>
@@ -261,7 +267,7 @@
             </div>
 
             <div class="backup-codes">
-              <div class="codes-grid">
+              <div class="backup-codes-grid">
                 <div
                   v-for="(code, index) in backupCodes"
                   :key="index"
@@ -271,7 +277,7 @@
                 </div>
               </div>
               
-              <div class="codes-actions">
+              <div class="backup-codes-actions">
                 <BaseButton
                   variant="outline"
                   @click="downloadBackupCodes"
@@ -429,12 +435,12 @@
     >
       <div class="disable-modal-content">
         <div class="disable-warning">
-          <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="warning-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
           </svg>
           <div class="warning-content">
             <h3 class="warning-title">Are you sure?</h3>
-            <p class="warning-description">
+            <p class="warning-message">
               Disabling two-factor authentication will make your account less secure. 
               You'll only need your password to sign in.
             </p>
@@ -494,7 +500,7 @@
         </div>
 
         <div v-if="testSuccess" class="test-success">
-          <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="success-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           Two-factor authentication is working correctly!
@@ -832,397 +838,5 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.two-factor-setup {
-  @apply space-y-8;
-}
-
-.setup-header {
-  @apply flex items-start justify-between;
-}
-
-.header-content {
-  @apply space-y-1;
-}
-
-.setup-title {
-  @apply text-2xl font-bold text-neutral-900;
-}
-
-.setup-description {
-  @apply text-neutral-600;
-}
-
-.header-status {
-  @apply flex items-center;
-}
-
-.status-badge {
-  @apply flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium;
-}
-
-.status-badge.enabled {
-  @apply bg-green-100 text-green-800;
-}
-
-.status-overview {
-  @apply mb-8;
-}
-
-.status-card {
-  @apply bg-white border rounded-lg p-6 flex items-start space-x-4;
-}
-
-.status-enabled {
-  @apply border-green-300 bg-green-50;
-}
-
-.status-disabled {
-  @apply border-neutral-300 bg-neutral-50;
-}
-
-.status-icon {
-  @apply w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0;
-}
-
-.status-enabled .status-icon {
-  @apply bg-green-100 text-green-600;
-}
-
-.status-disabled .status-icon {
-  @apply bg-neutral-100 text-neutral-600;
-}
-
-.status-content {
-  @apply flex-1 space-y-3;
-}
-
-.status-title {
-  @apply text-xl font-semibold text-neutral-900;
-}
-
-.status-description {
-  @apply text-neutral-700;
-}
-
-.status-details {
-  @apply space-y-2;
-}
-
-.detail-item {
-  @apply flex items-center space-x-2 text-sm;
-}
-
-.detail-label {
-  @apply text-neutral-600;
-}
-
-.detail-value {
-  @apply text-neutral-900 font-medium;
-}
-
-.setup-process {
-  @apply space-y-8;
-}
-
-.setup-step {
-  @apply bg-white border border-neutral-200 rounded-lg p-8;
-}
-
-.step-header {
-  @apply flex items-center justify-between mb-6;
-}
-
-.step-title {
-  @apply text-xl font-semibold text-neutral-900;
-}
-
-.step-indicator {
-  @apply text-sm text-neutral-600 bg-neutral-100 px-3 py-1 rounded-full;
-}
-
-.step-content {
-  @apply space-y-6;
-}
-
-.info-grid {
-  @apply grid grid-cols-1 md:grid-cols-3 gap-6;
-}
-
-.info-item {
-  @apply text-center space-y-3;
-}
-
-.info-icon {
-  @apply mx-auto;
-}
-
-.info-title {
-  @apply text-lg font-semibold text-neutral-900;
-}
-
-.info-description {
-  @apply text-neutral-600;
-}
-
-.recommended-apps {
-  @apply bg-neutral-50 rounded-lg p-6;
-}
-
-.apps-title {
-  @apply text-lg font-semibold text-neutral-900 mb-4;
-}
-
-.apps-list {
-  @apply space-y-3;
-}
-
-.app-item {
-  @apply flex items-center justify-between;
-}
-
-.app-name {
-  @apply font-medium text-neutral-900;
-}
-
-.app-platforms {
-  @apply text-sm text-neutral-600;
-}
-
-.qr-section {
-  @apply grid grid-cols-1 lg:grid-cols-2 gap-8;
-}
-
-.qr-container {
-  @apply text-center space-y-4;
-}
-
-.qr-code {
-  @apply mx-auto;
-}
-
-.qr-placeholder {
-  @apply w-48 h-48 border-2 border-dashed border-neutral-300 rounded-lg flex flex-col items-center justify-center space-y-2;
-}
-
-.qr-text {
-  @apply text-neutral-600;
-}
-
-.qr-instructions {
-  @apply text-neutral-700;
-}
-
-.manual-entry {
-  @apply space-y-4;
-}
-
-.manual-title {
-  @apply text-lg font-semibold text-neutral-900;
-}
-
-.secret-key {
-  @apply space-y-2;
-}
-
-.secret-label {
-  @apply block text-sm font-medium text-neutral-700;
-}
-
-.secret-value {
-  @apply flex items-center space-x-2;
-}
-
-.secret-code {
-  @apply bg-neutral-100 px-3 py-2 rounded font-mono text-sm;
-}
-
-.manual-instructions {
-  @apply text-sm text-neutral-600;
-}
-
-.verification-section {
-  @apply max-w-md mx-auto space-y-6;
-}
-
-.verification-instructions {
-  @apply text-center text-neutral-700;
-}
-
-.verification-form {
-  @apply space-y-4;
-}
-
-.error-message {
-  @apply flex items-center space-x-2 text-red-600 text-sm;
-}
-
-.backup-section {
-  @apply space-y-6;
-}
-
-.backup-warning {
-  @apply bg-yellow-50 border border-yellow-200 rounded-lg p-6 flex items-start space-x-4;
-}
-
-.warning-content {
-  @apply space-y-2;
-}
-
-.warning-title {
-  @apply text-lg font-semibold text-neutral-900;
-}
-
-.warning-description {
-  @apply text-neutral-700;
-}
-
-.backup-codes {
-  @apply space-y-6;
-}
-
-.codes-grid {
-  @apply grid grid-cols-2 md:grid-cols-5 gap-3;
-}
-
-.backup-code {
-  @apply bg-neutral-100 px-3 py-2 rounded font-mono text-sm text-center;
-}
-
-.codes-actions {
-  @apply flex items-center justify-center space-x-3;
-}
-
-.step-actions {
-  @apply flex items-center justify-between pt-6 border-t border-neutral-200;
-}
-
-.management-section {
-  @apply space-y-6;
-}
-
-.management-grid {
-  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
-}
-
-.management-card {
-  @apply bg-white border border-neutral-200 rounded-lg p-6 space-y-4;
-}
-
-.management-card.danger {
-  @apply border-red-200 bg-red-50;
-}
-
-.card-header {
-  @apply flex items-center justify-between;
-}
-
-.card-title {
-  @apply text-lg font-semibold text-neutral-900;
-}
-
-.codes-remaining {
-  @apply text-sm text-neutral-600 bg-neutral-100 px-2 py-1 rounded;
-}
-
-.card-description {
-  @apply text-neutral-600;
-}
-
-.card-actions {
-  @apply flex items-center space-x-2;
-}
-
-.backup-modal-content {
-  @apply space-y-6;
-}
-
-.backup-modal-description {
-  @apply text-neutral-700;
-}
-
-.disable-modal-content {
-  @apply space-y-6;
-}
-
-.disable-warning {
-  @apply flex items-start space-x-4;
-}
-
-.disable-form {
-  @apply space-y-4;
-}
-
-.test-modal-content {
-  @apply space-y-6;
-}
-
-.test-description {
-  @apply text-neutral-700;
-}
-
-.test-form {
-  @apply space-y-4;
-}
-
-.test-success {
-  @apply flex items-center space-x-2 text-green-600 bg-green-50 p-3 rounded;
-}
-
-.copied {
-  @apply bg-green-100 text-green-800;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .setup-title,
-  .status-title,
-  .step-title,
-  .info-title,
-  .apps-title,
-  .manual-title,
-  .warning-title,
-  .card-title {
-    @apply text-neutral-100;
-  }
-
-  .setup-description,
-  .status-description,
-  .info-description,
-  .qr-instructions,
-  .manual-instructions,
-  .verification-instructions,
-  .warning-description,
-  .card-description,
-  .backup-modal-description,
-  .test-description {
-    @apply text-neutral-400;
-  }
-
-  .status-card,
-  .setup-step,
-  .management-card {
-    @apply bg-neutral-800 border-neutral-700;
-  }
-
-  .recommended-apps {
-    @apply bg-neutral-700;
-  }
-
-  .secret-code,
-  .backup-code {
-    @apply bg-neutral-700 text-neutral-100;
-  }
-
-  .codes-remaining {
-    @apply bg-neutral-700 text-neutral-300;
-  }
-
-  .backup-warning {
-    @apply bg-yellow-900 border-yellow-700;
-  }
-
-  .management-card.danger {
-    @apply bg-red-900 border-red-700;
-  }
-}
+/* Component styles are handled by /src/styles/components/security/two-factor-setup.css */
 </style>

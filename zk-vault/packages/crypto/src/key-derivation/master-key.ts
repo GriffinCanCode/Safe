@@ -84,6 +84,8 @@ export class MasterKeyDerivation {
       // In production, this would use a proper Argon2id implementation
       const key = await this.pbkdf2Fallback(password, salt, finalParams);
 
+      console.log('🔑 Key derived with length:', key.length);
+
       const endTime = performance.now();
       const derivationTime = endTime - startTime;
 
@@ -129,6 +131,38 @@ export class MasterKeyDerivation {
       const encoder = new TextEncoder();
       const passwordBuffer = encoder.encode(password);
 
+      console.log('🔧 PBKDF2 params:', {
+        outputLength: params.outputLength,
+        time: params.time,
+        saltLength: salt.length,
+        passwordLength: password.length,
+      });
+
+      // Test if WebCrypto is actually working
+      try {
+        const testKey = await window.crypto.subtle.importKey(
+          'raw',
+          new Uint8Array([1, 2, 3, 4]),
+          'PBKDF2',
+          false,
+          ['deriveBits']
+        );
+        const testBits = await window.crypto.subtle.deriveBits(
+          {
+            name: 'PBKDF2',
+            salt: new Uint8Array([5, 6, 7, 8]),
+            iterations: 1000,
+            hash: 'SHA-256',
+          },
+          testKey,
+          64 // 8 bytes
+        );
+        console.log('🔧 WebCrypto test result length:', new Uint8Array(testBits).length);
+      } catch (error) {
+        console.error('❌ WebCrypto test failed:', error);
+        throw new Error('WebCrypto PBKDF2 not working properly');
+      }
+
       const keyMaterial = await window.crypto.subtle.importKey(
         'raw',
         passwordBuffer,
@@ -139,6 +173,11 @@ export class MasterKeyDerivation {
 
       // Use higher iterations to compensate for PBKDF2 being weaker than Argon2
       const iterations = Math.max(100000, params.time! * 50000);
+
+      console.log('🔧 PBKDF2 deriveBits with:', {
+        iterations,
+        outputBits: params.outputLength! * 8,
+      });
 
       const derivedBits = await window.crypto.subtle.deriveBits(
         {
@@ -151,7 +190,9 @@ export class MasterKeyDerivation {
         params.outputLength! * 8
       );
 
-      return new Uint8Array(derivedBits);
+      const result = new Uint8Array(derivedBits);
+      console.log('🔧 PBKDF2 result length:', result.length);
+      return result;
     } else {
       // Simple fallback for non-browser environments
       // In production, this would use a proper crypto library
@@ -198,9 +239,12 @@ export class MasterKeyDerivation {
           HKDF_PARAMS.OUTPUT_LENGTH * 8
         );
 
+        const derivedKey = new Uint8Array(derivedBits);
+        console.log('🔑 Account key derived with length:', derivedKey.length);
+
         return {
           success: true,
-          data: new Uint8Array(derivedBits),
+          data: derivedKey,
         };
       } else {
         return {
@@ -222,12 +266,16 @@ export class MasterKeyDerivation {
    * Creates a complete master key structure
    * @param password User password
    * @param email User email for SRP
-   * @returns Complete master key structure
+   * @returns Complete master key structure with raw keys
    */
   static async createMasterKeyStructure(
     password: string,
     _email: string
-  ): Promise<CryptoOperationResult<MasterKeyStructure>> {
+  ): Promise<
+    CryptoOperationResult<
+      MasterKeyStructure & { rawMasterKey: Uint8Array; rawAccountKey: Uint8Array }
+    >
+  > {
     try {
       // Generate salt
       const salt = this.generateSalt();
@@ -252,9 +300,13 @@ export class MasterKeyDerivation {
         };
       }
 
+      // Store raw keys
+      const rawMasterKey = masterKeyResult.data.key;
+      const rawAccountKey = accountKeyResult.data;
+
       // Convert to CryptoKey objects for WebCrypto compatibility
-      const masterKey = await this.importAsCryptoKey(masterKeyResult.data.key);
-      const accountKey = await this.importAsCryptoKey(accountKeyResult.data);
+      const masterKey = await this.importAsCryptoKey(rawMasterKey);
+      const accountKey = await this.importAsCryptoKey(rawAccountKey);
 
       // Generate SRP auth proof (simplified for now)
       const authProof: SRPAuthProof = {
@@ -276,7 +328,11 @@ export class MasterKeyDerivation {
 
       return {
         success: true,
-        data: structure,
+        data: {
+          ...structure,
+          rawMasterKey,
+          rawAccountKey,
+        },
       };
     } catch (error) {
       return {
@@ -294,10 +350,13 @@ export class MasterKeyDerivation {
    */
   private static async importAsCryptoKey(rawKey: Uint8Array): Promise<CryptoKey> {
     if (typeof window !== 'undefined' && window.crypto?.subtle) {
-      return await window.crypto.subtle.importKey('raw', rawKey, { name: 'AES-GCM' }, false, [
-        'encrypt',
-        'decrypt',
-      ]);
+      return await window.crypto.subtle.importKey(
+        'raw',
+        rawKey,
+        { name: 'AES-GCM' },
+        true, // Make key extractable
+        ['encrypt', 'decrypt']
+      );
     } else {
       // Fallback for non-browser environments
       // In production, this would use a proper crypto library

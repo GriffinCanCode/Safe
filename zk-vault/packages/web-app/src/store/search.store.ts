@@ -64,7 +64,7 @@ export const useSearchStore = defineStore('search', () => {
   const stats = ref<SearchStats | null>(null);
   const recentQueries = ref<string[]>([]);
   const popularFilters = ref<SearchFilters[]>([]);
-  
+
   // Loading and error states
   const isLoading = ref(false);
   const isIndexing = ref(false);
@@ -96,18 +96,19 @@ export const useSearchStore = defineStore('search', () => {
   const isIndexAvailable = computed(() => searchService.isIndexAvailable());
   const isEmpty = computed(() => !hasQuery.value && !hasFilters.value);
   const isActive = computed(() => hasQuery.value || hasFilters.value);
-  
+
   const resultCount = computed(() => results.value.length);
   const hasMatches = computed(() => matches.value.length > 0);
-  
+
   const filteredSuggestions = computed(() => {
     if (!query.value) return suggestions.value.slice(0, 10);
-    
+
     const queryLower = query.value.toLowerCase();
     return suggestions.value
-      .filter((suggestion: SearchSuggestion) => 
-        suggestion.value.toLowerCase().includes(queryLower) ||
-        suggestion.description?.toLowerCase().includes(queryLower)
+      .filter(
+        (suggestion: SearchSuggestion) =>
+          suggestion.value.toLowerCase().includes(queryLower) ||
+          suggestion.description?.toLowerCase().includes(queryLower)
       )
       .slice(0, 10);
   });
@@ -119,34 +120,51 @@ export const useSearchStore = defineStore('search', () => {
     if (filters.value.tags?.length) count++;
     if (filters.value.favorite !== undefined) count++;
     if (filters.value.dateRange?.start || filters.value.dateRange?.end) count++;
-    if (filters.value.strength?.min !== undefined || filters.value.strength?.max !== undefined) count++;
+    if (filters.value.strength?.min !== undefined || filters.value.strength?.max !== undefined)
+      count++;
     return count;
   });
 
-  const recentSearches = computed(() => 
+  const recentSearches = computed(() =>
     history.value
       .slice()
-      .sort((a: SearchHistoryEntry, b: SearchHistoryEntry) => b.timestamp.getTime() - a.timestamp.getTime())
+      .sort(
+        (a: SearchHistoryEntry, b: SearchHistoryEntry) =>
+          b.timestamp.getTime() - a.timestamp.getTime()
+      )
       .slice(0, 10)
   );
 
   const popularSearches = computed(() =>
     history.value
-      .reduce((acc: Array<{ query: string; count: number; lastUsed: number }>, entry: SearchHistoryEntry) => {
-        const existing = acc.find((item: { query: string; count: number; lastUsed: number }) => item.query === entry.query);
-        if (existing) {
-          existing.count++;
-          existing.lastUsed = Math.max(existing.lastUsed, entry.timestamp.getTime());
-        } else {
-          acc.push({
-            query: entry.query,
-            count: 1,
-            lastUsed: entry.timestamp.getTime(),
-          });
-        }
-        return acc;
-      }, [] as Array<{ query: string; count: number; lastUsed: number }>)
-      .sort((a: { query: string; count: number; lastUsed: number }, b: { query: string; count: number; lastUsed: number }) => b.count - a.count || b.lastUsed - a.lastUsed)
+      .reduce(
+        (
+          acc: Array<{ query: string; count: number; lastUsed: number }>,
+          entry: SearchHistoryEntry
+        ) => {
+          const existing = acc.find(
+            (item: { query: string; count: number; lastUsed: number }) => item.query === entry.query
+          );
+          if (existing) {
+            existing.count++;
+            existing.lastUsed = Math.max(existing.lastUsed, entry.timestamp.getTime());
+          } else {
+            acc.push({
+              query: entry.query,
+              count: 1,
+              lastUsed: entry.timestamp.getTime(),
+            });
+          }
+          return acc;
+        },
+        [] as Array<{ query: string; count: number; lastUsed: number }>
+      )
+      .sort(
+        (
+          a: { query: string; count: number; lastUsed: number },
+          b: { query: string; count: number; lastUsed: number }
+        ) => b.count - a.count || b.lastUsed - a.lastUsed
+      )
       .slice(0, 5)
   );
 
@@ -159,10 +177,7 @@ export const useSearchStore = defineStore('search', () => {
     filters.value = { ...newFilters };
   };
 
-  const updateFilter = <K extends keyof SearchFilters>(
-    key: K,
-    value: SearchFilters[K]
-  ): void => {
+  const updateFilter = <K extends keyof SearchFilters>(key: K, value: SearchFilters[K]): void => {
     filters.value = { ...filters.value, [key]: value };
   };
 
@@ -234,18 +249,19 @@ export const useSearchStore = defineStore('search', () => {
     try {
       const startTime = Date.now();
       const criteria = buildSearchCriteria();
-      
+
       const result: SearchResult = await searchService.search(criteria, config.value);
-      
+
       results.value = result.items;
       matches.value = result.matches;
-      
+
       // Update metrics
       const searchTime = Date.now() - startTime;
       searchMetrics.value.lastSearchTime = searchTime;
       searchMetrics.value.totalSearches++;
-      searchMetrics.value.averageSearchTime = 
-        (searchMetrics.value.averageSearchTime * (searchMetrics.value.totalSearches - 1) + searchTime) / 
+      searchMetrics.value.averageSearchTime =
+        (searchMetrics.value.averageSearchTime * (searchMetrics.value.totalSearches - 1) +
+          searchTime) /
         searchMetrics.value.totalSearches;
       searchMetrics.value.totalResults = result.items.length;
 
@@ -256,7 +272,6 @@ export const useSearchStore = defineStore('search', () => {
       if (query.value && !recentQueries.value.includes(query.value)) {
         recentQueries.value = [query.value, ...recentQueries.value.slice(0, 9)];
       }
-
     } catch (err: any) {
       error.value = err.message;
       console.error('Search failed:', err);
@@ -281,7 +296,7 @@ export const useSearchStore = defineStore('search', () => {
       };
 
       const result = await searchService.fuzzySearch(queryToUse, options);
-      
+
       // Update metrics
       const searchTime = Date.now() - startTime;
       searchMetrics.value.lastSearchTime = searchTime;
@@ -380,9 +395,10 @@ export const useSearchStore = defineStore('search', () => {
       // Add query suggestions from history
       if (query.value.length >= 2) {
         const queryMatch = history.value
-          .filter((entry: SearchHistoryEntry) => 
-            entry.query.toLowerCase().includes(query.value.toLowerCase()) &&
-            entry.query !== query.value
+          .filter(
+            (entry: SearchHistoryEntry) =>
+              entry.query.toLowerCase().includes(query.value.toLowerCase()) &&
+              entry.query !== query.value
           )
           .slice(0, 3)
           .map((entry: SearchHistoryEntry) => ({
@@ -390,14 +406,17 @@ export const useSearchStore = defineStore('search', () => {
             value: entry.query,
             description: `${entry.resultCount} results`,
           }));
-        
+
         newSuggestions.push(...queryMatch);
       }
 
       // Add filter suggestions
       if (stats.value) {
         Object.entries(stats.value.itemsByType).forEach(([type, count]) => {
-          if (!filters.value.type || type.toLowerCase().includes(filters.value.type.toLowerCase())) {
+          if (
+            !filters.value.type ||
+            type.toLowerCase().includes(filters.value.type.toLowerCase())
+          ) {
             newSuggestions.push({
               type: 'filter',
               value: type,
@@ -431,7 +450,8 @@ export const useSearchStore = defineStore('search', () => {
 
     // Avoid duplicates
     const existingIndex = history.value.findIndex(
-      (h: SearchHistoryEntry) => h.query === entry.query && JSON.stringify(h.filters) === JSON.stringify(entry.filters)
+      (h: SearchHistoryEntry) =>
+        h.query === entry.query && JSON.stringify(h.filters) === JSON.stringify(entry.filters)
     );
 
     if (existingIndex !== -1) {
@@ -585,4 +605,4 @@ export const useSearchStore = defineStore('search', () => {
     clearError,
     initialize,
   };
-}); 
+});

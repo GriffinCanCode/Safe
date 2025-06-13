@@ -46,8 +46,8 @@ export type {
   PerformanceEntry,
   MemoryUsage,
   NetworkInfo,
-  SessionInfo
+  SessionInfo,
 } from './app.types';
 
 // Re-export DeviceInfo from app.types with a different name to avoid conflict
-export type { DeviceInfo as AppDeviceInfo } from './app.types'; 
+export type { DeviceInfo as AppDeviceInfo } from './app.types';

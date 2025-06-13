@@ -1,0 +1,240 @@
+/**
+ * Register Form Component Styles
+ * Replaces @apply directives with dedicated CSS classes
+ */
+
+/* === FORM CONTAINER === */
+.register-form {
+  width: 100%;
+  max-width: 32rem; /* 512px */
+  margin: 0 auto;
+  padding: var(--space-8);
+  background-color: var(--color-background-primary);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+}
+
+/* === FORM HEADER === */
+.register-form-header {
+  text-align: center;
+  margin-bottom: var(--space-8);
+}
+
+.register-form-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.register-form-subtitle {
+  color: var(--color-text-secondary);
+}
+
+/* === FORM CONTENT === */
+.register-form-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.register-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.register-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* === PASSWORD STRENGTH === */
+.password-strength-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.password-strength-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.password-strength-indicator {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.strength-very-weak {
+  color: var(--color-danger-600);
+}
+
+.strength-weak {
+  color: var(--color-danger-500);
+}
+
+.strength-fair {
+  color: var(--color-warning-500);
+}
+
+.strength-good {
+  color: var(--color-info-600);
+}
+
+.strength-strong {
+  color: var(--color-success-600);
+}
+
+/* === PASSWORD REQUIREMENTS === */
+.password-requirements {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-1);
+  font-size: var(--font-size-xs);
+}
+
+.password-requirement {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+}
+
+.password-requirement.met {
+  color: var(--color-success-600);
+}
+
+.password-requirement-icon {
+  width: var(--space-4);
+  text-align: center;
+  font-family: var(--font-family-mono);
+}
+
+/* === FORM AGREEMENTS === */
+.form-agreements {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.form-agreement {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  cursor: pointer;
+}
+
+.form-agreement-checkbox {
+  margin-top: 0.125rem; /* 2px */
+  width: var(--space-4);
+  height: var(--space-4);
+  color: var(--color-primary-600);
+  border-color: var(--color-neutral-300);
+  border-radius: var(--radius-sm);
+}
+
+.form-agreement-checkbox:focus {
+  --tw-ring-color: var(--color-primary-500);
+  --tw-ring-width: 2px;
+}
+
+.form-agreement-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.form-agreement-link {
+  color: var(--color-primary-600);
+  text-decoration: underline;
+}
+
+.form-agreement-link:hover {
+  color: var(--color-primary-700);
+}
+
+/* === ERROR STATES === */
+.form-error {
+  font-size: var(--font-size-sm);
+  color: var(--color-danger-600);
+}
+
+.form-error-offset {
+  margin-top: calc(-1 * var(--space-2));
+}
+
+/* === BIOMETRIC WARNING === */
+.biometric-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background-color: var(--color-warning-50);
+  border: 1px solid var(--color-warning-200);
+  border-radius: var(--radius-lg);
+}
+
+.biometric-warning-icon {
+  color: var(--color-warning-600);
+  flex-shrink: 0;
+  margin-top: 0.125rem; /* 2px */
+}
+
+.biometric-warning-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.biometric-warning-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-warning-800);
+}
+
+.biometric-warning-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-warning-700);
+}
+
+/* === DARK MODE === */
+@media (prefers-color-scheme: dark) {
+  .register-form {
+    background-color: var(--color-background-secondary);
+    box-shadow: var(--shadow-xl);
+  }
+
+  .form-agreement-checkbox {
+    border-color: var(--color-neutral-600);
+  }
+
+  .biometric-warning {
+    background-color: color-mix(in oklch, var(--color-warning-500) 10%, var(--color-background-secondary));
+    border-color: color-mix(in oklch, var(--color-warning-500) 30%, transparent);
+  }
+
+  .biometric-warning-title {
+    color: var(--color-warning-300);
+  }
+
+  .biometric-warning-text {
+    color: var(--color-warning-400);
+  }
+}
+
+/* === RESPONSIVE === */
+@container (max-width: 28rem) {
+  .register-form {
+    padding: var(--space-6);
+  }
+
+  .register-form-header {
+    margin-bottom: var(--space-6);
+  }
+
+  .register-form-title {
+    font-size: var(--font-size-xl);
+  }
+} 

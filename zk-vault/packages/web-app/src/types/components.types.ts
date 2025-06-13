@@ -21,7 +21,17 @@ export interface BaseComponentProps {
  * Button component props
  */
 export interface ButtonProps extends BaseComponentProps {
-  variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'info' | 'light' | 'dark' | 'link' | 'outline';
+  variant?:
+    | 'primary'
+    | 'secondary'
+    | 'success'
+    | 'warning'
+    | 'danger'
+    | 'info'
+    | 'light'
+    | 'dark'
+    | 'link'
+    | 'outline';
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   type?: 'button' | 'submit' | 'reset';
   block?: boolean;
@@ -38,7 +48,17 @@ export interface ButtonProps extends BaseComponentProps {
  */
 export interface InputProps extends BaseComponentProps {
   modelValue?: string | number;
-  type?: 'text' | 'password' | 'email' | 'number' | 'tel' | 'url' | 'search' | 'date' | 'time' | 'datetime-local';
+  type?:
+    | 'text'
+    | 'password'
+    | 'email'
+    | 'number'
+    | 'tel'
+    | 'url'
+    | 'search'
+    | 'date'
+    | 'time'
+    | 'datetime-local';
   placeholder?: string;
   label?: string;
   hint?: string;
@@ -165,7 +185,20 @@ export interface FormSchema {
  */
 export interface FormField {
   name: string;
-  type: 'text' | 'password' | 'email' | 'number' | 'tel' | 'url' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'date' | 'time' | 'file';
+  type:
+    | 'text'
+    | 'password'
+    | 'email'
+    | 'number'
+    | 'tel'
+    | 'url'
+    | 'textarea'
+    | 'select'
+    | 'checkbox'
+    | 'radio'
+    | 'date'
+    | 'time'
+    | 'file';
   label?: string;
   placeholder?: string;
   hint?: string;
@@ -359,7 +392,19 @@ export interface AlertAction {
  */
 export interface TooltipProps extends BaseComponentProps {
   content?: string;
-  placement?: 'top' | 'bottom' | 'left' | 'right' | 'top-start' | 'top-end' | 'bottom-start' | 'bottom-end' | 'left-start' | 'left-end' | 'right-start' | 'right-end';
+  placement?:
+    | 'top'
+    | 'bottom'
+    | 'left'
+    | 'right'
+    | 'top-start'
+    | 'top-end'
+    | 'bottom-start'
+    | 'bottom-end'
+    | 'left-start'
+    | 'left-end'
+    | 'right-start'
+    | 'right-end';
   trigger?: 'hover' | 'click' | 'focus' | 'manual';
   delay?: number;
   hideDelay?: number;
@@ -482,31 +527,31 @@ export interface UploadRequestOptions {
  */
 export interface ComponentEmits {
   'update:modelValue': [value: any];
-  'change': [value: any];
-  'input': [value: any];
-  'focus': [event: FocusEvent];
-  'blur': [event: FocusEvent];
-  'click': [event: MouseEvent];
-  'submit': [data: any];
-  'reset': [];
-  'cancel': [];
-  'confirm': [];
-  'close': [];
-  'open': [];
-  'select': [value: any];
-  'deselect': [value: any];
-  'expand': [keys: string[]];
-  'collapse': [keys: string[]];
-  'check': [keys: string[]];
-  'uncheck': [keys: string[]];
-  'upload': [files: File[]];
-  'remove': [file: File];
-  'preview': [file: File];
-  'download': [file: File];
-  'error': [error: Error];
-  'success': [data: any];
-  'progress': [progress: number];
-  'complete': [];
+  change: [value: any];
+  input: [value: any];
+  focus: [event: FocusEvent];
+  blur: [event: FocusEvent];
+  click: [event: MouseEvent];
+  submit: [data: any];
+  reset: [];
+  cancel: [];
+  confirm: [];
+  close: [];
+  open: [];
+  select: [value: any];
+  deselect: [value: any];
+  expand: [keys: string[]];
+  collapse: [keys: string[]];
+  check: [keys: string[]];
+  uncheck: [keys: string[]];
+  upload: [files: File[]];
+  remove: [file: File];
+  preview: [file: File];
+  download: [file: File];
+  error: [error: Error];
+  success: [data: any];
+  progress: [progress: number];
+  complete: [];
 }
 
 /**
@@ -528,4 +573,4 @@ export interface ComponentSlots {
   empty?: () => any;
   error?: () => any;
   [key: string]: (() => any) | undefined;
-} 
+}

@@ -4,7 +4,7 @@ import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [vue()],
-  
+
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),
@@ -18,7 +18,7 @@ export default defineConfig({
       '@/views': resolve(__dirname, './src/views'),
       // Monorepo package aliases
       '@zk-vault/shared': resolve(__dirname, '../shared/src'),
-      '@zk-vault/crypto': resolve(__dirname, '../crypto/src'),
+      '@zk-vault/crypto': resolve(__dirname, '../crypto/dist'),
     },
   },
 

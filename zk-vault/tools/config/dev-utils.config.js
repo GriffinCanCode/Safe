@@ -13,39 +13,39 @@ const { execSync } = require('child_process');
  * @param {Object} options Analysis options
  */
 function createBundleAnalyzer(packagePath, options = {}) {
-  const { 
-    outputPath = 'bundle-analysis',
-    openBrowser = true,
-    analyzeMode = 'static'
-  } = options;
+  const { outputPath = 'bundle-analysis', openBrowser = true, analyzeMode = 'static' } = options;
 
   return {
     webpack: {
       plugins: [
         // Webpack Bundle Analyzer
-        ...(process.env.ANALYZE === 'true' ? [
-          new (require('webpack-bundle-analyzer').BundleAnalyzerPlugin)({
-            analyzerMode,
-            openAnalyzer: openBrowser,
-            reportFilename: path.resolve(packagePath, outputPath, 'webpack-report.html'),
-            generateStatsFile: true,
-            statsFilename: path.resolve(packagePath, outputPath, 'webpack-stats.json'),
-          })
-        ] : []),
+        ...(process.env.ANALYZE === 'true'
+          ? [
+              new (require('webpack-bundle-analyzer').BundleAnalyzerPlugin)({
+                analyzerMode,
+                openAnalyzer: openBrowser,
+                reportFilename: path.resolve(packagePath, outputPath, 'webpack-report.html'),
+                generateStatsFile: true,
+                statsFilename: path.resolve(packagePath, outputPath, 'webpack-stats.json'),
+              }),
+            ]
+          : []),
       ],
     },
-    
+
     vite: {
       plugins: [
         // Rollup Bundle Analyzer for Vite
-        ...(process.env.ANALYZE === 'true' ? [
-          require('rollup-plugin-visualizer')({
-            filename: path.resolve(packagePath, outputPath, 'vite-stats.html'),
-            open: openBrowser,
-            gzipSize: true,
-            brotliSize: true,
-          })
-        ] : []),
+        ...(process.env.ANALYZE === 'true'
+          ? [
+              require('rollup-plugin-visualizer')({
+                filename: path.resolve(packagePath, outputPath, 'vite-stats.html'),
+                open: openBrowser,
+                gzipSize: true,
+                brotliSize: true,
+              }),
+            ]
+          : []),
       ],
     },
   };
@@ -60,9 +60,9 @@ function createPerformanceConfig(packageName) {
     // Web Vitals configuration
     webVitals: {
       enabled: process.env.NODE_ENV !== 'test',
-      reportWebVitals: (metric) => {
+      reportWebVitals: metric => {
         console.log(`[${packageName}] ${metric.name}: ${metric.value}`);
-        
+
         // Send to analytics in production
         if (process.env.NODE_ENV === 'production') {
           // gtag('event', metric.name, {
@@ -187,22 +187,27 @@ function generateDevScripts(packageName) {
 
   const scripts = {
     // Development
-    'dev': isWebApp ? 'vite --mode development' :
-           isMobileApp ? 'react-native start' :
-           isBrowserExtension ? 'webpack --mode development --watch' :
-           'npm run build -- --watch',
+    dev: isWebApp
+      ? 'vite --mode development'
+      : isMobileApp
+        ? 'react-native start'
+        : isBrowserExtension
+          ? 'webpack --mode development --watch'
+          : 'npm run build -- --watch',
 
-    'dev:debug': isWebApp ? 'vite --mode development --debug' :
-                 'npm run dev -- --verbose',
+    'dev:debug': isWebApp ? 'vite --mode development --debug' : 'npm run dev -- --verbose',
 
-    'dev:https': isWebApp ? 'vite --mode development --https' :
-                 isBrowserExtension ? 'webpack-dev-server --https' :
-                 'npm run dev',
+    'dev:https': isWebApp
+      ? 'vite --mode development --https'
+      : isBrowserExtension
+        ? 'webpack-dev-server --https'
+        : 'npm run dev',
 
     // Building
     'build:analyze': 'cross-env ANALYZE=true npm run build',
-    'build:profile': isWebApp ? 'vite build --mode production --profile' :
-                     'webpack --mode production --profile --json > webpack-stats.json',
+    'build:profile': isWebApp
+      ? 'vite build --mode production --profile'
+      : 'webpack --mode production --profile --json > webpack-stats.json',
 
     // Testing with different options
     'test:watch': 'npm run test -- --watch',
@@ -213,10 +218,13 @@ function generateDevScripts(packageName) {
     'quality:complexity': 'npx ts-complex --threshold 10 src/',
     'quality:deps': 'npx depcheck && npm audit',
     'quality:bundle': 'npm run build:analyze',
-    'quality:all': 'npm run lint && npm run type-check && npm run test && npm run quality:complexity',
+    'quality:all':
+      'npm run lint && npm run type-check && npm run test && npm run quality:complexity',
 
     // Performance monitoring
-    'perf:lighthouse': isWebApp ? 'lhci autorun' : 'echo "Lighthouse not available for this package"',
+    'perf:lighthouse': isWebApp
+      ? 'lhci autorun'
+      : 'echo "Lighthouse not available for this package"',
     'perf:bundle': 'npm run build:analyze',
 
     // Maintenance
@@ -234,85 +242,76 @@ function generateDevScripts(packageName) {
  */
 function createVSCodeConfig(rootDir) {
   const vscodeDir = path.resolve(rootDir, '.vscode');
-  
+
   if (!fs.existsSync(vscodeDir)) {
     fs.mkdirSync(vscodeDir);
   }
 
   // Settings
   const settings = {
-    "typescript.preferences.importModuleSpecifier": "relative",
-    "editor.formatOnSave": true,
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "eslint.workingDirectories": ["packages/*"],
-    "typescript.preferences.includePackageJsonAutoImports": "auto",
-    "files.associations": {
-      "*.vue": "vue"
+    'typescript.preferences.importModuleSpecifier': 'relative',
+    'editor.formatOnSave': true,
+    'editor.defaultFormatter': 'esbenp.prettier-vscode',
+    'eslint.workingDirectories': ['packages/*'],
+    'typescript.preferences.includePackageJsonAutoImports': 'auto',
+    'files.associations': {
+      '*.vue': 'vue',
     },
-    "emmet.includeLanguages": {
-      "vue": "html"
+    'emmet.includeLanguages': {
+      vue: 'html',
     },
-    "vetur.validation.template": false,
-    "vetur.validation.script": false,
-    "vetur.validation.style": false,
-    "[vue]": {
-      "editor.defaultFormatter": "johnsoncodehk.volar"
-    }
+    'vetur.validation.template': false,
+    'vetur.validation.script': false,
+    'vetur.validation.style': false,
+    '[vue]': {
+      'editor.defaultFormatter': 'johnsoncodehk.volar',
+    },
   };
 
-  fs.writeFileSync(
-    path.resolve(vscodeDir, 'settings.json'),
-    JSON.stringify(settings, null, 2)
-  );
+  fs.writeFileSync(path.resolve(vscodeDir, 'settings.json'), JSON.stringify(settings, null, 2));
 
   // Extensions
   const extensions = {
-    "recommendations": [
-      "esbenp.prettier-vscode",
-      "dbaeumer.vscode-eslint",
-      "ms-vscode.vscode-typescript-next",
-      "johnsoncodehk.volar",
-      "vue.vscode-typescript-vue-plugin",
-      "bradlc.vscode-tailwindcss",
-      "ms-vscode.test-adapter-converter",
-      "hbenl.vscode-test-explorer"
-    ]
+    recommendations: [
+      'esbenp.prettier-vscode',
+      'dbaeumer.vscode-eslint',
+      'ms-vscode.vscode-typescript-next',
+      'johnsoncodehk.volar',
+      'vue.vscode-typescript-vue-plugin',
+      'bradlc.vscode-tailwindcss',
+      'ms-vscode.test-adapter-converter',
+      'hbenl.vscode-test-explorer',
+    ],
   };
 
-  fs.writeFileSync(
-    path.resolve(vscodeDir, 'extensions.json'),
-    JSON.stringify(extensions, null, 2)
-  );
+  fs.writeFileSync(path.resolve(vscodeDir, 'extensions.json'), JSON.stringify(extensions, null, 2));
 
   // Launch configuration
   const launch = {
-    "version": "0.2.0",
-    "configurations": [
+    version: '0.2.0',
+    configurations: [
       {
-        "name": "Debug Web App",
-        "type": "node",
-        "request": "launch",
-        "program": "${workspaceFolder}/packages/web-app/node_modules/.bin/vite",
-        "args": ["--mode", "development"],
-        "console": "integratedTerminal",
-        "cwd": "${workspaceFolder}/packages/web-app"
+        name: 'Debug Web App',
+        type: 'node',
+        request: 'launch',
+        program: '${workspaceFolder}/packages/web-app/node_modules/.bin/vite',
+        args: ['--mode', 'development'],
+        console: 'integratedTerminal',
+        cwd: '${workspaceFolder}/packages/web-app',
       },
       {
-        "name": "Debug Tests",
-        "type": "node",
-        "request": "launch",
-        "program": "${workspaceFolder}/node_modules/.bin/jest",
-        "args": ["--runInBand"],
-        "console": "integratedTerminal",
-        "internalConsoleOptions": "neverOpen"
-      }
-    ]
+        name: 'Debug Tests',
+        type: 'node',
+        request: 'launch',
+        program: '${workspaceFolder}/node_modules/.bin/jest',
+        args: ['--runInBand'],
+        console: 'integratedTerminal',
+        internalConsoleOptions: 'neverOpen',
+      },
+    ],
   };
 
-  fs.writeFileSync(
-    path.resolve(vscodeDir, 'launch.json'),
-    JSON.stringify(launch, null, 2)
-  );
+  fs.writeFileSync(path.resolve(vscodeDir, 'launch.json'), JSON.stringify(launch, null, 2));
 }
 
 /**
@@ -321,7 +320,7 @@ function createVSCodeConfig(rootDir) {
  */
 function createGitHubActions(rootDir) {
   const workflowsDir = path.resolve(rootDir, '.github', 'workflows');
-  
+
   if (!fs.existsSync(workflowsDir)) {
     fs.mkdirSync(workflowsDir, { recursive: true });
   }
@@ -410,10 +409,7 @@ jobs:
         with:
           languages: javascript`;
 
-  fs.writeFileSync(
-    path.resolve(workflowsDir, 'ci.yml'),
-    ciWorkflow
-  );
+  fs.writeFileSync(path.resolve(workflowsDir, 'ci.yml'), ciWorkflow);
 }
 
 module.exports = {
@@ -424,4 +420,4 @@ module.exports = {
   generateDevScripts,
   createVSCodeConfig,
   createGitHubActions,
-}; 
+};

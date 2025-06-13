@@ -1,0 +1,814 @@
+/**
+ * Biometric Setup Component Styles
+ * Fingerprint, face recognition, and biometric authentication setup
+ * Tailwind CSS v4 with OKLCH colors and modern CSS features
+ */
+
+/* === BIOMETRIC SETUP CONTAINER === */
+.biometric-setup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.biometric-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.biometric-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-neutral-900);
+  margin-bottom: var(--space-1);
+}
+
+.biometric-description {
+  color: var(--color-neutral-600);
+  line-height: var(--line-height-relaxed);
+}
+
+.biometric-actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+/* === BIOMETRIC STATUS === */
+.biometric-status {
+  background: linear-gradient(135deg, var(--color-primary-50), var(--color-primary-100));
+  border: 1px solid var(--color-primary-200);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.biometric-status::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--color-success-500), var(--color-primary-500), var(--color-warning-500));
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.status-icon {
+  width: var(--space-16);
+  height: var(--space-16);
+  margin: 0 auto var(--space-4);
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-600);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-icon.enabled {
+  background-color: var(--color-success-100);
+  color: var(--color-success-600);
+}
+
+.status-icon.disabled {
+  background-color: var(--color-neutral-100);
+  color: var(--color-neutral-500);
+}
+
+.status-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary-700);
+  margin-bottom: var(--space-2);
+}
+
+.status-title.enabled {
+  color: var(--color-success-700);
+}
+
+.status-title.disabled {
+  color: var(--color-neutral-700);
+}
+
+.status-message {
+  color: var(--color-primary-600);
+  margin-bottom: var(--space-6);
+}
+
+.status-message.enabled {
+  color: var(--color-success-600);
+}
+
+.status-message.disabled {
+  color: var(--color-neutral-600);
+}
+
+/* === BIOMETRIC METHODS === */
+.biometric-methods {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-6);
+}
+
+.method-card {
+  background-color: var(--color-white);
+  border: 1px solid var(--color-neutral-200);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  transition: all var(--duration-200) var(--ease-out);
+  position: relative;
+}
+
+.method-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.method-card.available {
+  border-color: var(--color-success-300);
+  background-color: var(--color-success-50);
+}
+
+.method-card.unavailable {
+  border-color: var(--color-neutral-300);
+  background-color: var(--color-neutral-50);
+  opacity: 0.7;
+}
+
+.method-card.enrolled {
+  border-color: var(--color-primary-300);
+  background-color: var(--color-primary-50);
+}
+
+.method-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.method-icon {
+  width: var(--space-12);
+  height: var(--space-12);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.method-icon.fingerprint {
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-600);
+}
+
+.method-icon.face {
+  background-color: var(--color-success-100);
+  color: var(--color-success-600);
+}
+
+.method-icon.voice {
+  background-color: var(--color-warning-100);
+  color: var(--color-warning-600);
+}
+
+.method-content {
+  flex: 1;
+}
+
+.method-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-neutral-900);
+  margin-bottom: var(--space-1);
+}
+
+.method-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-600);
+}
+
+.method-description {
+  color: var(--color-neutral-600);
+  line-height: var(--line-height-relaxed);
+  margin-bottom: var(--space-4);
+}
+
+.method-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.status-badge {
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+.status-badge.available {
+  background-color: var(--color-success-100);
+  color: var(--color-success-800);
+}
+
+.status-badge.unavailable {
+  background-color: var(--color-neutral-100);
+  color: var(--color-neutral-600);
+}
+
+.status-badge.enrolled {
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-800);
+}
+
+.method-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* === SETUP PROCESS === */
+.setup-process {
+  background-color: var(--color-white);
+  border: 1px solid var(--color-neutral-200);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+}
+
+.setup-header {
+  text-align: center;
+  margin-bottom: var(--space-8);
+}
+
+.setup-icon {
+  width: var(--space-20);
+  height: var(--space-20);
+  margin: 0 auto var(--space-4);
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-600);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.setup-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-neutral-900);
+  margin-bottom: var(--space-2);
+}
+
+.setup-instructions {
+  color: var(--color-neutral-600);
+  line-height: var(--line-height-relaxed);
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* === ENROLLMENT STEPS === */
+.enrollment-steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.enrollment-step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  transition: all var(--duration-200) var(--ease-out);
+}
+
+.enrollment-step.active {
+  background-color: var(--color-primary-50);
+  border: 1px solid var(--color-primary-200);
+}
+
+.enrollment-step.completed {
+  background-color: var(--color-success-50);
+  border: 1px solid var(--color-success-200);
+}
+
+.step-number {
+  width: var(--space-8);
+  height: var(--space-8);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm);
+  flex-shrink: 0;
+}
+
+.step-number.active {
+  background-color: var(--color-primary-600);
+  color: var(--color-white);
+}
+
+.step-number.completed {
+  background-color: var(--color-success-600);
+  color: var(--color-white);
+}
+
+.step-number.pending {
+  background-color: var(--color-neutral-200);
+  color: var(--color-neutral-600);
+}
+
+.step-content {
+  flex: 1;
+}
+
+.step-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-neutral-900);
+  margin-bottom: var(--space-1);
+}
+
+.step-description {
+  color: var(--color-neutral-600);
+  line-height: var(--line-height-relaxed);
+}
+
+/* === BIOMETRIC SCANNER === */
+.biometric-scanner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-8);
+  background-color: var(--color-neutral-50);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.scanner-visual {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--color-primary-100), var(--color-primary-200));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.scanner-visual.scanning {
+  animation: pulse 2s infinite;
+}
+
+.scanner-visual.success {
+  background: linear-gradient(135deg, var(--color-success-100), var(--color-success-200));
+}
+
+.scanner-visual.error {
+  background: linear-gradient(135deg, var(--color-danger-100), var(--color-danger-200));
+}
+
+.scanner-icon {
+  width: var(--space-16);
+  height: var(--space-16);
+  color: var(--color-primary-600);
+}
+
+.scanner-visual.success .scanner-icon {
+  color: var(--color-success-600);
+}
+
+.scanner-visual.error .scanner-icon {
+  color: var(--color-danger-600);
+}
+
+.scanner-progress {
+  position: absolute;
+  inset: -4px;
+  border-radius: var(--radius-full);
+  background: conic-gradient(var(--color-primary-500) var(--progress, 0%), transparent 0%);
+  padding: 4px;
+}
+
+.scanner-progress::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-neutral-50);
+}
+
+.scanner-message {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-neutral-900);
+}
+
+.scanner-hint {
+  color: var(--color-neutral-600);
+  font-size: var(--font-size-sm);
+}
+
+/* === ENROLLMENT RESULTS === */
+.enrollment-results {
+  text-align: center;
+  padding: var(--space-8);
+}
+
+.results-icon {
+  width: var(--space-16);
+  height: var(--space-16);
+  margin: 0 auto var(--space-4);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.results-icon.success {
+  background-color: var(--color-success-100);
+  color: var(--color-success-600);
+}
+
+.results-icon.error {
+  background-color: var(--color-danger-100);
+  color: var(--color-danger-600);
+}
+
+.results-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--space-2);
+}
+
+.results-title.success {
+  color: var(--color-success-700);
+}
+
+.results-title.error {
+  color: var(--color-danger-700);
+}
+
+.results-message {
+  color: var(--color-neutral-600);
+  line-height: var(--line-height-relaxed);
+  margin-bottom: var(--space-6);
+}
+
+.results-actions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: center;
+}
+
+/* === DEVICE COMPATIBILITY === */
+.device-compatibility {
+  background-color: var(--color-neutral-50);
+  border: 1px solid var(--color-neutral-200);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+}
+
+.compatibility-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.compatibility-icon {
+  width: var(--space-8);
+  height: var(--space-8);
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-600);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.compatibility-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-neutral-900);
+}
+
+.compatibility-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.compatibility-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background-color: var(--color-white);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-neutral-200);
+}
+
+.compatibility-status {
+  width: var(--space-6);
+  height: var(--space-6);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.compatibility-status.supported {
+  background-color: var(--color-success-500);
+  color: var(--color-white);
+}
+
+.compatibility-status.unsupported {
+  background-color: var(--color-danger-500);
+  color: var(--color-white);
+}
+
+.compatibility-status.unknown {
+  background-color: var(--color-neutral-400);
+  color: var(--color-white);
+}
+
+.compatibility-text {
+  flex: 1;
+  color: var(--color-neutral-700);
+}
+
+/* === DARK MODE SUPPORT === */
+@media (prefers-color-scheme: dark) {
+  .biometric-title {
+    color: var(--color-neutral-100);
+  }
+
+  .biometric-description {
+    color: var(--color-neutral-400);
+  }
+
+  .biometric-status {
+    background: linear-gradient(135deg, var(--color-primary-900), var(--color-primary-800));
+    border-color: var(--color-primary-700);
+  }
+
+  .status-icon {
+    background-color: var(--color-primary-900);
+    color: var(--color-primary-400);
+  }
+
+  .status-icon.enabled {
+    background-color: var(--color-success-900);
+    color: var(--color-success-400);
+  }
+
+  .status-icon.disabled {
+    background-color: var(--color-neutral-700);
+    color: var(--color-neutral-400);
+  }
+
+  .status-title {
+    color: var(--color-primary-300);
+  }
+
+  .status-title.enabled {
+    color: var(--color-success-300);
+  }
+
+  .status-title.disabled {
+    color: var(--color-neutral-300);
+  }
+
+  .status-message {
+    color: var(--color-primary-400);
+  }
+
+  .status-message.enabled {
+    color: var(--color-success-400);
+  }
+
+  .status-message.disabled {
+    color: var(--color-neutral-400);
+  }
+
+  .method-card,
+  .setup-process {
+    background-color: var(--color-neutral-800);
+    border-color: var(--color-neutral-700);
+  }
+
+  .method-card.available {
+    border-color: var(--color-success-700);
+    background-color: color-mix(in oklch, var(--color-success-900) 20%, transparent);
+  }
+
+  .method-card.unavailable {
+    border-color: var(--color-neutral-600);
+    background-color: var(--color-neutral-800);
+  }
+
+  .method-card.enrolled {
+    border-color: var(--color-primary-700);
+    background-color: color-mix(in oklch, var(--color-primary-900) 20%, transparent);
+  }
+
+  .method-icon.fingerprint {
+    background-color: var(--color-primary-900);
+    color: var(--color-primary-400);
+  }
+
+  .method-icon.face {
+    background-color: var(--color-success-900);
+    color: var(--color-success-400);
+  }
+
+  .method-icon.voice {
+    background-color: var(--color-warning-900);
+    color: var(--color-warning-400);
+  }
+
+  .method-title,
+  .setup-title,
+  .step-title {
+    color: var(--color-neutral-100);
+  }
+
+  .method-subtitle,
+  .method-description,
+  .setup-instructions,
+  .step-description {
+    color: var(--color-neutral-400);
+  }
+
+  .status-badge.available {
+    background-color: var(--color-success-900);
+    color: var(--color-success-200);
+  }
+
+  .status-badge.unavailable {
+    background-color: var(--color-neutral-700);
+    color: var(--color-neutral-300);
+  }
+
+  .status-badge.enrolled {
+    background-color: var(--color-primary-900);
+    color: var(--color-primary-200);
+  }
+
+  .setup-icon {
+    background-color: var(--color-primary-900);
+    color: var(--color-primary-400);
+  }
+
+  .enrollment-step.active {
+    background-color: color-mix(in oklch, var(--color-primary-900) 20%, transparent);
+    border-color: var(--color-primary-700);
+  }
+
+  .enrollment-step.completed {
+    background-color: color-mix(in oklch, var(--color-success-900) 20%, transparent);
+    border-color: var(--color-success-700);
+  }
+
+  .biometric-scanner {
+    background-color: var(--color-neutral-800);
+  }
+
+  .scanner-message {
+    color: var(--color-neutral-100);
+  }
+
+  .scanner-hint {
+    color: var(--color-neutral-400);
+  }
+
+  .results-title.success {
+    color: var(--color-success-300);
+  }
+
+  .results-title.error {
+    color: var(--color-danger-300);
+  }
+
+  .results-message {
+    color: var(--color-neutral-400);
+  }
+
+  .device-compatibility {
+    background-color: var(--color-neutral-800);
+    border-color: var(--color-neutral-700);
+  }
+
+  .compatibility-icon {
+    background-color: var(--color-primary-900);
+    color: var(--color-primary-400);
+  }
+
+  .compatibility-title {
+    color: var(--color-neutral-100);
+  }
+
+  .compatibility-item {
+    background-color: var(--color-neutral-700);
+    border-color: var(--color-neutral-600);
+  }
+
+  .compatibility-text {
+    color: var(--color-neutral-300);
+  }
+}
+
+/* === ANIMATIONS === */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
+
+/* === RESPONSIVE DESIGN === */
+@container (max-width: 768px) {
+  .biometric-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .biometric-actions {
+    justify-content: stretch;
+  }
+
+  .biometric-methods {
+    grid-template-columns: 1fr;
+  }
+
+  .biometric-scanner {
+    padding: var(--space-6);
+  }
+
+  .scanner-visual {
+    width: 150px;
+    height: 150px;
+  }
+
+  .scanner-icon {
+    width: var(--space-12);
+    height: var(--space-12);
+  }
+
+  .results-actions {
+    flex-direction: column;
+  }
+}
+
+/* === REDUCED MOTION === */
+@media (prefers-reduced-motion: reduce) {
+  .method-card {
+    transition: none;
+  }
+
+  .method-card:hover {
+    transform: none;
+  }
+
+  .scanner-visual.scanning {
+    animation: none;
+  }
+
+  .enrollment-step {
+    transition: none;
+  }
+}
+
+/* === HIGH CONTRAST === */
+@media (prefers-contrast: high) {
+  .method-card,
+  .setup-process,
+  .device-compatibility {
+    border-width: 2px;
+  }
+
+  .status-badge {
+    border: 1px solid currentColor;
+  }
+
+  .compatibility-item {
+    border-width: 2px;
+  }
+} 
