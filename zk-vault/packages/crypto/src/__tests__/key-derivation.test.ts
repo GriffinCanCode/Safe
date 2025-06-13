@@ -28,7 +28,7 @@ describe('Master Key Derivation', () => {
     test('should generate salts of custom length', () => {
       const salt16 = MasterKeyDerivation.generateSalt(16);
       const salt64 = MasterKeyDerivation.generateSalt(64);
-      
+
       expect(salt16.length).toBe(16);
       expect(salt64.length).toBe(64);
     });
@@ -37,7 +37,7 @@ describe('Master Key Derivation', () => {
   describe('Key Derivation', () => {
     test('should derive keys with default parameters', async () => {
       const result = await MasterKeyDerivation.deriveKey(testPassword, testSalt);
-      
+
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
       expect(result.data!.key).toBeInstanceOf(Uint8Array);
@@ -52,11 +52,11 @@ describe('Master Key Derivation', () => {
         time: 2,
         memory: 16384,
         parallelism: 1,
-        outputLength: 64
+        outputLength: 64,
       };
-      
+
       const result = await MasterKeyDerivation.deriveKey(testPassword, testSalt, customParams);
-      
+
       expect(result.success).toBe(true);
       expect(result.data!.key.length).toBe(64);
       expect(result.data!.params.time).toBe(2);
@@ -68,7 +68,7 @@ describe('Master Key Derivation', () => {
       const emptyPasswordResult = await MasterKeyDerivation.deriveKey('', testSalt);
       expect(emptyPasswordResult.success).toBe(false);
       expect(emptyPasswordResult.errorCode).toBe('INVALID_PASSWORD');
-      
+
       // Short salt
       const shortSalt = new Uint8Array(8);
       const shortSaltResult = await MasterKeyDerivation.deriveKey(testPassword, shortSalt);
@@ -79,7 +79,7 @@ describe('Master Key Derivation', () => {
     test('should produce consistent results for same inputs', async () => {
       const result1 = await MasterKeyDerivation.deriveKey(testPassword, testSalt);
       const result2 = await MasterKeyDerivation.deriveKey(testPassword, testSalt);
-      
+
       expect(result1.success).toBe(true);
       expect(result2.success).toBe(true);
       expect(TestUtils.arraysEqual(result1.data!.key, result2.data!.key)).toBe(true);
@@ -87,13 +87,13 @@ describe('Master Key Derivation', () => {
 
     test('should reject invalid parameters', async () => {
       const invalidTimeResult = await MasterKeyDerivation.deriveKey(testPassword, testSalt, {
-        time: 15 // Too high
+        time: 15, // Too high
       });
       expect(invalidTimeResult.success).toBe(false);
       expect(invalidTimeResult.errorCode).toBe('INVALID_PARAMS');
 
       const invalidMemoryResult = await MasterKeyDerivation.deriveKey(testPassword, testSalt, {
-        memory: 1000000 // Too high
+        memory: 1000000, // Too high
       });
       expect(invalidMemoryResult.success).toBe(false);
       expect(invalidMemoryResult.errorCode).toBe('INVALID_PARAMS');
@@ -140,7 +140,7 @@ describe('Master Key Derivation', () => {
   describe('Master Key Structure Creation', () => {
     test('should create complete master key structure', async () => {
       const result = await MasterKeyDerivation.createMasterKeyStructure(testPassword, testEmail);
-      
+
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
       expect(result.data!.masterKey).toBeDefined();
@@ -159,7 +159,7 @@ describe('Master Key Derivation', () => {
         time: 3,
         memory: 19456,
         parallelism: 1,
-        outputLength: 32
+        outputLength: 32,
       };
 
       const invalidParams = {
@@ -168,7 +168,7 @@ describe('Master Key Derivation', () => {
         time: 15, // Too high
         memory: 19456,
         parallelism: 1,
-        outputLength: 32
+        outputLength: 32,
       };
 
       expect(MasterKeyDerivation.validateParams(validParams)).toBe(true);
@@ -185,7 +185,7 @@ describe('HKDF Derivation', () => {
   describe('Key Expansion', () => {
     test('should expand keys using HKDF', async () => {
       const result = await HKDF.derive(testKey, testSalt, testInfo);
-      
+
       expect(result.success).toBe(true);
       expect(result.data).toBeInstanceOf(Uint8Array);
       expect(result.data!.length).toBe(32);
@@ -194,10 +194,10 @@ describe('HKDF Derivation', () => {
     test('should produce different outputs for different info', async () => {
       const info1 = new TextEncoder().encode('info-1');
       const info2 = new TextEncoder().encode('info-2');
-      
+
       const result1 = await HKDF.derive(testKey, testSalt, info1);
       const result2 = await HKDF.derive(testKey, testSalt, info2);
-      
+
       expect(result1.success).toBe(true);
       expect(result2.success).toBe(true);
       expect(TestUtils.arraysEqual(result1.data!, result2.data!)).toBe(false);
@@ -206,7 +206,7 @@ describe('HKDF Derivation', () => {
     test('should support custom output lengths', async () => {
       const result64 = await HKDF.derive(testKey, testSalt, testInfo, 64);
       const result16 = await HKDF.derive(testKey, testSalt, testInfo, 16);
-      
+
       expect(result64.success).toBe(true);
       expect(result16.success).toBe(true);
       expect(result64.data!.length).toBe(64);
@@ -231,11 +231,11 @@ describe('HKDF Derivation', () => {
       const keySpecs = [
         { name: 'encryption', info: 'encryption-key', length: 32 },
         { name: 'authentication', info: 'auth-key', length: 32 },
-        { name: 'signing', info: 'signing-key', length: 64 }
+        { name: 'signing', info: 'signing-key', length: 64 },
       ];
 
       const result = await HKDF.deriveMultiple(testKey, testSalt, keySpecs);
-      
+
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
       expect(result.data!.encryption).toBeInstanceOf(Uint8Array);

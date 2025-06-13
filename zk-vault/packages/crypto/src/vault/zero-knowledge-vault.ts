@@ -5,13 +5,13 @@
  * @security Zero-knowledge architecture - server never sees plaintext or keys
  */
 
-import { 
+import {
   MasterKeyStructure,
   EncryptionResult,
   EncryptionContext,
   DecryptionContext,
   CryptoOperationResult,
-  AlgorithmSelection
+  AlgorithmSelection,
 } from '@zk-vault/shared';
 
 import { AlgorithmSelector } from '../algorithms/algorithm-selector';
@@ -34,26 +34,26 @@ export class ZeroKnowledgeVault {
    * @returns Master key structure for the vault
    */
   async initialize(
-    password: string, 
+    password: string,
     email: string
   ): Promise<CryptoOperationResult<MasterKeyStructure>> {
     try {
       // Select optimal encryption algorithm
       this.selectedAlgorithm = await AlgorithmSelector.selectOptimalAlgorithm();
-      
+
       // Create master key structure
       const result = await MasterKeyDerivation.createMasterKeyStructure(password, email);
-      
+
       if (result.success && result.data) {
         this.masterKeyStructure = result.data;
       }
-      
+
       return result;
     } catch (error) {
       return {
         success: false,
         error: `Vault initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'VAULT_INIT_FAILED'
+        errorCode: 'VAULT_INIT_FAILED',
       };
     }
   }
@@ -72,15 +72,13 @@ export class ZeroKnowledgeVault {
       return {
         success: false,
         error: 'Vault not initialized. Call initialize() first.',
-        errorCode: 'VAULT_NOT_INITIALIZED'
+        errorCode: 'VAULT_NOT_INITIALIZED',
       };
     }
 
     try {
       // Convert string to Uint8Array if needed
-      const data = typeof plaintext === 'string' 
-        ? new TextEncoder().encode(plaintext)
-        : plaintext;
+      const data = typeof plaintext === 'string' ? new TextEncoder().encode(plaintext) : plaintext;
 
       // Extract raw key from CryptoKey (simplified for demo)
       // In production, this would use proper key extraction
@@ -88,12 +86,11 @@ export class ZeroKnowledgeVault {
 
       // Use AES-GCM for now (would select based on algorithm selection)
       return await AESGCMCipher.encrypt(data, accountKeyRaw, context);
-
     } catch (error) {
       return {
         success: false,
         error: `Encryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'ENCRYPTION_FAILED'
+        errorCode: 'ENCRYPTION_FAILED',
       };
     }
   }
@@ -112,7 +109,7 @@ export class ZeroKnowledgeVault {
       return {
         success: false,
         error: 'Vault not initialized. Call initialize() first.',
-        errorCode: 'VAULT_NOT_INITIALIZED'
+        errorCode: 'VAULT_NOT_INITIALIZED',
       };
     }
 
@@ -122,28 +119,27 @@ export class ZeroKnowledgeVault {
 
       // Decrypt using appropriate algorithm
       const result = await AESGCMCipher.decrypt(encryptedData, accountKeyRaw, context);
-      
+
       if (result.success && result.data) {
         // Convert Uint8Array back to string
         const plaintext = new TextDecoder().decode(result.data);
-                 return {
-           success: true,
-           data: plaintext,
-           ...(result.metrics && { metrics: result.metrics })
-         };
+        return {
+          success: true,
+          data: plaintext,
+          ...(result.metrics && { metrics: result.metrics }),
+        };
       } else {
         return {
           success: false,
           error: result.error || 'Decryption failed',
-          errorCode: result.errorCode || 'DECRYPTION_FAILED'
+          errorCode: result.errorCode || 'DECRYPTION_FAILED',
         };
       }
-
     } catch (error) {
       return {
         success: false,
         error: `Decryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'DECRYPTION_FAILED'
+        errorCode: 'DECRYPTION_FAILED',
       };
     }
   }
@@ -158,14 +154,14 @@ export class ZeroKnowledgeVault {
       return {
         success: false,
         error: 'Vault not initialized',
-        errorCode: 'VAULT_NOT_INITIALIZED'
+        errorCode: 'VAULT_NOT_INITIALIZED',
       };
     }
 
     try {
       // Extract raw master key
       const masterKeyRaw = await this.extractRawKey(this.masterKeyStructure.masterKey);
-      
+
       // Derive item-specific key using HKDF
       const result = await MasterKeyDerivation.deriveAccountKey(
         masterKeyRaw,
@@ -174,12 +170,11 @@ export class ZeroKnowledgeVault {
       );
 
       return result;
-
     } catch (error) {
       return {
         success: false,
         error: `Item key derivation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'KEY_DERIVATION_FAILED'
+        errorCode: 'KEY_DERIVATION_FAILED',
       };
     }
   }
@@ -196,19 +191,21 @@ export class ZeroKnowledgeVault {
    * Gets vault status information
    * @returns Vault status
    */
-     getStatus(): {
-     initialized: boolean;
-     algorithm?: string;
-     hardwareAccelerated?: boolean;
-   } {
-     return {
-       initialized: !!this.masterKeyStructure,
-       ...(this.selectedAlgorithm?.algorithm && { algorithm: this.selectedAlgorithm.algorithm }),
-       ...(this.selectedAlgorithm?.hardwareAccelerated !== undefined && { 
-         hardwareAccelerated: this.selectedAlgorithm.hardwareAccelerated 
-       })
-     };
-   }
+  getStatus(): {
+    initialized: boolean;
+    algorithm?: string;
+    hardwareAccelerated?: boolean;
+  } {
+    return {
+      initialized: !!this.masterKeyStructure,
+      ...(this.selectedAlgorithm?.algorithm && {
+        algorithm: this.selectedAlgorithm.algorithm,
+      }),
+      ...(this.selectedAlgorithm?.hardwareAccelerated !== undefined && {
+        hardwareAccelerated: this.selectedAlgorithm.hardwareAccelerated,
+      }),
+    };
+  }
 
   /**
    * Locks the vault by clearing sensitive data
@@ -217,7 +214,7 @@ export class ZeroKnowledgeVault {
     // Clear sensitive data from memory
     this.masterKeyStructure = undefined;
     this.selectedAlgorithm = undefined;
-    
+
     // Clear algorithm selector cache
     AlgorithmSelector.clearCache();
   }
@@ -268,16 +265,16 @@ export class ZeroKnowledgeVault {
     try {
       this.masterKeyStructure = masterKeyStructure;
       this.selectedAlgorithm = await AlgorithmSelector.selectOptimalAlgorithm();
-      
+
       return {
         success: true,
-        data: true
+        data: true,
       };
     } catch (error) {
       return {
         success: false,
         error: `Vault restoration failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'VAULT_RESTORE_FAILED'
+        errorCode: 'VAULT_RESTORE_FAILED',
       };
     }
   }

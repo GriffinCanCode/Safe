@@ -16,16 +16,19 @@ export function validateEmail(email: string): boolean {
   return VALIDATION_RULES.EMAIL.PATTERN.test(email);
 }
 
-export function validatePassword(password: string): { valid: boolean; errors: string[] } {
+export function validatePassword(password: string): {
+  valid: boolean;
+  errors: string[];
+} {
   const errors: string[] = [];
-  
+
   if (!password || password.length < VALIDATION_RULES.PASSWORD.MIN_LENGTH) {
     errors.push(`Password must be at least ${VALIDATION_RULES.PASSWORD.MIN_LENGTH} characters`);
   }
-  
+
   if (password.length > VALIDATION_RULES.PASSWORD.MAX_LENGTH) {
     errors.push(`Password must be no more than ${VALIDATION_RULES.PASSWORD.MAX_LENGTH} characters`);
   }
-  
+
   return { valid: errors.length === 0, errors };
 }

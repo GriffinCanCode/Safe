@@ -16,26 +16,27 @@ const dependencies = [
     name: 'argon2',
     description: 'Password hashing with Argon2id',
     required: false,
-    install: 'npm install argon2'
+    install: 'npm install argon2',
   },
   {
     name: 'libsodium-wrappers',
     description: 'Comprehensive crypto library (XChaCha20-Poly1305, etc.)',
     required: false,
-    install: 'npm install libsodium-wrappers'
+    install: 'npm install libsodium-wrappers',
   },
   {
     name: '@stablelib/xchacha20poly1305',
     description: 'XChaCha20-Poly1305 implementation',
     required: false,
-    install: 'npm install @stablelib/xchacha20poly1305 @stablelib/hkdf @stablelib/sha256 @stablelib/hmac @stablelib/pbkdf2'
+    install:
+      'npm install @stablelib/xchacha20poly1305 @stablelib/hkdf @stablelib/sha256 @stablelib/hmac @stablelib/pbkdf2',
   },
   {
     name: '@types/libsodium-wrappers',
     description: 'TypeScript types for libsodium',
     required: false,
-    install: 'npm install --save-dev @types/libsodium-wrappers'
-  }
+    install: 'npm install --save-dev @types/libsodium-wrappers',
+  },
 ];
 
 function isInstalled(packageName) {
@@ -69,7 +70,7 @@ function main() {
       installed++;
     } else {
       console.log(`⚠️  ${dep.name} is not installed - ${dep.description}`);
-      
+
       if (process.argv.includes('--install') || process.argv.includes('-i')) {
         if (installDependency(dep)) {
           installed++;
@@ -105,4 +106,4 @@ if (require.main === module) {
   main();
 }
 
-module.exports = { dependencies, isInstalled, installDependency }; 
+module.exports = { dependencies, isInstalled, installDependency };

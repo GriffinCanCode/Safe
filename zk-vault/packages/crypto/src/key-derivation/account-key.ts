@@ -5,10 +5,7 @@
  * @security Uses HKDF to derive account keys with proper context separation
  */
 
-import { 
-  CryptoOperationResult,
-  HKDF_PARAMS 
-} from '@zk-vault/shared';
+import { CryptoOperationResult, HKDF_PARAMS } from '@zk-vault/shared';
 import { HKDF } from './hkdf';
 
 /**
@@ -17,7 +14,6 @@ import { HKDF } from './hkdf';
  * @security Ensures proper key separation between different accounts
  */
 export class AccountKeyDerivation {
-
   /**
    * Derives an account encryption key from master key
    * @param masterKey Master key derived from password
@@ -38,7 +34,7 @@ export class AccountKeyDerivation {
         return {
           success: false,
           error: 'Master key must be 32 bytes',
-          errorCode: 'INVALID_MASTER_KEY_LENGTH'
+          errorCode: 'INVALID_MASTER_KEY_LENGTH',
         };
       }
 
@@ -46,7 +42,7 @@ export class AccountKeyDerivation {
         return {
           success: false,
           error: 'Account ID cannot be empty',
-          errorCode: 'INVALID_ACCOUNT_ID'
+          errorCode: 'INVALID_ACCOUNT_ID',
         };
       }
 
@@ -54,28 +50,22 @@ export class AccountKeyDerivation {
         return {
           success: false,
           error: 'Salt must be at least 16 bytes',
-          errorCode: 'INVALID_SALT_LENGTH'
+          errorCode: 'INVALID_SALT_LENGTH',
         };
       }
 
       // Create context-specific info parameter
       const info = this.createAccountKeyInfo(accountId, keyType);
-      
+
       // Derive account key using HKDF
-      const result = await HKDF.derive(
-        masterKey,
-        salt,
-        info,
-        HKDF_PARAMS.OUTPUT_LENGTH
-      );
+      const result = await HKDF.derive(masterKey, salt, info, HKDF_PARAMS.OUTPUT_LENGTH);
 
       return result;
-
     } catch (error) {
       return {
         success: false,
         error: `Account key derivation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'ACCOUNT_KEY_DERIVATION_FAILED'
+        errorCode: 'ACCOUNT_KEY_DERIVATION_FAILED',
       };
     }
   }
@@ -98,17 +88,16 @@ export class AccountKeyDerivation {
       const keySpecs = keyTypes.map(keyType => ({
         name: keyType,
         info: this.createAccountKeyInfoString(accountId, keyType),
-        length: HKDF_PARAMS.OUTPUT_LENGTH
+        length: HKDF_PARAMS.OUTPUT_LENGTH,
       }));
 
       const result = await HKDF.deriveMultiple(masterKey, salt, keySpecs);
       return result;
-
     } catch (error) {
       return {
         success: false,
         error: `Multiple account key derivation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'MULTIPLE_ACCOUNT_KEY_DERIVATION_FAILED'
+        errorCode: 'MULTIPLE_ACCOUNT_KEY_DERIVATION_FAILED',
       };
     }
   }
@@ -131,7 +120,7 @@ export class AccountKeyDerivation {
         return {
           success: false,
           error: 'Account key must be 32 bytes',
-          errorCode: 'INVALID_ACCOUNT_KEY_LENGTH'
+          errorCode: 'INVALID_ACCOUNT_KEY_LENGTH',
         };
       }
 
@@ -139,31 +128,25 @@ export class AccountKeyDerivation {
         return {
           success: false,
           error: 'Vault ID cannot be empty',
-          errorCode: 'INVALID_VAULT_ID'
+          errorCode: 'INVALID_VAULT_ID',
         };
       }
 
       // Create vault-specific info parameter
       const info = this.createVaultKeyInfo(vaultId, purpose);
-      
+
       // Use a deterministic salt based on vault ID
       const vaultSalt = await this.createVaultSalt(vaultId);
 
       // Derive vault key using HKDF
-      const result = await HKDF.derive(
-        accountKey,
-        vaultSalt,
-        info,
-        HKDF_PARAMS.OUTPUT_LENGTH
-      );
+      const result = await HKDF.derive(accountKey, vaultSalt, info, HKDF_PARAMS.OUTPUT_LENGTH);
 
       return result;
-
     } catch (error) {
       return {
         success: false,
         error: `Vault key derivation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'VAULT_KEY_DERIVATION_FAILED'
+        errorCode: 'VAULT_KEY_DERIVATION_FAILED',
       };
     }
   }
@@ -186,7 +169,7 @@ export class AccountKeyDerivation {
         return {
           success: false,
           error: 'Account key must be 32 bytes',
-          errorCode: 'INVALID_ACCOUNT_KEY_LENGTH'
+          errorCode: 'INVALID_ACCOUNT_KEY_LENGTH',
         };
       }
 
@@ -194,31 +177,25 @@ export class AccountKeyDerivation {
         return {
           success: false,
           error: 'Recipient ID and shared item ID cannot be empty',
-          errorCode: 'INVALID_SHARING_PARAMETERS'
+          errorCode: 'INVALID_SHARING_PARAMETERS',
         };
       }
 
       // Create sharing-specific info parameter
       const info = this.createSharingKeyInfo(recipientId, sharedItemId);
-      
+
       // Create sharing salt
       const sharingSalt = await this.createSharingSalt(recipientId, sharedItemId);
 
       // Derive sharing key using HKDF
-      const result = await HKDF.derive(
-        accountKey,
-        sharingSalt,
-        info,
-        HKDF_PARAMS.OUTPUT_LENGTH
-      );
+      const result = await HKDF.derive(accountKey, sharingSalt, info, HKDF_PARAMS.OUTPUT_LENGTH);
 
       return result;
-
     } catch (error) {
       return {
         success: false,
         error: `Sharing key derivation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'SHARING_KEY_DERIVATION_FAILED'
+        errorCode: 'SHARING_KEY_DERIVATION_FAILED',
       };
     }
   }
@@ -270,10 +247,7 @@ export class AccountKeyDerivation {
    * @param sharedItemId Shared item identifier
    * @returns Info parameter as Uint8Array
    */
-  private static createSharingKeyInfo(
-    recipientId: string,
-    sharedItemId: string
-  ): Uint8Array {
+  private static createSharingKeyInfo(recipientId: string, sharedItemId: string): Uint8Array {
     const infoString = `${HKDF_PARAMS.INFO.SHARING_KEY}:${recipientId}:${sharedItemId}`;
     return new TextEncoder().encode(infoString);
   }
@@ -287,7 +261,7 @@ export class AccountKeyDerivation {
     // Create deterministic salt from vault ID
     const encoder = new TextEncoder();
     const vaultIdBytes = encoder.encode(`vault-salt:${vaultId}`);
-    
+
     // Hash to create consistent salt
     if (typeof window !== 'undefined' && window.crypto?.subtle) {
       const hashBuffer = await window.crypto.subtle.digest('SHA-256', vaultIdBytes);
@@ -315,7 +289,7 @@ export class AccountKeyDerivation {
     // Create deterministic salt from sharing parameters
     const encoder = new TextEncoder();
     const sharingBytes = encoder.encode(`sharing-salt:${recipientId}:${sharedItemId}`);
-    
+
     // Hash to create consistent salt
     if (typeof window !== 'undefined' && window.crypto?.subtle) {
       const hashBuffer = await window.crypto.subtle.digest('SHA-256', sharingBytes);
@@ -337,15 +311,7 @@ export class AccountKeyDerivation {
    * @param salt Salt value
    * @returns True if parameters are valid
    */
-  static validateParameters(
-    masterKey: Uint8Array,
-    accountId: string,
-    salt: Uint8Array
-  ): boolean {
-    return (
-      masterKey.length === 32 &&
-      accountId.length > 0 &&
-      salt.length >= 16
-    );
+  static validateParameters(masterKey: Uint8Array, accountId: string, salt: Uint8Array): boolean {
+    return masterKey.length === 32 && accountId.length > 0 && salt.length >= 16;
   }
 }

@@ -5,10 +5,7 @@
  * @security Ensures each vault item has a unique encryption key
  */
 
-import { 
-  CryptoOperationResult,
-  HKDF_PARAMS 
-} from '@zk-vault/shared';
+import { CryptoOperationResult, HKDF_PARAMS } from '@zk-vault/shared';
 import { HKDF } from './hkdf';
 
 /**
@@ -17,7 +14,6 @@ import { HKDF } from './hkdf';
  * @security Ensures proper key isolation between vault items
  */
 export class ItemKeyDerivation {
-
   /**
    * Derives an encryption key for a specific vault item
    * @param accountKey Account-level encryption key
@@ -38,7 +34,7 @@ export class ItemKeyDerivation {
         return {
           success: false,
           error: 'Account key must be 32 bytes',
-          errorCode: 'INVALID_ACCOUNT_KEY_LENGTH'
+          errorCode: 'INVALID_ACCOUNT_KEY_LENGTH',
         };
       }
 
@@ -46,7 +42,7 @@ export class ItemKeyDerivation {
         return {
           success: false,
           error: 'Item ID cannot be empty',
-          errorCode: 'INVALID_ITEM_ID'
+          errorCode: 'INVALID_ITEM_ID',
         };
       }
 
@@ -54,31 +50,25 @@ export class ItemKeyDerivation {
         return {
           success: false,
           error: 'Version must be between 1 and 999',
-          errorCode: 'INVALID_VERSION'
+          errorCode: 'INVALID_VERSION',
         };
       }
 
       // Create item-specific info parameter
       const info = this.createItemKeyInfo(itemId, itemType, version);
-      
+
       // Create item-specific salt
       const itemSalt = await this.createItemSalt(itemId, itemType);
 
       // Derive item key using HKDF
-      const result = await HKDF.derive(
-        accountKey,
-        itemSalt,
-        info,
-        HKDF_PARAMS.OUTPUT_LENGTH
-      );
+      const result = await HKDF.derive(accountKey, itemSalt, info, HKDF_PARAMS.OUTPUT_LENGTH);
 
       return result;
-
     } catch (error) {
       return {
         success: false,
         error: `Item key derivation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'ITEM_KEY_DERIVATION_FAILED'
+        errorCode: 'ITEM_KEY_DERIVATION_FAILED',
       };
     }
   }
@@ -103,7 +93,7 @@ export class ItemKeyDerivation {
       const keySpecs = keyPurposes.map(purpose => ({
         name: purpose,
         info: this.createItemKeyInfoString(itemId, itemType, purpose, version),
-        length: HKDF_PARAMS.OUTPUT_LENGTH
+        length: HKDF_PARAMS.OUTPUT_LENGTH,
       }));
 
       // Create item-specific salt
@@ -111,12 +101,11 @@ export class ItemKeyDerivation {
 
       const result = await HKDF.deriveMultiple(accountKey, itemSalt, keySpecs);
       return result;
-
     } catch (error) {
       return {
         success: false,
         error: `Multiple item key derivation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'MULTIPLE_ITEM_KEY_DERIVATION_FAILED'
+        errorCode: 'MULTIPLE_ITEM_KEY_DERIVATION_FAILED',
       };
     }
   }
@@ -139,7 +128,7 @@ export class ItemKeyDerivation {
         return {
           success: false,
           error: 'Item key must be 32 bytes',
-          errorCode: 'INVALID_ITEM_KEY_LENGTH'
+          errorCode: 'INVALID_ITEM_KEY_LENGTH',
         };
       }
 
@@ -147,31 +136,25 @@ export class ItemKeyDerivation {
         return {
           success: false,
           error: 'Field name cannot be empty',
-          errorCode: 'INVALID_FIELD_NAME'
+          errorCode: 'INVALID_FIELD_NAME',
         };
       }
 
       // Create field-specific info parameter
       const info = this.createFieldKeyInfo(fieldName, fieldType);
-      
+
       // Create field-specific salt
       const fieldSalt = await this.createFieldSalt(fieldName, fieldType);
 
       // Derive field key using HKDF
-      const result = await HKDF.derive(
-        itemKey,
-        fieldSalt,
-        info,
-        HKDF_PARAMS.OUTPUT_LENGTH
-      );
+      const result = await HKDF.derive(itemKey, fieldSalt, info, HKDF_PARAMS.OUTPUT_LENGTH);
 
       return result;
-
     } catch (error) {
       return {
         success: false,
         error: `Field key derivation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'FIELD_KEY_DERIVATION_FAILED'
+        errorCode: 'FIELD_KEY_DERIVATION_FAILED',
       };
     }
   }
@@ -194,7 +177,7 @@ export class ItemKeyDerivation {
         return {
           success: false,
           error: 'Item key must be 32 bytes',
-          errorCode: 'INVALID_ITEM_KEY_LENGTH'
+          errorCode: 'INVALID_ITEM_KEY_LENGTH',
         };
       }
 
@@ -202,31 +185,25 @@ export class ItemKeyDerivation {
         return {
           success: false,
           error: 'Invalid chunk index',
-          errorCode: 'INVALID_CHUNK_INDEX'
+          errorCode: 'INVALID_CHUNK_INDEX',
         };
       }
 
       // Create chunk-specific info parameter
       const info = this.createChunkKeyInfo(chunkIndex, totalChunks);
-      
+
       // Create chunk-specific salt
       const chunkSalt = await this.createChunkSalt(chunkIndex);
 
       // Derive chunk key using HKDF
-      const result = await HKDF.derive(
-        itemKey,
-        chunkSalt,
-        info,
-        HKDF_PARAMS.OUTPUT_LENGTH
-      );
+      const result = await HKDF.derive(itemKey, chunkSalt, info, HKDF_PARAMS.OUTPUT_LENGTH);
 
       return result;
-
     } catch (error) {
       return {
         success: false,
         error: `Chunk key derivation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'CHUNK_KEY_DERIVATION_FAILED'
+        errorCode: 'CHUNK_KEY_DERIVATION_FAILED',
       };
     }
   }
@@ -256,11 +233,7 @@ export class ItemKeyDerivation {
    * @param version Key version
    * @returns Info parameter as Uint8Array
    */
-  private static createItemKeyInfo(
-    itemId: string,
-    itemType: string,
-    version: number
-  ): Uint8Array {
+  private static createItemKeyInfo(itemId: string, itemType: string, version: number): Uint8Array {
     const infoString = this.createItemKeyInfoString(itemId, itemType, 'encryption', version);
     return new TextEncoder().encode(infoString);
   }
@@ -288,10 +261,7 @@ export class ItemKeyDerivation {
    * @param fieldType Field type
    * @returns Info parameter as Uint8Array
    */
-  private static createFieldKeyInfo(
-    fieldName: string,
-    fieldType: string
-  ): Uint8Array {
+  private static createFieldKeyInfo(fieldName: string, fieldType: string): Uint8Array {
     const infoString = `zk-vault-field-key:${fieldType}:${fieldName}`;
     return new TextEncoder().encode(infoString);
   }
@@ -302,10 +272,7 @@ export class ItemKeyDerivation {
    * @param totalChunks Total chunks
    * @returns Info parameter as Uint8Array
    */
-  private static createChunkKeyInfo(
-    chunkIndex: number,
-    totalChunks: number
-  ): Uint8Array {
+  private static createChunkKeyInfo(chunkIndex: number, totalChunks: number): Uint8Array {
     const infoString = `zk-vault-chunk-key:${chunkIndex}:${totalChunks}`;
     return new TextEncoder().encode(infoString);
   }
@@ -316,14 +283,11 @@ export class ItemKeyDerivation {
    * @param itemType Item type
    * @returns Item salt
    */
-  private static async createItemSalt(
-    itemId: string,
-    itemType: string
-  ): Promise<Uint8Array> {
+  private static async createItemSalt(itemId: string, itemType: string): Promise<Uint8Array> {
     // Create deterministic salt from item parameters
     const encoder = new TextEncoder();
     const itemBytes = encoder.encode(`item-salt:${itemType}:${itemId}`);
-    
+
     // Hash to create consistent salt
     if (typeof window !== 'undefined' && window.crypto?.subtle) {
       const hashBuffer = await window.crypto.subtle.digest('SHA-256', itemBytes);
@@ -344,14 +308,11 @@ export class ItemKeyDerivation {
    * @param fieldType Field type
    * @returns Field salt
    */
-  private static async createFieldSalt(
-    fieldName: string,
-    fieldType: string
-  ): Promise<Uint8Array> {
+  private static async createFieldSalt(fieldName: string, fieldType: string): Promise<Uint8Array> {
     // Create deterministic salt from field parameters
     const encoder = new TextEncoder();
     const fieldBytes = encoder.encode(`field-salt:${fieldType}:${fieldName}`);
-    
+
     // Hash to create consistent salt
     if (typeof window !== 'undefined' && window.crypto?.subtle) {
       const hashBuffer = await window.crypto.subtle.digest('SHA-256', fieldBytes);
@@ -375,7 +336,7 @@ export class ItemKeyDerivation {
     // Create deterministic salt from chunk index
     const encoder = new TextEncoder();
     const chunkBytes = encoder.encode(`chunk-salt:${chunkIndex}`);
-    
+
     // Hash to create consistent salt
     if (typeof window !== 'undefined' && window.crypto?.subtle) {
       const hashBuffer = await window.crypto.subtle.digest('SHA-256', chunkBytes);
@@ -397,16 +358,7 @@ export class ItemKeyDerivation {
    * @param version Key version
    * @returns True if parameters are valid
    */
-  static validateParameters(
-    accountKey: Uint8Array,
-    itemId: string,
-    version: number
-  ): boolean {
-    return (
-      accountKey.length === 32 &&
-      itemId.length > 0 &&
-      version >= 1 &&
-      version <= 999
-    );
+  static validateParameters(accountKey: Uint8Array, itemId: string, version: number): boolean {
+    return accountKey.length === 32 && itemId.length > 0 && version >= 1 && version <= 999;
   }
 }

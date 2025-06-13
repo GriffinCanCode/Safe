@@ -5,13 +5,13 @@
  * @security Provides unified interface for quantum-resistant encryption
  */
 
-import { 
+import {
   EncryptionResult,
   EncryptionContext,
   DecryptionContext,
   CryptoOperationResult,
   PostQuantumConfig,
-  POST_QUANTUM
+  POST_QUANTUM,
 } from '@zk-vault/shared';
 
 import { KyberKEM, KyberKeyPair } from './kyber';
@@ -21,10 +21,10 @@ import { HybridEncryption, HybridEncryptionResult, HybridKeyPair } from './hybri
  * Quantum-resistant encryption mode
  * @responsibility Defines available quantum-resistant encryption modes
  */
-export type QuantumResistantMode = 
-  | 'classical-only'      // Current classical algorithms
-  | 'hybrid'              // Classical + Post-quantum
-  | 'post-quantum-only';  // Pure post-quantum (future)
+export type QuantumResistantMode =
+  | 'classical-only' // Current classical algorithms
+  | 'hybrid' // Classical + Post-quantum
+  | 'post-quantum-only'; // Pure post-quantum (future)
 
 /**
  * Quantum-resistant configuration
@@ -64,7 +64,6 @@ export interface QuantumResistantResult {
  * @security Ensures quantum resistance while maintaining compatibility
  */
 export class QuantumResistantCrypto {
-
   /**
    * Encrypts data using quantum-resistant algorithms
    * @param plaintext Data to encrypt
@@ -85,20 +84,19 @@ export class QuantumResistantCrypto {
       switch (finalConfig.mode) {
         case 'hybrid':
           return await this.encryptHybrid(plaintext, publicKey, context, finalConfig);
-        
+
         case 'post-quantum-only':
           return await this.encryptPostQuantumOnly(plaintext, publicKey, context, finalConfig);
-        
+
         case 'classical-only':
         default:
           return await this.encryptClassicalOnly(plaintext, context, finalConfig);
       }
-
     } catch (error) {
       return {
         success: false,
         error: `Quantum-resistant encryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'QR_ENCRYPTION_FAILED'
+        errorCode: 'QR_ENCRYPTION_FAILED',
       };
     }
   }
@@ -122,20 +120,16 @@ export class QuantumResistantCrypto {
             return {
               success: false,
               error: 'Hybrid data missing',
-              errorCode: 'MISSING_HYBRID_DATA'
+              errorCode: 'MISSING_HYBRID_DATA',
             };
           }
-          return await HybridEncryption.decryptHybrid(
-            encryptedData.hybrid,
-            privateKey,
-            context
-          );
+          return await HybridEncryption.decryptHybrid(encryptedData.hybrid, privateKey, context);
 
         case 'post-quantum-only':
           return {
             success: false,
             error: 'Post-quantum only mode not yet implemented',
-            errorCode: 'PQ_ONLY_NOT_IMPLEMENTED'
+            errorCode: 'PQ_ONLY_NOT_IMPLEMENTED',
           };
 
         case 'classical-only':
@@ -144,22 +138,21 @@ export class QuantumResistantCrypto {
             return {
               success: false,
               error: 'Classical data missing',
-              errorCode: 'MISSING_CLASSICAL_DATA'
+              errorCode: 'MISSING_CLASSICAL_DATA',
             };
           }
           // Would use classical decryption here
           return {
             success: false,
             error: 'Classical-only decryption not implemented in this interface',
-            errorCode: 'CLASSICAL_ONLY_NOT_IMPLEMENTED'
+            errorCode: 'CLASSICAL_ONLY_NOT_IMPLEMENTED',
           };
       }
-
     } catch (error) {
       return {
         success: false,
         error: `Quantum-resistant decryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'QR_DECRYPTION_FAILED'
+        errorCode: 'QR_DECRYPTION_FAILED',
       };
     }
   }
@@ -176,10 +169,10 @@ export class QuantumResistantCrypto {
       switch (mode) {
         case 'hybrid':
           return await HybridEncryption.generateHybridKeyPair();
-        
+
         case 'post-quantum-only':
           return await KyberKEM.generateKeyPair();
-        
+
         case 'classical-only':
         default: {
           // Generate classical key pair
@@ -190,18 +183,17 @@ export class QuantumResistantCrypto {
               classicalKey,
               postQuantumKeyPair: {
                 publicKey: new Uint8Array(0),
-                privateKey: new Uint8Array(0)
-              }
-            } as HybridKeyPair
+                privateKey: new Uint8Array(0),
+              },
+            } as HybridKeyPair,
           };
         }
       }
-
     } catch (error) {
       return {
         success: false,
         error: `Key pair generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'QR_KEYGEN_FAILED'
+        errorCode: 'QR_KEYGEN_FAILED',
       };
     }
   }
@@ -234,7 +226,7 @@ export class QuantumResistantCrypto {
       return {
         success: false,
         error: hybridResult.error || 'Hybrid encryption failed',
-        errorCode: hybridResult.errorCode || 'HYBRID_ENCRYPTION_FAILED'
+        errorCode: hybridResult.errorCode || 'HYBRID_ENCRYPTION_FAILED',
       };
     }
 
@@ -245,8 +237,8 @@ export class QuantumResistantCrypto {
         hybrid: hybridResult.data,
         algorithm: hybridResult.data.algorithm,
         securityLevel: 'Quantum-resistant (192-bit)',
-        quantumResistant: true
-      }
+        quantumResistant: true,
+      },
     };
   }
 
@@ -268,7 +260,7 @@ export class QuantumResistantCrypto {
     return {
       success: false,
       error: 'Post-quantum only mode not yet implemented',
-      errorCode: 'PQ_ONLY_NOT_IMPLEMENTED'
+      errorCode: 'PQ_ONLY_NOT_IMPLEMENTED',
     };
   }
 
@@ -288,7 +280,7 @@ export class QuantumResistantCrypto {
     return {
       success: false,
       error: 'Classical-only mode not implemented in this interface',
-      errorCode: 'CLASSICAL_ONLY_NOT_IMPLEMENTED'
+      errorCode: 'CLASSICAL_ONLY_NOT_IMPLEMENTED',
     };
   }
 
@@ -304,7 +296,7 @@ export class QuantumResistantCrypto {
       migrationStrategy: config?.migrationStrategy ?? 'gradual',
       enableHybrid: config?.enableHybrid ?? POST_QUANTUM.HYBRID_MODE.ENABLED,
       algorithm: config?.algorithm ?? 'Kyber',
-      classicalAlgorithm: config?.classicalAlgorithm ?? 'AES-256-GCM'
+      classicalAlgorithm: config?.classicalAlgorithm ?? 'AES-256-GCM',
     };
   }
 
@@ -320,8 +312,9 @@ export class QuantumResistantCrypto {
     // This would be updated based on current quantum computing developments
     return {
       level: 'medium',
-      description: 'Quantum computers are advancing but not yet capable of breaking current encryption',
-      recommendation: 'Begin migration to quantum-resistant algorithms'
+      description:
+        'Quantum computers are advancing but not yet capable of breaking current encryption',
+      recommendation: 'Begin migration to quantum-resistant algorithms',
     };
   }
 
@@ -342,19 +335,19 @@ export class QuantumResistantCrypto {
       return {
         resistant: true,
         securityLevel: 'Post-quantum secure',
-        recommendation: 'Algorithm is quantum-resistant'
+        recommendation: 'Algorithm is quantum-resistant',
       };
     } else if (hybridAlgorithms.includes(algorithm)) {
       return {
         resistant: true,
         securityLevel: 'Hybrid quantum-resistant',
-        recommendation: 'Algorithm provides quantum resistance with classical fallback'
+        recommendation: 'Algorithm provides quantum resistance with classical fallback',
       };
     } else {
       return {
         resistant: false,
         securityLevel: 'Classical security only',
-        recommendation: 'Consider upgrading to quantum-resistant algorithms'
+        recommendation: 'Consider upgrading to quantum-resistant algorithms',
       };
     }
   }
@@ -371,13 +364,13 @@ export class QuantumResistantCrypto {
     timeline: string;
   } {
     const resistance = this.checkQuantumResistance(currentAlgorithm);
-    
+
     if (resistance.resistant) {
       return {
         urgency: 'low',
         targetAlgorithm: currentAlgorithm,
         migrationPath: [],
-        timeline: 'No migration needed'
+        timeline: 'No migration needed',
       };
     } else {
       return {
@@ -387,9 +380,9 @@ export class QuantumResistantCrypto {
           'Enable hybrid mode',
           'Generate quantum-resistant keys',
           'Migrate existing data gradually',
-          'Phase out classical-only algorithms'
+          'Phase out classical-only algorithms',
         ],
-        timeline: '1-2 years'
+        timeline: '1-2 years',
       };
     }
   }

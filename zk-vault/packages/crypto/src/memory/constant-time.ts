@@ -11,7 +11,6 @@
  * @security Prevents timing attacks by ensuring operations take constant time
  */
 export class ConstantTime {
-
   /**
    * Performs constant-time comparison of two byte arrays
    * @param a First byte array
@@ -22,16 +21,16 @@ export class ConstantTime {
   static compare(a: Uint8Array, b: Uint8Array): boolean {
     // Different lengths are not equal, but still take constant time
     let result = a.length ^ b.length;
-    
+
     // Compare all bytes, even if lengths differ
     const maxLength = Math.max(a.length, b.length);
-    
+
     for (let i = 0; i < maxLength; i++) {
       const byteA = i < a.length ? a[i] : 0;
       const byteB = i < b.length ? b[i] : 0;
       result |= byteA ^ byteB;
     }
-    
+
     return result === 0;
   }
 
@@ -46,7 +45,7 @@ export class ConstantTime {
     const encoder = new TextEncoder();
     const bytesA = encoder.encode(a);
     const bytesB = encoder.encode(b);
-    
+
     return this.compare(bytesA, bytesB);
   }
 
@@ -61,7 +60,7 @@ export class ConstantTime {
   static select(condition: number, valueIfTrue: number, valueIfFalse: number): number {
     // Ensure condition is 0 or 1
     const mask = (condition & 1) - 1; // 0 becomes -1 (0xFFFFFFFF), 1 becomes 0
-    
+
     return (valueIfFalse & mask) | (valueIfTrue & ~mask);
   }
 
@@ -81,14 +80,14 @@ export class ConstantTime {
     if (arrayIfTrue.length !== arrayIfFalse.length) {
       throw new Error('Arrays must have the same length for constant-time selection');
     }
-    
+
     const result = new Uint8Array(arrayIfTrue.length);
     const mask = (condition & 1) - 1; // 0 becomes -1, 1 becomes 0
-    
+
     for (let i = 0; i < result.length; i++) {
       result[i] = (arrayIfFalse[i] & mask) | (arrayIfTrue[i] & ~mask);
     }
-    
+
     return result;
   }
 
@@ -99,17 +98,13 @@ export class ConstantTime {
    * @param condition Copy condition (0 or 1)
    * @security Copy operation takes constant time regardless of condition
    */
-  static conditionalCopy(
-    source: Uint8Array,
-    destination: Uint8Array,
-    condition: number
-  ): void {
+  static conditionalCopy(source: Uint8Array, destination: Uint8Array, condition: number): void {
     if (source.length !== destination.length) {
       throw new Error('Arrays must have the same length for constant-time copy');
     }
-    
+
     const mask = (condition & 1) - 1; // 0 becomes -1, 1 becomes 0
-    
+
     for (let i = 0; i < source.length; i++) {
       destination[i] = (destination[i] & mask) | (source[i] & ~mask);
     }
@@ -125,15 +120,15 @@ export class ConstantTime {
   static indexOf(array: Uint8Array, target: number): number {
     let foundIndex = -1;
     let found = 0;
-    
+
     for (let i = 0; i < array.length; i++) {
       const isMatch = (array[i] ^ target) === 0 ? 1 : 0;
       const isFirstMatch = isMatch & (found ^ 1);
-      
+
       foundIndex = this.select(isFirstMatch, i, foundIndex);
       found |= isMatch;
     }
-    
+
     return foundIndex;
   }
 
@@ -146,12 +141,12 @@ export class ConstantTime {
    */
   static contains(array: Uint8Array, target: number): boolean {
     let found = 0;
-    
+
     for (let i = 0; i < array.length; i++) {
       const isMatch = (array[i] ^ target) === 0 ? 1 : 0;
       found |= isMatch;
     }
-    
+
     return found === 1;
   }
 
@@ -166,13 +161,14 @@ export class ConstantTime {
     // Simple constant-time modular reduction
     // Note: This is a simplified implementation for demonstration
     let result = value;
-    
+
     // Perform reduction in constant time
-    for (let i = 0; i < 32; i++) { // Assume 32-bit values
+    for (let i = 0; i < 32; i++) {
+      // Assume 32-bit values
       const needsReduction = result >= modulus ? 1 : 0;
       result = this.select(needsReduction, result - modulus, result);
     }
-    
+
     return result;
   }
 
@@ -187,7 +183,7 @@ export class ConstantTime {
   static conditionalSwap(a: number, b: number, condition: number): [number, number] {
     const mask = (condition & 1) - 1; // 0 becomes -1, 1 becomes 0
     const diff = (a ^ b) & ~mask;
-    
+
     return [a ^ diff, b ^ diff];
   }
 
@@ -198,17 +194,13 @@ export class ConstantTime {
    * @param condition Swap condition (0 or 1)
    * @security Swap takes constant time regardless of condition
    */
-  static conditionalSwapArrays(
-    a: Uint8Array,
-    b: Uint8Array,
-    condition: number
-  ): void {
+  static conditionalSwapArrays(a: Uint8Array, b: Uint8Array, condition: number): void {
     if (a.length !== b.length) {
       throw new Error('Arrays must have the same length for constant-time swap');
     }
-    
+
     const mask = (condition & 1) - 1; // 0 becomes -1, 1 becomes 0
-    
+
     for (let i = 0; i < a.length; i++) {
       const diff = (a[i] ^ b[i]) & ~mask;
       a[i] ^= diff;
@@ -223,17 +215,14 @@ export class ConstantTime {
    * @returns True if timing is consistent, false otherwise
    * @security Helps detect timing vulnerabilities in implementations
    */
-  static validateConstantTime(
-    operation: () => void,
-    iterations: number = 1000
-  ): boolean {
+  static validateConstantTime(operation: () => void, iterations: number = 1000): boolean {
     const timings: number[] = [];
-    
+
     // Warm up
     for (let i = 0; i < 10; i++) {
       operation();
     }
-    
+
     // Measure timings
     for (let i = 0; i < iterations; i++) {
       const start = performance.now();
@@ -241,15 +230,16 @@ export class ConstantTime {
       const end = performance.now();
       timings.push(end - start);
     }
-    
+
     // Calculate statistics
     const mean = timings.reduce((sum, time) => sum + time, 0) / timings.length;
-    const variance = timings.reduce((sum, time) => sum + Math.pow(time - mean, 2), 0) / timings.length;
+    const variance =
+      timings.reduce((sum, time) => sum + Math.pow(time - mean, 2), 0) / timings.length;
     const stdDev = Math.sqrt(variance);
-    
+
     // Check if timing is consistent (low coefficient of variation)
     const coefficientOfVariation = stdDev / mean;
-    
+
     // Consider timing constant if coefficient of variation is below threshold
     return coefficientOfVariation < 0.1; // 10% threshold
   }
@@ -261,14 +251,14 @@ export class ConstantTime {
    */
   static secureClear(data: Uint8Array): void {
     // Multiple passes with different patterns
-    const patterns = [0x00, 0xFF, 0xAA, 0x55];
-    
+    const patterns = [0x00, 0xff, 0xaa, 0x55];
+
     for (const pattern of patterns) {
       for (let i = 0; i < data.length; i++) {
         data[i] = pattern;
       }
     }
-    
+
     // Final pass with random data
     if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
       crypto.getRandomValues(data);

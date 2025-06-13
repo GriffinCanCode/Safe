@@ -5,10 +5,7 @@
  * @security Post-quantum cryptographic algorithm resistant to quantum attacks
  */
 
-import { 
-  CryptoOperationResult,
-  POST_QUANTUM 
-} from '@zk-vault/shared';
+import { CryptoOperationResult, POST_QUANTUM } from '@zk-vault/shared';
 
 /**
  * Kyber key pair structure
@@ -38,7 +35,6 @@ export interface KyberEncapsulation {
  * @security Resistant to both classical and quantum attacks
  */
 export class KyberKEM {
-  
   /**
    * Generates a Kyber key pair
    * @returns Key pair with public and private keys
@@ -48,10 +44,8 @@ export class KyberKEM {
       // This is a placeholder implementation
       // In production, this would use a proper Kyber implementation
       // such as the NIST PQC reference implementation
-      
-      const publicKey = crypto.getRandomValues(
-        new Uint8Array(POST_QUANTUM.KYBER.PUBLIC_KEY_SIZE)
-      );
+
+      const publicKey = crypto.getRandomValues(new Uint8Array(POST_QUANTUM.KYBER.PUBLIC_KEY_SIZE));
       const privateKey = crypto.getRandomValues(
         new Uint8Array(POST_QUANTUM.KYBER.PRIVATE_KEY_SIZE)
       );
@@ -60,15 +54,14 @@ export class KyberKEM {
         success: true,
         data: {
           publicKey,
-          privateKey
-        }
+          privateKey,
+        },
       };
-
     } catch (error) {
       return {
         success: false,
         error: `Kyber key generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'KYBER_KEYGEN_FAILED'
+        errorCode: 'KYBER_KEYGEN_FAILED',
       };
     }
   }
@@ -87,35 +80,32 @@ export class KyberKEM {
         return {
           success: false,
           error: `Invalid public key size. Expected ${POST_QUANTUM.KYBER.PUBLIC_KEY_SIZE} bytes`,
-          errorCode: 'INVALID_PUBLIC_KEY'
+          errorCode: 'INVALID_PUBLIC_KEY',
         };
       }
 
       // This is a placeholder implementation
       // In production, this would use the actual Kyber encapsulation algorithm
-      const ciphertext = crypto.getRandomValues(
-        new Uint8Array(POST_QUANTUM.KYBER.CIPHERTEXT_SIZE)
-      );
+      const ciphertext = crypto.getRandomValues(new Uint8Array(POST_QUANTUM.KYBER.CIPHERTEXT_SIZE));
       const sharedSecret = crypto.getRandomValues(
         new Uint8Array(POST_QUANTUM.KYBER.SHARED_SECRET_SIZE)
       );
 
       // In real Kyber, the shared secret would be deterministically derived
       // from the public key and randomness used in encapsulation
-      
+
       return {
         success: true,
         data: {
           ciphertext,
-          sharedSecret
-        }
+          sharedSecret,
+        },
       };
-
     } catch (error) {
       return {
         success: false,
         error: `Kyber encapsulation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'KYBER_ENCAPSULATION_FAILED'
+        errorCode: 'KYBER_ENCAPSULATION_FAILED',
       };
     }
   }
@@ -136,7 +126,7 @@ export class KyberKEM {
         return {
           success: false,
           error: `Invalid ciphertext size. Expected ${POST_QUANTUM.KYBER.CIPHERTEXT_SIZE} bytes`,
-          errorCode: 'INVALID_CIPHERTEXT'
+          errorCode: 'INVALID_CIPHERTEXT',
         };
       }
 
@@ -144,7 +134,7 @@ export class KyberKEM {
         return {
           success: false,
           error: `Invalid private key size. Expected ${POST_QUANTUM.KYBER.PRIVATE_KEY_SIZE} bytes`,
-          errorCode: 'INVALID_PRIVATE_KEY'
+          errorCode: 'INVALID_PRIVATE_KEY',
         };
       }
 
@@ -156,17 +146,16 @@ export class KyberKEM {
 
       // In real Kyber, the shared secret would be deterministically computed
       // from the ciphertext and private key
-      
+
       return {
         success: true,
-        data: sharedSecret
+        data: sharedSecret,
       };
-
     } catch (error) {
       return {
         success: false,
         error: `Kyber decapsulation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'KYBER_DECAPSULATION_FAILED'
+        errorCode: 'KYBER_DECAPSULATION_FAILED',
       };
     }
   }
@@ -222,12 +211,10 @@ export class KyberKEM {
    * @returns Serialized key pair
    */
   static serializeKeyPair(keyPair: KyberKeyPair): string {
-    const combined = new Uint8Array(
-      keyPair.publicKey.length + keyPair.privateKey.length
-    );
+    const combined = new Uint8Array(keyPair.publicKey.length + keyPair.privateKey.length);
     combined.set(keyPair.publicKey, 0);
     combined.set(keyPair.privateKey, keyPair.publicKey.length);
-    
+
     return btoa(String.fromCharCode(...combined));
   }
 
@@ -239,17 +226,18 @@ export class KyberKEM {
   static deserializeKeyPair(serialized: string): CryptoOperationResult<KyberKeyPair> {
     try {
       const combined = new Uint8Array(
-        atob(serialized).split('').map(c => c.charCodeAt(0))
+        atob(serialized)
+          .split('')
+          .map(c => c.charCodeAt(0))
       );
-      
-      const expectedSize = POST_QUANTUM.KYBER.PUBLIC_KEY_SIZE + 
-                          POST_QUANTUM.KYBER.PRIVATE_KEY_SIZE;
-      
+
+      const expectedSize = POST_QUANTUM.KYBER.PUBLIC_KEY_SIZE + POST_QUANTUM.KYBER.PRIVATE_KEY_SIZE;
+
       if (combined.length !== expectedSize) {
         return {
           success: false,
           error: 'Invalid serialized key pair size',
-          errorCode: 'INVALID_SERIALIZED_KEYPAIR'
+          errorCode: 'INVALID_SERIALIZED_KEYPAIR',
         };
       }
 
@@ -260,15 +248,14 @@ export class KyberKEM {
         success: true,
         data: {
           publicKey,
-          privateKey
-        }
+          privateKey,
+        },
       };
-
     } catch (error) {
       return {
         success: false,
         error: `Key pair deserialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'KEYPAIR_DESERIALIZATION_FAILED'
+        errorCode: 'KEYPAIR_DESERIALIZATION_FAILED',
       };
     }
   }

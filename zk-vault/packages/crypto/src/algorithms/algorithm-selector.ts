@@ -28,7 +28,7 @@ export class AlgorithmSelector {
         // Test AES performance to detect hardware acceleration
         const testData = new Uint8Array(1024);
         crypto.getRandomValues(testData);
-        
+
         const key = await window.crypto.subtle.generateKey(
           { name: 'AES-GCM', length: 256 },
           false,
@@ -36,25 +36,20 @@ export class AlgorithmSelector {
         );
 
         const iv = crypto.getRandomValues(new Uint8Array(12));
-        
+
         // Benchmark AES-GCM performance
         const start = performance.now();
         for (let i = 0; i < 100; i++) {
-          await window.crypto.subtle.encrypt(
-            { name: 'AES-GCM', iv },
-            key,
-            testData
-          );
+          await window.crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, testData);
         }
         const duration = performance.now() - start;
-        
+
         // If AES is very fast, likely hardware accelerated
         this.hasAESNI = duration < 50; // Less than 50ms for 100 operations
-        
-             } else {
-         // Non-browser environment - assume no hardware acceleration
-         this.hasAESNI = false;
-       }
+      } else {
+        // Non-browser environment - assume no hardware acceleration
+        this.hasAESNI = false;
+      }
     } catch (error) {
       console.warn('Hardware acceleration detection failed:', error);
       this.hasAESNI = false;
@@ -69,20 +64,20 @@ export class AlgorithmSelector {
    */
   static async selectOptimalAlgorithm(): Promise<AlgorithmSelection> {
     const hasHardwareAcceleration = await this.detectHardwareAcceleration();
-    
+
     if (hasHardwareAcceleration) {
       return {
         algorithm: 'AES-256-GCM',
         reason: 'hardware-acceleration',
         hardwareAccelerated: true,
-        performanceScore: await this.benchmarkAlgorithm('AES-256-GCM')
+        performanceScore: await this.benchmarkAlgorithm('AES-256-GCM'),
       };
     } else {
       return {
         algorithm: 'XChaCha20-Poly1305',
         reason: 'software-fallback',
         hardwareAccelerated: false,
-        performanceScore: await this.benchmarkAlgorithm('XChaCha20-Poly1305')
+        performanceScore: await this.benchmarkAlgorithm('XChaCha20-Poly1305'),
       };
     }
   }
@@ -92,7 +87,9 @@ export class AlgorithmSelector {
    * @param algorithm Algorithm to benchmark
    * @returns Performance score (operations per second)
    */
-  private static async benchmarkAlgorithm(algorithm: 'AES-256-GCM' | 'XChaCha20-Poly1305'): Promise<number> {
+  private static async benchmarkAlgorithm(
+    algorithm: 'AES-256-GCM' | 'XChaCha20-Poly1305'
+  ): Promise<number> {
     const cacheKey = algorithm;
     if (this.performanceCache.has(cacheKey)) {
       return this.performanceCache.get(cacheKey)!;
@@ -101,7 +98,7 @@ export class AlgorithmSelector {
     try {
       const testData = new Uint8Array(1024);
       crypto.getRandomValues(testData);
-      
+
       const iterations = 100;
       let totalTime = 0;
 
@@ -114,20 +111,16 @@ export class AlgorithmSelector {
             ['encrypt']
           );
           const iv = crypto.getRandomValues(new Uint8Array(12));
-          
+
           const start = performance.now();
           for (let i = 0; i < iterations; i++) {
-            await window.crypto.subtle.encrypt(
-              { name: 'AES-GCM', iv },
-              key,
-              testData
-            );
+            await window.crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, testData);
           }
           totalTime = performance.now() - start;
-                 } else {
-           // Non-browser environment - use estimated performance
-           totalTime = 60; // Estimated time for AES-256-GCM without hardware acceleration
-         }
+        } else {
+          // Non-browser environment - use estimated performance
+          totalTime = 60; // Estimated time for AES-256-GCM without hardware acceleration
+        }
       } else {
         // ChaCha20-Poly1305 would require a library like libsodium
         // For now, estimate based on typical performance characteristics
@@ -137,7 +130,6 @@ export class AlgorithmSelector {
       const score = Math.round((iterations / totalTime) * 1000); // Operations per second
       this.performanceCache.set(cacheKey, score);
       return score;
-      
     } catch (error) {
       console.warn(`Benchmark failed for ${algorithm}:`, error);
       return 0;
@@ -154,7 +146,7 @@ export class AlgorithmSelector {
       algorithm,
       reason: 'user-preference',
       hardwareAccelerated: algorithm === 'AES-256-GCM',
-      performanceScore: 0
+      performanceScore: 0,
     };
   }
 

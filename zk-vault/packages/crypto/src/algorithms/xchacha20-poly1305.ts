@@ -6,12 +6,12 @@
  * @reference https://tools.ietf.org/html/draft-irtf-cfrg-xchacha-03
  */
 
-import { 
-  EncryptionResult, 
-  EncryptionContext, 
+import {
+  EncryptionResult,
+  EncryptionContext,
   DecryptionContext,
   CryptoOperationResult,
-  XCHACHA20_PARAMS 
+  XCHACHA20_PARAMS,
 } from '@zk-vault/shared';
 
 // Dynamic imports for crypto libraries
@@ -47,7 +47,6 @@ async function initializeCrypto() {
  * @security Uses libsodium or StableLib for production-grade implementation
  */
 export class XChaCha20Poly1305Cipher {
-
   /**
    * Encrypts data using XChaCha20-Poly1305
    * @param plaintext Data to encrypt
@@ -61,7 +60,7 @@ export class XChaCha20Poly1305Cipher {
     context?: EncryptionContext
   ): Promise<CryptoOperationResult<EncryptionResult>> {
     const startTime = performance.now();
-    
+
     try {
       // Initialize crypto libraries if not already done
       await initializeCrypto();
@@ -71,7 +70,7 @@ export class XChaCha20Poly1305Cipher {
         return {
           success: false,
           error: 'Invalid key length. XChaCha20-Poly1305 requires 32-byte key',
-          errorCode: 'INVALID_KEY_LENGTH'
+          errorCode: 'INVALID_KEY_LENGTH',
         };
       }
 
@@ -79,13 +78,13 @@ export class XChaCha20Poly1305Cipher {
         return {
           success: false,
           error: 'Cannot encrypt empty data',
-          errorCode: 'INVALID_DATA_SIZE'
+          errorCode: 'INVALID_DATA_SIZE',
         };
       }
 
       // Generate random 24-byte nonce (XChaCha20 extended nonce)
       const nonce = this.generateNonce();
-      
+
       // Prepare additional authenticated data if provided
       const additionalData = context?.additionalData;
 
@@ -93,25 +92,15 @@ export class XChaCha20Poly1305Cipher {
 
       // Use libsodium if available (best implementation)
       if (libsodium) {
-        encryptedData = await this.encryptWithLibsodium(
-          plaintext,
-          key,
-          nonce,
-          additionalData
-        );
+        encryptedData = await this.encryptWithLibsodium(plaintext, key, nonce, additionalData);
       } else if (stableLibXChaCha20) {
         // Use StableLib as fallback
-        encryptedData = await this.encryptWithStableLib(
-          plaintext,
-          key,
-          nonce,
-          additionalData
-        );
+        encryptedData = await this.encryptWithStableLib(plaintext, key, nonce, additionalData);
       } else {
         return {
           success: false,
           error: 'No XChaCha20-Poly1305 implementation available',
-          errorCode: 'ALGORITHM_NOT_SUPPORTED'
+          errorCode: 'ALGORITHM_NOT_SUPPORTED',
         };
       }
 
@@ -124,7 +113,7 @@ export class XChaCha20Poly1305Cipher {
         nonce,
         authTag,
         algorithm: 'XChaCha20-Poly1305',
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
 
       const endTime = performance.now();
@@ -135,15 +124,14 @@ export class XChaCha20Poly1305Cipher {
         metrics: {
           duration: endTime - startTime,
           memoryUsed: plaintext.length + encryptedData.length,
-          cpuUsage: 0 // Not measurable in browser
-        }
+          cpuUsage: 0, // Not measurable in browser
+        },
       };
-
     } catch (error) {
       return {
         success: false,
         error: `XChaCha20-Poly1305 encryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'ENCRYPTION_FAILED'
+        errorCode: 'ENCRYPTION_FAILED',
       };
     }
   }
@@ -171,7 +159,7 @@ export class XChaCha20Poly1305Cipher {
         return {
           success: false,
           error: 'Invalid key length. XChaCha20-Poly1305 requires 32-byte key',
-          errorCode: 'INVALID_KEY_LENGTH'
+          errorCode: 'INVALID_KEY_LENGTH',
         };
       }
 
@@ -179,7 +167,7 @@ export class XChaCha20Poly1305Cipher {
         return {
           success: false,
           error: 'Invalid algorithm. Expected XChaCha20-Poly1305',
-          errorCode: 'ALGORITHM_NOT_SUPPORTED'
+          errorCode: 'ALGORITHM_NOT_SUPPORTED',
         };
       }
 
@@ -190,7 +178,7 @@ export class XChaCha20Poly1305Cipher {
           return {
             success: false,
             error: 'Encrypted data is too old',
-            errorCode: 'DATA_EXPIRED'
+            errorCode: 'DATA_EXPIRED',
           };
         }
       }
@@ -226,7 +214,7 @@ export class XChaCha20Poly1305Cipher {
         return {
           success: false,
           error: 'No XChaCha20-Poly1305 implementation available',
-          errorCode: 'ALGORITHM_NOT_SUPPORTED'
+          errorCode: 'ALGORITHM_NOT_SUPPORTED',
         };
       }
 
@@ -238,15 +226,14 @@ export class XChaCha20Poly1305Cipher {
         metrics: {
           duration: endTime - startTime,
           memoryUsed: combinedData.length + decryptedData.length,
-          cpuUsage: 0
-        }
+          cpuUsage: 0,
+        },
       };
-
     } catch (error) {
       return {
         success: false,
         error: `XChaCha20-Poly1305 decryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'DECRYPTION_FAILED'
+        errorCode: 'DECRYPTION_FAILED',
       };
     }
   }
@@ -284,7 +271,9 @@ export class XChaCha20Poly1305Cipher {
         );
       }
     } catch (error) {
-      throw new Error(`Libsodium encryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Libsodium encryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -321,7 +310,9 @@ export class XChaCha20Poly1305Cipher {
         );
       }
     } catch (error) {
-      throw new Error(`Libsodium decryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Libsodium decryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -343,7 +334,9 @@ export class XChaCha20Poly1305Cipher {
       const cipher = new stableLibXChaCha20(key);
       return cipher.seal(nonce, plaintext, additionalData);
     } catch (error) {
-      throw new Error(`StableLib encryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `StableLib encryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -364,14 +357,16 @@ export class XChaCha20Poly1305Cipher {
     try {
       const cipher = new stableLibXChaCha20(key);
       const result = cipher.open(nonce, ciphertext, additionalData);
-      
+
       if (result === null) {
         throw new Error('Authentication failed');
       }
-      
+
       return result;
     } catch (error) {
-      throw new Error(`StableLib decryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `StableLib decryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 

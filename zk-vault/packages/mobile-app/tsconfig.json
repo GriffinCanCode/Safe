@@ -1,0 +1,31 @@
+{
+  "extends": "../../tools/config/tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@shared/*": ["../shared/src/*"],
+      "@crypto/*": ["../crypto/src/*"],
+      "@screens/*": ["./src/screens/*"],
+      "@components/*": ["./src/components/*"],
+      "@navigation/*": ["./src/navigation/*"],
+      "@hooks/*": ["./src/hooks/*"],
+      "@utils/*": ["./src/utils/*"],
+      "@services/*": ["./src/services/*"],
+      "@types/*": ["./src/types/*"],
+      "@assets/*": ["./src/assets/*"]
+    },
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": ["src/**/*", "types/**/*"],
+  "exclude": ["dist", "node_modules", "**/*.test.ts", "**/*.spec.ts"],
+  "references": [
+    {
+      "path": "../shared"
+    },
+    {
+      "path": "../crypto"
+    }
+  ]
+}

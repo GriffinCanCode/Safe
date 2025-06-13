@@ -5,13 +5,13 @@
  * @security Provides protection against both classical and quantum attacks
  */
 
-import { 
+import {
   EncryptionResult,
   EncryptionContext,
   DecryptionContext,
   CryptoOperationResult,
   PostQuantumConfig,
-  POST_QUANTUM
+  POST_QUANTUM,
 } from '@zk-vault/shared';
 
 import { AESGCMCipher } from '../algorithms/aes-gcm';
@@ -55,7 +55,6 @@ export interface HybridKeyPair {
  * @security Ensures security against both current and future quantum attacks
  */
 export class HybridEncryption {
-
   /**
    * Generates a hybrid key pair
    * @returns Hybrid key pair with classical and post-quantum components
@@ -64,14 +63,14 @@ export class HybridEncryption {
     try {
       // Generate classical key (256-bit for AES)
       const classicalKey = crypto.getRandomValues(new Uint8Array(32));
-      
+
       // Generate post-quantum key pair
       const pqKeyPairResult = await KyberKEM.generateKeyPair();
       if (!pqKeyPairResult.success || !pqKeyPairResult.data) {
         return {
           success: false,
           error: pqKeyPairResult.error || 'Post-quantum key generation failed',
-          errorCode: pqKeyPairResult.errorCode || 'PQ_KEYGEN_FAILED'
+          errorCode: pqKeyPairResult.errorCode || 'PQ_KEYGEN_FAILED',
         };
       }
 
@@ -79,15 +78,14 @@ export class HybridEncryption {
         success: true,
         data: {
           classicalKey,
-          postQuantumKeyPair: pqKeyPairResult.data
-        }
+          postQuantumKeyPair: pqKeyPairResult.data,
+        },
       };
-
     } catch (error) {
       return {
         success: false,
         error: `Hybrid key generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'HYBRID_KEYGEN_FAILED'
+        errorCode: 'HYBRID_KEYGEN_FAILED',
       };
     }
   }
@@ -110,14 +108,14 @@ export class HybridEncryption {
       const finalConfig = {
         enableHybrid: config?.enableHybrid ?? POST_QUANTUM.HYBRID_MODE.ENABLED,
         classicalWeight: config?.classicalAlgorithm ? POST_QUANTUM.HYBRID_MODE.CLASSICAL_WEIGHT : 1,
-        quantumWeight: POST_QUANTUM.HYBRID_MODE.QUANTUM_WEIGHT
+        quantumWeight: POST_QUANTUM.HYBRID_MODE.QUANTUM_WEIGHT,
       };
 
       if (!finalConfig.enableHybrid) {
         return {
           success: false,
           error: 'Hybrid encryption is disabled',
-          errorCode: 'HYBRID_DISABLED'
+          errorCode: 'HYBRID_DISABLED',
         };
       }
 
@@ -125,17 +123,13 @@ export class HybridEncryption {
       const ephemeralKey = crypto.getRandomValues(new Uint8Array(32));
 
       // Step 2: Encrypt data with classical algorithm
-      const classicalResult = await AESGCMCipher.encrypt(
-        plaintext,
-        ephemeralKey,
-        context
-      );
+      const classicalResult = await AESGCMCipher.encrypt(plaintext, ephemeralKey, context);
 
       if (!classicalResult.success || !classicalResult.data) {
         return {
           success: false,
           error: classicalResult.error || 'Classical encryption failed',
-          errorCode: classicalResult.errorCode || 'CLASSICAL_ENCRYPTION_FAILED'
+          errorCode: classicalResult.errorCode || 'CLASSICAL_ENCRYPTION_FAILED',
         };
       }
 
@@ -145,7 +139,7 @@ export class HybridEncryption {
         return {
           success: false,
           error: kemResult.error || 'Post-quantum encapsulation failed',
-          errorCode: kemResult.errorCode || 'PQ_ENCAPSULATION_FAILED'
+          errorCode: kemResult.errorCode || 'PQ_ENCAPSULATION_FAILED',
         };
       }
 
@@ -168,7 +162,7 @@ export class HybridEncryption {
         return {
           success: false,
           error: finalResult.error || 'Final encryption failed',
-          errorCode: finalResult.errorCode || 'FINAL_ENCRYPTION_FAILED'
+          errorCode: finalResult.errorCode || 'FINAL_ENCRYPTION_FAILED',
         };
       }
 
@@ -178,22 +172,21 @@ export class HybridEncryption {
         keyInfo: {
           classicalWeight: finalConfig.classicalWeight,
           quantumWeight: finalConfig.quantumWeight,
-          algorithm: 'Hybrid-AES-Kyber'
+          algorithm: 'Hybrid-AES-Kyber',
         },
         algorithm: 'Hybrid-AES-Kyber',
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
 
       return {
         success: true,
-        data: hybridResult
+        data: hybridResult,
       };
-
     } catch (error) {
       return {
         success: false,
         error: `Hybrid encryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'HYBRID_ENCRYPTION_FAILED'
+        errorCode: 'HYBRID_ENCRYPTION_FAILED',
       };
     }
   }
@@ -221,7 +214,7 @@ export class HybridEncryption {
         return {
           success: false,
           error: sharedSecretResult.error || 'Post-quantum decapsulation failed',
-          errorCode: sharedSecretResult.errorCode || 'PQ_DECAPSULATION_FAILED'
+          errorCode: sharedSecretResult.errorCode || 'PQ_DECAPSULATION_FAILED',
         };
       }
 
@@ -238,17 +231,13 @@ export class HybridEncryption {
       );
 
       // Step 4: Decrypt the outer layer
-      const outerResult = await AESGCMCipher.decrypt(
-        hybridData.classical,
-        combinedKey,
-        context
-      );
+      const outerResult = await AESGCMCipher.decrypt(hybridData.classical, combinedKey, context);
 
       if (!outerResult.success || !outerResult.data) {
         return {
           success: false,
           error: outerResult.error || 'Outer decryption failed',
-          errorCode: outerResult.errorCode || 'OUTER_DECRYPTION_FAILED'
+          errorCode: outerResult.errorCode || 'OUTER_DECRYPTION_FAILED',
         };
       }
 
@@ -258,33 +247,30 @@ export class HybridEncryption {
         nonce: hybridData.classical.nonce,
         algorithm: 'AES-256-GCM',
         timestamp: hybridData.timestamp,
-        ...(hybridData.classical.authTag && { authTag: hybridData.classical.authTag })
+        ...(hybridData.classical.authTag && {
+          authTag: hybridData.classical.authTag,
+        }),
       };
 
-      const finalResult = await AESGCMCipher.decrypt(
-        innerEncrypted,
-        ephemeralKey,
-        context
-      );
+      const finalResult = await AESGCMCipher.decrypt(innerEncrypted, ephemeralKey, context);
 
       if (!finalResult.success || !finalResult.data) {
         return {
           success: false,
           error: finalResult.error || 'Inner decryption failed',
-          errorCode: finalResult.errorCode || 'INNER_DECRYPTION_FAILED'
+          errorCode: finalResult.errorCode || 'INNER_DECRYPTION_FAILED',
         };
       }
 
       return {
         success: true,
-        data: finalResult.data
+        data: finalResult.data,
       };
-
     } catch (error) {
       return {
         success: false,
         error: `Hybrid decryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'HYBRID_DECRYPTION_FAILED'
+        errorCode: 'HYBRID_DECRYPTION_FAILED',
       };
     }
   }
@@ -311,24 +297,18 @@ export class HybridEncryption {
       combined.set(quantumKey, classicalKey.length);
 
       // Use HKDF to derive the final key
-      const keyMaterial = await window.crypto.subtle.importKey(
-        'raw',
-        combined,
-        'HKDF',
-        false,
-        ['deriveBits']
-      );
+      const keyMaterial = await window.crypto.subtle.importKey('raw', combined, 'HKDF', false, [
+        'deriveBits',
+      ]);
 
-      const info = new TextEncoder().encode(
-        `hybrid-key-${classicalWeight}-${quantumWeight}`
-      );
+      const info = new TextEncoder().encode(`hybrid-key-${classicalWeight}-${quantumWeight}`);
 
       const derivedBits = await window.crypto.subtle.deriveBits(
         {
           name: 'HKDF',
           hash: 'SHA-256',
           salt: new Uint8Array(32), // Zero salt for deterministic derivation
-          info: info
+          info: info,
         },
         keyMaterial,
         256 // 32 bytes
@@ -339,8 +319,7 @@ export class HybridEncryption {
       // Fallback: simple XOR combination
       const result = new Uint8Array(32);
       for (let i = 0; i < 32; i++) {
-        result[i] = classicalKey[i % classicalKey.length] ^ 
-                   quantumKey[i % quantumKey.length];
+        result[i] = classicalKey[i % classicalKey.length] ^ quantumKey[i % quantumKey.length];
       }
       return result;
     }
@@ -391,7 +370,7 @@ export class HybridEncryption {
     return {
       classical: 'AES-256 (128-bit security)',
       postQuantum: 'Kyber-768 (192-bit security)',
-      combined: 'Hybrid (192-bit quantum-resistant security)'
+      combined: 'Hybrid (192-bit quantum-resistant security)',
     };
   }
 }

@@ -28,12 +28,18 @@ const mockCrypto = {
       }
       return hash.buffer;
     },
-    importKey: async (_format: string, _keyData: ArrayBuffer, algorithm: any, extractable: boolean, keyUsages: string[]) => {
+    importKey: async (
+      _format: string,
+      _keyData: ArrayBuffer,
+      algorithm: any,
+      extractable: boolean,
+      keyUsages: string[]
+    ) => {
       return {
         type: 'secret',
         extractable,
         algorithm,
-        usages: keyUsages
+        usages: keyUsages,
       } as CryptoKey;
     },
     exportKey: async (_format: string, _key: CryptoKey) => {
@@ -68,32 +74,32 @@ const mockCrypto = {
         type: 'secret',
         extractable,
         algorithm,
-        usages: keyUsages
+        usages: keyUsages,
       } as CryptoKey;
-    }
-  }
+    },
+  },
 };
 
 // Setup global crypto mock
 Object.defineProperty(global, 'crypto', {
   value: mockCrypto,
-  writable: true
+  writable: true,
 });
 
 // Mock performance.now for consistent timing
 Object.defineProperty(global, 'performance', {
   value: {
-    now: () => Date.now()
+    now: () => Date.now(),
   },
-  writable: true
+  writable: true,
 });
 
 // Mock window.crypto for browser environment tests
 Object.defineProperty(global, 'window', {
   value: {
-    crypto: mockCrypto
+    crypto: mockCrypto,
   },
-  writable: true
+  writable: true,
 });
 
 // Test utilities
@@ -153,11 +159,11 @@ export const TestUtils = {
       metrics: {
         duration: 100,
         memoryUsed: 1024,
-        cpuUsage: 0
-      }
+        cpuUsage: 0,
+      },
     };
-  }
+  },
 };
 
 // Global test timeout
-jest.setTimeout(30000); 
+jest.setTimeout(30000);

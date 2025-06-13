@@ -6,11 +6,11 @@
  * @reference https://tools.ietf.org/html/rfc9106
  */
 
-import { 
-  KeyDerivationParams, 
+import {
+  KeyDerivationParams,
   KeyDerivationResult,
   CryptoOperationResult,
-  ARGON2_PARAMS 
+  ARGON2_PARAMS,
 } from '@zk-vault/shared';
 
 // Dynamic imports for optional dependencies
@@ -26,7 +26,7 @@ async function initializeCrypto() {
     } catch (error) {
       console.warn('Argon2 not available, will use PBKDF2 fallback');
     }
-    
+
     try {
       nodeCrypto = await import('crypto');
     } catch (error) {
@@ -42,17 +42,16 @@ async function initializeCrypto() {
  * @performance Balances security and performance for production use
  */
 export class Argon2idDerivation {
-
   /**
    * OWASP 2025 compliant default parameters for Argon2id
    * @security These parameters provide strong protection against GPU attacks
    */
   private static readonly DEFAULT_OPTIONS = {
-    time: ARGON2_PARAMS.TIME,           // 3 iterations (OWASP 2025)
-    memory: ARGON2_PARAMS.MEMORY,       // 19456 KiB (~19 MB)
+    time: ARGON2_PARAMS.TIME, // 3 iterations (OWASP 2025)
+    memory: ARGON2_PARAMS.MEMORY, // 19456 KiB (~19 MB)
     parallelism: ARGON2_PARAMS.PARALLELISM, // 1 thread
-    hashLength: ARGON2_PARAMS.HASH_LENGTH,  // 32 bytes
-    saltLength: ARGON2_PARAMS.SALT_LENGTH   // 32 bytes
+    hashLength: ARGON2_PARAMS.HASH_LENGTH, // 32 bytes
+    saltLength: ARGON2_PARAMS.SALT_LENGTH, // 32 bytes
   };
 
   /**
@@ -83,7 +82,7 @@ export class Argon2idDerivation {
         time: options.time ?? this.DEFAULT_OPTIONS.time,
         memory: options.memory ?? this.DEFAULT_OPTIONS.memory,
         parallelism: options.parallelism ?? this.DEFAULT_OPTIONS.parallelism,
-        outputLength: options.outputLength ?? this.DEFAULT_OPTIONS.hashLength
+        outputLength: options.outputLength ?? this.DEFAULT_OPTIONS.hashLength,
       };
 
       // Validate parameters are within secure ranges
@@ -96,7 +95,9 @@ export class Argon2idDerivation {
         derivedKey = await this.deriveWithNativeArgon2(finalOptions);
       } else {
         // Fallback to PBKDF2 with increased iterations
-        console.warn('Argon2 not available, falling back to PBKDF2 with increased security parameters');
+        console.warn(
+          'Argon2 not available, falling back to PBKDF2 with increased security parameters'
+        );
         derivedKey = await this.deriveWithPBKDF2Fallback(finalOptions);
       }
 
@@ -107,7 +108,7 @@ export class Argon2idDerivation {
         key: derivedKey,
         salt,
         params: finalOptions,
-        derivationTime
+        derivationTime,
       };
 
       return {
@@ -116,15 +117,14 @@ export class Argon2idDerivation {
         metrics: {
           duration: derivationTime,
           memoryUsed: finalOptions.memory! * 1024, // Convert KiB to bytes
-          cpuUsage: 0 // Not measurable in browser
-        }
+          cpuUsage: 0, // Not measurable in browser
+        },
       };
-
     } catch (error) {
       return {
         success: false,
         error: `Argon2id key derivation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'KEY_DERIVATION_FAILED'
+        errorCode: 'KEY_DERIVATION_FAILED',
       };
     }
   }
@@ -148,12 +148,14 @@ export class Argon2idDerivation {
           parallelism: params.parallelism,
           hashLength: params.outputLength,
           salt: saltBuffer,
-          raw: true
+          raw: true,
         });
 
         return new Uint8Array(hash);
       } catch (error) {
-        throw new Error(`Native Argon2 derivation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw new Error(
+          `Native Argon2 derivation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
     } else {
       throw new Error('Argon2 library not available');
@@ -176,7 +178,7 @@ export class Argon2idDerivation {
         const derivedKey = await new Promise<any>((resolve, reject) => {
           // Convert Uint8Array to Buffer-like for Node.js
           const saltBuffer = Array.from(params.salt);
-          
+
           nodeCrypto.pbkdf2(
             params.password,
             saltBuffer,
@@ -192,7 +194,9 @@ export class Argon2idDerivation {
 
         return new Uint8Array(derivedKey);
       } catch (error) {
-        throw new Error(`Node.js PBKDF2 failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw new Error(
+          `Node.js PBKDF2 failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
     }
 
@@ -218,7 +222,7 @@ export class Argon2idDerivation {
           name: 'PBKDF2',
           salt: params.salt,
           iterations: iterations,
-          hash: 'SHA-256'
+          hash: 'SHA-256',
         },
         keyMaterial,
         params.outputLength! * 8
@@ -311,13 +315,13 @@ export class Argon2idDerivation {
   static estimateDerivationTime(params: Partial<KeyDerivationParams>): number {
     const time = params.time ?? this.DEFAULT_OPTIONS.time;
     const memory = params.memory ?? this.DEFAULT_OPTIONS.memory;
-    
+
     // Rough estimation based on typical hardware
     // Actual time varies significantly based on hardware
     const baseTime = 100; // Base time in ms
     const timeMultiplier = time * 50;
     const memoryMultiplier = (memory / 1024) * 2;
-    
+
     return baseTime + timeMultiplier + memoryMultiplier;
   }
 
@@ -326,13 +330,15 @@ export class Argon2idDerivation {
    * @param level Security level: 'interactive', 'sensitive', 'paranoid'
    * @returns Recommended parameters
    */
-  static getRecommendedParams(level: 'interactive' | 'sensitive' | 'paranoid'): Partial<KeyDerivationParams> {
+  static getRecommendedParams(
+    level: 'interactive' | 'sensitive' | 'paranoid'
+  ): Partial<KeyDerivationParams> {
     switch (level) {
       case 'interactive':
         return {
           time: 2,
           memory: 9728, // ~9.5 MB
-          parallelism: 1
+          parallelism: 1,
         };
       case 'sensitive':
         return this.DEFAULT_OPTIONS;
@@ -340,7 +346,7 @@ export class Argon2idDerivation {
         return {
           time: 5,
           memory: 38912, // ~38 MB
-          parallelism: 2
+          parallelism: 2,
         };
       default:
         return this.DEFAULT_OPTIONS;
@@ -360,7 +366,7 @@ export class Argon2idDerivation {
     // Check for obvious patterns (all zeros, all same byte)
     const firstByte = key[0];
     const allSame = key.every(byte => byte === firstByte);
-    
+
     return !allSame;
   }
 }

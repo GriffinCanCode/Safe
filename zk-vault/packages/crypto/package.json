@@ -16,7 +16,26 @@
     "test": "jest",
     "benchmark": "node dist/benchmarks/performance.js",
     "install-crypto": "node install-crypto-deps.js",
-    "install-crypto-deps": "node install-crypto-deps.js --install"
+    "install-crypto-deps": "node install-crypto-deps.js --install",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint:fix": "eslint src/ --ext .ts,.tsx,.js,.jsx --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,md}\"",
+    "dev:debug": "npm run dev -- --verbose",
+    "dev:https": "npm run dev",
+    "build:analyze": "cross-env ANALYZE=true npm run build",
+    "build:profile": "webpack --mode production --profile --json > webpack-stats.json",
+    "test:debug": "npm run test -- --no-coverage --verbose",
+    "test:ui": "npm run test -- --watch",
+    "quality:complexity": "npx ts-complex --threshold 10 src/",
+    "quality:deps": "npx depcheck && npm audit",
+    "quality:bundle": "npm run build:analyze",
+    "quality:all": "npm run lint && npm run type-check && npm run test && npm run quality:complexity",
+    "perf:lighthouse": "echo \"Lighthouse not available for this package\"",
+    "perf:bundle": "npm run build:analyze",
+    "deps:update": "npx npm-check-updates -u && npm install",
+    "deps:audit": "npm audit fix",
+    "clean:full": "npm run clean && rm -rf node_modules package-lock.json && npm install"
   },
   "dependencies": {
     "@zk-vault/shared": "^0.1.0"

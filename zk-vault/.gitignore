@@ -7,9 +7,7 @@
 *.cert
 *.env
 .env*
-*password*
 *secret*
-*credential*
 id_rsa
 id_dsa
 
@@ -42,9 +40,9 @@ logs/
 Thumbs.db
 
 # Additional patterns from scan
-*auth*
-*config*.json
 *token*
+*package-lock*
+*.tsbuildinfo*
 *~
 .gif
 .js.map

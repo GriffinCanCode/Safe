@@ -5,13 +5,13 @@
  * @security Chunked encryption for large files with integrity verification
  */
 
-import { 
+import {
   EncryptionResult,
   EncryptionContext,
   DecryptionContext,
   CryptoOperationResult,
   FILE_ENCRYPTION,
-  DEFAULT_CONTEXTS
+  DEFAULT_CONTEXTS,
 } from '@zk-vault/shared';
 
 import { AESGCMCipher } from '../algorithms/aes-gcm';
@@ -86,7 +86,6 @@ export interface FileProgressCallback {
  * @security Uses per-chunk keys for enhanced security
  */
 export class FileEncryption {
-
   /**
    * Encrypts a file using chunked encryption
    * @param fileData File data to encrypt
@@ -115,7 +114,7 @@ export class FileEncryption {
         return {
           success: false,
           error: 'Cannot encrypt empty file',
-          errorCode: 'EMPTY_FILE'
+          errorCode: 'EMPTY_FILE',
         };
       }
 
@@ -123,22 +122,18 @@ export class FileEncryption {
         return {
           success: false,
           error: `File too large. Maximum size is ${FILE_ENCRYPTION.MAX_FILE_SIZE} bytes`,
-          errorCode: 'FILE_TOO_LARGE'
+          errorCode: 'FILE_TOO_LARGE',
         };
       }
 
       // Derive item-specific encryption key
-      const itemKeyResult = await ItemKeyDerivation.deriveItemKey(
-        accountKey,
-        itemId,
-        'file'
-      );
+      const itemKeyResult = await ItemKeyDerivation.deriveItemKey(accountKey, itemId, 'file');
 
       if (!itemKeyResult.success || !itemKeyResult.data) {
         return {
           success: false,
           error: itemKeyResult.error || 'Failed to derive item key',
-          errorCode: itemKeyResult.errorCode || 'ITEM_KEY_DERIVATION_FAILED'
+          errorCode: itemKeyResult.errorCode || 'ITEM_KEY_DERIVATION_FAILED',
         };
       }
 
@@ -161,7 +156,7 @@ export class FileEncryption {
         ...DEFAULT_CONTEXTS.FILE_CHUNK,
         ...options.context,
         itemId,
-        purpose: 'file-chunk'
+        purpose: 'file-chunk',
       };
 
       // Encrypt chunks
@@ -174,34 +169,26 @@ export class FileEncryption {
         const chunkData = fileData.slice(start, end);
 
         // Derive chunk-specific key
-        const chunkKeyResult = await ItemKeyDerivation.deriveChunkKey(
-          itemKey,
-          i,
-          chunkCount
-        );
+        const chunkKeyResult = await ItemKeyDerivation.deriveChunkKey(itemKey, i, chunkCount);
 
         if (!chunkKeyResult.success || !chunkKeyResult.data) {
           return {
             success: false,
             error: `Failed to derive key for chunk ${i}`,
-            errorCode: 'CHUNK_KEY_DERIVATION_FAILED'
+            errorCode: 'CHUNK_KEY_DERIVATION_FAILED',
           };
         }
 
         const chunkKey = chunkKeyResult.data;
 
         // Encrypt chunk
-        const encryptResult = await AESGCMCipher.encrypt(
-          chunkData,
-          chunkKey,
-          encryptionContext
-        );
+        const encryptResult = await AESGCMCipher.encrypt(chunkData, chunkKey, encryptionContext);
 
         if (!encryptResult.success || !encryptResult.data) {
           return {
             success: false,
             error: `Failed to encrypt chunk ${i}`,
-            errorCode: 'CHUNK_ENCRYPTION_FAILED'
+            errorCode: 'CHUNK_ENCRYPTION_FAILED',
           };
         }
 
@@ -212,7 +199,7 @@ export class FileEncryption {
           index: i,
           size: chunkData.length,
           encryptedData: encryptResult.data,
-          hash: chunkHash
+          hash: chunkHash,
         });
 
         processedBytes += chunkData.length;
@@ -224,7 +211,7 @@ export class FileEncryption {
             total: fileData.length,
             percentage: (processedBytes / fileData.length) * 100,
             currentChunk: i + 1,
-            totalChunks: chunkCount
+            totalChunks: chunkCount,
           });
         }
 
@@ -241,7 +228,7 @@ export class FileEncryption {
         chunkSize,
         fileHash,
         encryptedAt: Date.now(),
-        version: 1
+        version: 1,
       };
 
       // Clear item key from memory
@@ -251,15 +238,14 @@ export class FileEncryption {
         success: true,
         data: {
           metadata,
-          chunks
-        }
+          chunks,
+        },
       };
-
     } catch (error) {
       return {
         success: false,
         error: `File encryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'FILE_ENCRYPTION_FAILED'
+        errorCode: 'FILE_ENCRYPTION_FAILED',
       };
     }
   }
@@ -281,33 +267,31 @@ export class FileEncryption {
       context?: DecryptionContext;
       verifyIntegrity?: boolean;
     } = {}
-  ): Promise<CryptoOperationResult<{
-    data: Uint8Array;
-    filename: string;
-    mimeType: string;
-  }>> {
+  ): Promise<
+    CryptoOperationResult<{
+      data: Uint8Array;
+      filename: string;
+      mimeType: string;
+    }>
+  > {
     try {
       // Validate encrypted file structure
       if (!this.validateEncryptedFile(encryptedFile)) {
         return {
           success: false,
           error: 'Invalid encrypted file structure',
-          errorCode: 'INVALID_ENCRYPTED_FILE'
+          errorCode: 'INVALID_ENCRYPTED_FILE',
         };
       }
 
       // Derive item-specific encryption key
-      const itemKeyResult = await ItemKeyDerivation.deriveItemKey(
-        accountKey,
-        itemId,
-        'file'
-      );
+      const itemKeyResult = await ItemKeyDerivation.deriveItemKey(accountKey, itemId, 'file');
 
       if (!itemKeyResult.success || !itemKeyResult.data) {
         return {
           success: false,
           error: itemKeyResult.error || 'Failed to derive item key',
-          errorCode: itemKeyResult.errorCode || 'ITEM_KEY_DERIVATION_FAILED'
+          errorCode: itemKeyResult.errorCode || 'ITEM_KEY_DERIVATION_FAILED',
         };
       }
 
@@ -316,7 +300,7 @@ export class FileEncryption {
       // Create decryption context
       const decryptionContext: DecryptionContext = {
         expectedPurpose: 'file-chunk',
-        ...options.context
+        ...options.context,
       };
 
       // Decrypt chunks in order
@@ -329,7 +313,7 @@ export class FileEncryption {
           return {
             success: false,
             error: `Missing chunk ${i}`,
-            errorCode: 'MISSING_CHUNK'
+            errorCode: 'MISSING_CHUNK',
           };
         }
 
@@ -344,7 +328,7 @@ export class FileEncryption {
           return {
             success: false,
             error: `Failed to derive key for chunk ${i}`,
-            errorCode: 'CHUNK_KEY_DERIVATION_FAILED'
+            errorCode: 'CHUNK_KEY_DERIVATION_FAILED',
           };
         }
 
@@ -361,7 +345,7 @@ export class FileEncryption {
           return {
             success: false,
             error: `Failed to decrypt chunk ${i}`,
-            errorCode: 'CHUNK_DECRYPTION_FAILED'
+            errorCode: 'CHUNK_DECRYPTION_FAILED',
           };
         }
 
@@ -374,7 +358,7 @@ export class FileEncryption {
             return {
               success: false,
               error: `Chunk ${i} integrity verification failed`,
-              errorCode: 'CHUNK_INTEGRITY_FAILED'
+              errorCode: 'CHUNK_INTEGRITY_FAILED',
             };
           }
         }
@@ -389,7 +373,7 @@ export class FileEncryption {
             total: encryptedFile.metadata.originalSize,
             percentage: (processedBytes / encryptedFile.metadata.originalSize) * 100,
             currentChunk: i + 1,
-            totalChunks: encryptedFile.metadata.chunkCount
+            totalChunks: encryptedFile.metadata.chunkCount,
           });
         }
 
@@ -407,7 +391,7 @@ export class FileEncryption {
           return {
             success: false,
             error: 'File integrity verification failed',
-            errorCode: 'FILE_INTEGRITY_FAILED'
+            errorCode: 'FILE_INTEGRITY_FAILED',
           };
         }
       }
@@ -420,15 +404,14 @@ export class FileEncryption {
         data: {
           data: fileData,
           filename: encryptedFile.metadata.filename,
-          mimeType: encryptedFile.metadata.mimeType
-        }
+          mimeType: encryptedFile.metadata.mimeType,
+        },
       };
-
     } catch (error) {
       return {
         success: false,
         error: `File decryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'FILE_DECRYPTION_FAILED'
+        errorCode: 'FILE_DECRYPTION_FAILED',
       };
     }
   }
@@ -466,13 +449,13 @@ export class FileEncryption {
   private static combineChunks(chunks: Uint8Array[]): Uint8Array {
     const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
     const combined = new Uint8Array(totalLength);
-    
+
     let offset = 0;
     for (const chunk of chunks) {
       combined.set(chunk, offset);
       offset += chunk.length;
     }
-    
+
     return combined;
   }
 
@@ -490,11 +473,12 @@ export class FileEncryption {
       typeof encryptedFile.metadata.chunkCount === 'number' &&
       Array.isArray(encryptedFile.chunks) &&
       encryptedFile.chunks.length === encryptedFile.metadata.chunkCount &&
-      encryptedFile.chunks.every(chunk => 
-        typeof chunk.index === 'number' &&
-        typeof chunk.size === 'number' &&
-        chunk.encryptedData &&
-        typeof chunk.hash === 'string'
+      encryptedFile.chunks.every(
+        chunk =>
+          typeof chunk.index === 'number' &&
+          typeof chunk.size === 'number' &&
+          chunk.encryptedData &&
+          typeof chunk.hash === 'string'
       )
     );
   }
@@ -509,7 +493,7 @@ export class FileEncryption {
       if (pass === 0) {
         data.fill(0);
       } else if (pass === 1) {
-        data.fill(0xFF);
+        data.fill(0xff);
       } else {
         crypto.getRandomValues(data);
       }
@@ -522,15 +506,18 @@ export class FileEncryption {
    * @param chunkSize Chunk size used
    * @returns Estimated encrypted size
    */
-  static estimateEncryptedSize(originalSize: number, chunkSize: number = FILE_ENCRYPTION.CHUNK_SIZE): number {
+  static estimateEncryptedSize(
+    originalSize: number,
+    chunkSize: number = FILE_ENCRYPTION.CHUNK_SIZE
+  ): number {
     const chunkCount = Math.ceil(originalSize / chunkSize);
-    
+
     // Each chunk adds IV (12 bytes) + auth tag (16 bytes)
     const encryptionOverhead = chunkCount * (12 + 16);
-    
+
     // Metadata overhead (approximate)
     const metadataOverhead = 1024; // JSON metadata
-    
+
     return originalSize + encryptionOverhead + metadataOverhead;
   }
 
@@ -542,9 +529,11 @@ export class FileEncryption {
   static getOptimalChunkSize(fileSize: number): number {
     if (fileSize <= FILE_ENCRYPTION.MIN_CHUNK_SIZE) {
       return FILE_ENCRYPTION.MIN_CHUNK_SIZE;
-    } else if (fileSize <= 1024 * 1024) { // 1 MB
+    } else if (fileSize <= 1024 * 1024) {
+      // 1 MB
       return 64 * 1024; // 64 KB chunks
-    } else if (fileSize <= 10 * 1024 * 1024) { // 10 MB
+    } else if (fileSize <= 10 * 1024 * 1024) {
+      // 10 MB
       return 256 * 1024; // 256 KB chunks
     } else {
       return FILE_ENCRYPTION.CHUNK_SIZE; // Default 4 MB chunks

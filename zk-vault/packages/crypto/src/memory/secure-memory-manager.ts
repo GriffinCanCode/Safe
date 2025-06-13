@@ -31,7 +31,7 @@ export class SecureMemoryManager {
       autoClearTimeout: config.autoClearTimeout ?? MEMORY_PROTECTION.AUTO_CLEAR_TIMEOUT,
       useSecureMemory: config.useSecureMemory ?? true,
       secureOverwrite: config.secureOverwrite ?? true,
-      maxLifetime: config.maxLifetime ?? MEMORY_PROTECTION.MAX_LIFETIME
+      maxLifetime: config.maxLifetime ?? MEMORY_PROTECTION.MAX_LIFETIME,
     };
 
     // Create a protected copy of the data
@@ -93,7 +93,7 @@ export class SecureMemoryManager {
         buffer.fill(0);
       } else if (pass === 1) {
         // Second pass: all ones
-        buffer.fill(0xFF);
+        buffer.fill(0xff);
       } else {
         // Final pass: random data
         crypto.getRandomValues(buffer);
@@ -151,7 +151,7 @@ export class SecureBuffer {
 
   constructor(size: number, autoCleanup: boolean = true) {
     this.buffer = new Uint8Array(size);
-    
+
     if (autoCleanup) {
       this.timer = setTimeout(() => {
         this.clear();
@@ -179,7 +179,7 @@ export class SecureBuffer {
     if (this.cleared) {
       throw new Error('Buffer has been cleared');
     }
-    
+
     if (offset + data.length > this.buffer.length) {
       throw new Error('Data exceeds buffer size');
     }

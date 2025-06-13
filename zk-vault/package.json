@@ -13,20 +13,77 @@
   "scripts": {
     "build": "lerna run build",
     "test": "lerna run test",
+    "test:coverage": "lerna run test:coverage",
     "lint": "lerna run lint",
+    "lint:fix": "lerna run lint:fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path .gitignore",
+    "type-check": "lerna run type-check",
     "clean": "lerna clean && rm -rf node_modules",
     "bootstrap": "lerna bootstrap",
     "publish": "lerna publish",
     "dev": "lerna run dev --parallel",
-    "type-check": "lerna run type-check"
+    "config": "node tools/cli.js",
+    "setup:config": "node tools/scripts/setup-package-config.js",
+    "setup:config:all": "node tools/scripts/setup-package-config.js all",
+    "setup:config:force": "node tools/scripts/setup-package-config.js all --force",
+    "commit": "git-cz",
+    "validate": "npm run lint && npm run type-check && npm run test",
+    "precommit": "lint-staged"
   },
   "devDependencies": {
+    "@babel/core": "^7.22.0",
+    "@babel/plugin-proposal-class-properties": "^7.18.0",
+    "@babel/plugin-transform-runtime": "^7.22.0",
+    "@babel/preset-env": "^7.22.0",
+    "@babel/preset-react": "^7.22.0",
+    "@babel/preset-typescript": "^7.22.0",
+    "@commitlint/cli": "^17.6.0",
+    "@commitlint/config-conventional": "^17.6.0",
+    "@tailwindcss/aspect-ratio": "^0.4.2",
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/typography": "^0.5.16",
+    "@testing-library/jest-dom": "^5.16.0",
+    "@testing-library/react": "^13.4.0",
+    "@types/pako": "^2.0.3",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
+    "@vitest/ui": "^3.2.3",
+    "@vue/test-utils": "^2.4.6",
+    "babel-loader": "^9.1.0",
+    "commander": "^11.0.0",
+    "commitizen": "^4.3.0",
+    "cross-env": "^7.0.3",
+    "css-loader": "^6.8.0",
+    "cz-conventional-changelog": "^3.3.0",
+    "depcheck": "^1.4.7",
     "eslint": "^8.0.0",
+    "eslint-plugin-import": "^2.27.0",
+    "eslint-plugin-jest": "^27.2.0",
+    "eslint-plugin-security": "^1.7.0",
+    "husky": "^8.0.0",
+    "identity-obj-proxy": "^3.0.0",
+    "jest": "^29.5.0",
+    "jest-environment-jsdom": "^29.5.0",
+    "jest-extended": "^4.0.0",
     "lerna": "^7.0.0",
+    "lint-staged": "^13.2.0",
+    "markdownlint-cli": "^0.35.0",
+    "npm-check-updates": "^18.0.1",
     "prettier": "^3.0.0",
-    "typescript": "^5.0.0"
+    "rollup-plugin-visualizer": "^6.0.3",
+    "sass": "^1.63.0",
+    "sass-loader": "^13.3.0",
+    "sort-package-json": "^2.4.0",
+    "style-loader": "^3.3.0",
+    "stylelint": "^15.7.0",
+    "stylelint-config-standard": "^33.0.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.0.0",
+    "vitest": "^3.2.3",
+    "webpack": "^5.88.0",
+    "webpack-bundle-analyzer": "^4.10.2",
+    "webpack-cli": "^5.1.0",
+    "webpack-dev-server": "^4.15.0"
   },
   "engines": {
     "node": ">=18.0.0",
@@ -37,8 +94,39 @@
     "password-manager",
     "encryption",
     "security",
-    "firebase"
+    "firebase",
+    "monorepo",
+    "typescript"
   ],
   "author": "ZK-Vault Team",
-  "license": "MIT"
+  "license": "MIT",
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix --cache --max-warnings 0",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ],
+    "package.json": [
+      "sort-package-json",
+      "prettier --write"
+    ]
+  },
+  "commitlint": {
+    "extends": [
+      "./tools/config/commitlint.config.js"
+    ]
+  },
+  "dependencies": {
+    "comlink": "^4.4.2",
+    "fuse": "^0.12.1",
+    "fuse.js": "^7.1.0",
+    "pako": "^2.1.0"
+  }
 }

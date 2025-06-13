@@ -100,7 +100,11 @@ declare module '@stablelib/pbkdf2' {
 declare module 'tweetnacl' {
   export namespace secretbox {
     export function seal(message: Uint8Array, nonce: Uint8Array, key: Uint8Array): Uint8Array;
-    export function open(ciphertext: Uint8Array, nonce: Uint8Array, key: Uint8Array): Uint8Array | null;
+    export function open(
+      ciphertext: Uint8Array,
+      nonce: Uint8Array,
+      key: Uint8Array
+    ): Uint8Array | null;
     export const keyLength: number;
     export const nonceLength: number;
   }
@@ -119,4 +123,4 @@ declare module 'node-forge' {
     export function encode64(bytes: string): string;
     export function decode64(encoded: string): string;
   }
-} 
+}

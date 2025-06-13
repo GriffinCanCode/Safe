@@ -1,0 +1,405 @@
+/**
+ * ZK-Vault Utility Styles
+ * Using Tailwind CSS v4 new utilities and variants
+ */
+
+@layer utilities {
+  /* === ACCESSIBILITY === */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .not-sr-only {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+
+  /* Focus management */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
+  }
+
+  .focus-ring-inset {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-inset;
+  }
+
+  /* Skip links for keyboard navigation */
+  .skip-link {
+    @apply absolute -top-10 left-6 z-50 bg-primary-600 text-white px-4 py-2 rounded-md;
+    @apply focus:top-6 transition-all duration-300;
+  }
+
+  /* === LAYOUT === */
+  .container-narrow {
+    @apply max-w-3xl mx-auto px-4;
+  }
+
+  .container-wide {
+    @apply max-w-7xl mx-auto px-4;
+  }
+
+  .full-bleed {
+    width: 100vw;
+    margin-left: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* Aspect ratios using modern CSS */
+  .aspect-square {
+    aspect-ratio: 1 / 1;
+  }
+
+  .aspect-video {
+    aspect-ratio: 16 / 9;
+  }
+
+  .aspect-photo {
+    aspect-ratio: 4 / 3;
+  }
+
+  /* === SCROLLING === */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+
+  .scroll-auto {
+    scroll-behavior: auto;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scroll-snap-x {
+    scroll-snap-type: x mandatory;
+  }
+
+  .scroll-snap-y {
+    scroll-snap-type: y mandatory;
+  }
+
+  .scroll-snap-start {
+    scroll-snap-align: start;
+  }
+
+  .scroll-snap-center {
+    scroll-snap-align: center;
+  }
+
+  .scroll-snap-end {
+    scroll-snap-align: end;
+  }
+
+  /* === TYPOGRAPHY === */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  .text-nowrap {
+    text-wrap: nowrap;
+  }
+
+  /* Font feature settings */
+  .font-feature-normal {
+    font-feature-settings: normal;
+  }
+
+  .font-feature-small-caps {
+    font-feature-settings: "smcp" 1;
+  }
+
+  .font-feature-oldstyle-nums {
+    font-feature-settings: "onum" 1;
+  }
+
+  .font-feature-tabular-nums {
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* === ANIMATIONS === */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .animate-slide-in-left {
+    animation: slideInLeft 0.3s ease-out;
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.3s ease-out;
+  }
+
+  .animate-slide-in-up {
+    animation: slideInUp 0.3s ease-out;
+  }
+
+  .animate-slide-in-down {
+    animation: slideInDown 0.3s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+
+  .animate-bounce-in {
+    animation: bounceIn 0.5s ease-out;
+  }
+
+  /* Pause animations for reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-in,
+    .animate-slide-in-left,
+    .animate-slide-in-right,
+    .animate-slide-in-up,
+    .animate-slide-in-down,
+    .animate-scale-in,
+    .animate-bounce-in {
+      animation: none;
+    }
+  }
+
+  /* === INTERACTIONS === */
+  .hover-lift {
+    @apply transition-transform duration-200;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+  }
+
+  .hover-scale {
+    @apply transition-transform duration-200;
+  }
+
+  .hover-scale:hover {
+    transform: scale(1.05);
+  }
+
+  .click-shrink:active {
+    transform: scale(0.95);
+  }
+
+  /* === POSITIONING === */
+  .absolute-center {
+    @apply absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2;
+  }
+
+  .absolute-center-x {
+    @apply absolute left-1/2 -translate-x-1/2;
+  }
+
+  .absolute-center-y {
+    @apply absolute top-1/2 -translate-y-1/2;
+  }
+
+  /* === SECURITY UTILITIES === */
+  .password-hidden {
+    font-family: var(--font-family-mono);
+    letter-spacing: 0.1em;
+  }
+
+  .password-hidden::placeholder {
+    font-family: var(--font-family-sans);
+    letter-spacing: normal;
+  }
+
+  .secure-input {
+    @apply password-hidden bg-neutral-50 border-neutral-300;
+    @apply focus:bg-white focus:border-primary-500;
+    
+    @media (prefers-color-scheme: dark) {
+      @apply bg-neutral-900 border-neutral-600;
+      @apply focus:bg-neutral-800 focus:border-primary-400;
+    }
+  }
+
+  /* === GRADIENT UTILITIES === */
+  .gradient-primary {
+    background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-600));
+  }
+
+  .gradient-success {
+    background: linear-gradient(135deg, var(--color-success-500), var(--color-success-600));
+  }
+
+  .gradient-warning {
+    background: linear-gradient(135deg, var(--color-warning-500), var(--color-warning-600));
+  }
+
+  .gradient-danger {
+    background: linear-gradient(135deg, var(--color-danger-500), var(--color-danger-600));
+  }
+
+  /* Glass morphism utilities */
+  .glass-light {
+    background: color-mix(in oklab, white 80%, transparent);
+    backdrop-filter: blur(12px);
+    border: 1px solid color-mix(in oklab, white 20%, transparent);
+  }
+
+  .glass-dark {
+    background: color-mix(in oklab, black 40%, transparent);
+    backdrop-filter: blur(12px);
+    border: 1px solid color-mix(in oklab, white 10%, transparent);
+  }
+
+  .glass {
+    @apply glass-light;
+    
+    @media (prefers-color-scheme: dark) {
+      @apply glass-dark;
+    }
+  }
+
+  /* === PRINT UTILITIES === */
+  @media print {
+    .print-hidden {
+      display: none !important;
+    }
+
+    .print-visible {
+      display: block !important;
+    }
+
+    .print-break-before {
+      break-before: page;
+    }
+
+    .print-break-after {
+      break-after: page;
+    }
+
+    .print-break-inside-avoid {
+      break-inside: avoid;
+    }
+  }
+
+  /* === HIGH CONTRAST === */
+  @media (prefers-contrast: high) {
+    .high-contrast-border {
+      border-width: 2px !important;
+      border-color: currentColor !important;
+    }
+
+    .high-contrast-outline {
+      outline: 2px solid currentColor !important;
+      outline-offset: 2px !important;
+    }
+  }
+
+  /* === MOTION PREFERENCES === */
+  @media (prefers-reduced-motion: reduce) {
+    .motion-safe\:animate-spin {
+      animation: none;
+    }
+
+    .motion-safe\:animate-pulse {
+      animation: none;
+    }
+
+    .motion-safe\:animate-bounce {
+      animation: none;
+    }
+
+    .motion-safe\:transition-transform {
+      transition-property: none;
+    }
+  }
+
+  /* === RESPONSIVE DESIGN === */
+  /* Container query utilities */
+  .cq-normal {
+    container-type: normal;
+  }
+
+  .cq-size {
+    container-type: size;
+  }
+
+  .cq-inline-size {
+    container-type: inline-size;
+  }
+
+  /* === DEBUGGING === */
+  .debug-grid {
+    background-image: 
+      linear-gradient(rgba(255, 0, 0, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 0, 0, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  .debug-baseline {
+    background-image: linear-gradient(rgba(0, 255, 0, 0.2) 1px, transparent 1px);
+    background-size: 100% 1.5rem;
+    background-position: 0 0.25rem;
+  }
+
+  .debug-outline * {
+    outline: 1px solid rgba(255, 0, 0, 0.3) !important;
+  }
+}
+
+/* === KEYFRAMES === */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slideInUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes slideInDown {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.05); }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); opacity: 1; }
+}

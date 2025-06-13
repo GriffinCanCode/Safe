@@ -5,12 +5,12 @@
  * @security Hardware-accelerated AEAD cipher with 256-bit keys
  */
 
-import { 
-  EncryptionResult, 
-  EncryptionContext, 
+import {
+  EncryptionResult,
+  EncryptionContext,
   DecryptionContext,
   CryptoOperationResult,
-  AES_GCM_PARAMS 
+  AES_GCM_PARAMS,
 } from '@zk-vault/shared';
 
 /**
@@ -19,7 +19,6 @@ import {
  * @security Uses WebCrypto API for hardware acceleration when available
  */
 export class AESGCMCipher {
-  
   /**
    * Encrypts data using AES-256-GCM
    * @param plaintext Data to encrypt
@@ -33,14 +32,14 @@ export class AESGCMCipher {
     context?: EncryptionContext
   ): Promise<CryptoOperationResult<EncryptionResult>> {
     const startTime = performance.now();
-    
+
     try {
       // Validate inputs
       if (key.length !== 32) {
         return {
           success: false,
           error: 'Invalid key length. AES-256-GCM requires 32-byte key',
-          errorCode: 'INVALID_KEY_LENGTH'
+          errorCode: 'INVALID_KEY_LENGTH',
         };
       }
 
@@ -48,18 +47,18 @@ export class AESGCMCipher {
         return {
           success: false,
           error: 'Cannot encrypt empty data',
-          errorCode: 'INVALID_DATA_SIZE'
+          errorCode: 'INVALID_DATA_SIZE',
         };
       }
 
       // Generate random IV (12 bytes for GCM)
       const iv = crypto.getRandomValues(new Uint8Array(AES_GCM_PARAMS.IV_LENGTH));
-      
+
       // Prepare additional authenticated data if provided
       const additionalData = context?.additionalData;
 
       let encryptedData: ArrayBuffer;
-      
+
       // Use WebCrypto API if available (browser environment)
       if (typeof window !== 'undefined' && window.crypto?.subtle) {
         const cryptoKey = await window.crypto.subtle.importKey(
@@ -73,20 +72,16 @@ export class AESGCMCipher {
         const algorithm: AesGcmParams = {
           name: 'AES-GCM',
           iv: iv,
-          ...(additionalData && { additionalData })
+          ...(additionalData && { additionalData }),
         };
 
-        encryptedData = await window.crypto.subtle.encrypt(
-          algorithm,
-          cryptoKey,
-          plaintext
-        );
+        encryptedData = await window.crypto.subtle.encrypt(algorithm, cryptoKey, plaintext);
       } else {
         // Fallback for Node.js environment
         return {
           success: false,
           error: 'AES-GCM not available in this environment',
-          errorCode: 'ALGORITHM_NOT_SUPPORTED'
+          errorCode: 'ALGORITHM_NOT_SUPPORTED',
         };
       }
 
@@ -100,7 +95,7 @@ export class AESGCMCipher {
         nonce: iv,
         authTag,
         algorithm: 'AES-256-GCM',
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
 
       const endTime = performance.now();
@@ -111,15 +106,14 @@ export class AESGCMCipher {
         metrics: {
           duration: endTime - startTime,
           memoryUsed: plaintext.length + encrypted.length,
-          cpuUsage: 0 // Not measurable in browser
-        }
+          cpuUsage: 0, // Not measurable in browser
+        },
       };
-
     } catch (error) {
       return {
         success: false,
         error: `AES-GCM encryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'ENCRYPTION_FAILED'
+        errorCode: 'ENCRYPTION_FAILED',
       };
     }
   }
@@ -144,7 +138,7 @@ export class AESGCMCipher {
         return {
           success: false,
           error: 'Invalid key length. AES-256-GCM requires 32-byte key',
-          errorCode: 'INVALID_KEY_LENGTH'
+          errorCode: 'INVALID_KEY_LENGTH',
         };
       }
 
@@ -152,7 +146,7 @@ export class AESGCMCipher {
         return {
           success: false,
           error: 'Invalid algorithm. Expected AES-256-GCM',
-          errorCode: 'ALGORITHM_NOT_SUPPORTED'
+          errorCode: 'ALGORITHM_NOT_SUPPORTED',
         };
       }
 
@@ -163,7 +157,7 @@ export class AESGCMCipher {
           return {
             success: false,
             error: 'Encrypted data is too old',
-            errorCode: 'DATA_EXPIRED'
+            errorCode: 'DATA_EXPIRED',
           };
         }
       }
@@ -192,20 +186,18 @@ export class AESGCMCipher {
         const algorithm: AesGcmParams = {
           name: 'AES-GCM',
           iv: encryptedData.nonce,
-          ...(context?.verifyAdditionalData && { additionalData: context.verifyAdditionalData })
+          ...(context?.verifyAdditionalData && {
+            additionalData: context.verifyAdditionalData,
+          }),
         };
 
-        decryptedData = await window.crypto.subtle.decrypt(
-          algorithm,
-          cryptoKey,
-          combinedData
-        );
+        decryptedData = await window.crypto.subtle.decrypt(algorithm, cryptoKey, combinedData);
       } else {
         // Fallback for Node.js environment
         return {
           success: false,
           error: 'AES-GCM not available in this environment',
-          errorCode: 'ALGORITHM_NOT_SUPPORTED'
+          errorCode: 'ALGORITHM_NOT_SUPPORTED',
         };
       }
 
@@ -218,15 +210,14 @@ export class AESGCMCipher {
         metrics: {
           duration: endTime - startTime,
           memoryUsed: combinedData.length + plaintext.length,
-          cpuUsage: 0
-        }
+          cpuUsage: 0,
+        },
       };
-
     } catch (error) {
       return {
         success: false,
         error: `AES-GCM decryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'DECRYPTION_FAILED'
+        errorCode: 'DECRYPTION_FAILED',
       };
     }
   }

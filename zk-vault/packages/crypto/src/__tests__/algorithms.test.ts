@@ -30,7 +30,7 @@ describe('AES-GCM Cipher', () => {
   describe('Encryption', () => {
     test('should encrypt data successfully', async () => {
       const result = await AESGCMCipher.encrypt(testData, testKey);
-      
+
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
       expect(result.data!.algorithm).toBe('AES-256-GCM');
@@ -45,7 +45,7 @@ describe('AES-GCM Cipher', () => {
     test('should fail with invalid key length', async () => {
       const invalidKey = new Uint8Array(16);
       const result = await AESGCMCipher.encrypt(testData, invalidKey);
-      
+
       expect(result.success).toBe(false);
       expect(result.errorCode).toBe('INVALID_KEY_LENGTH');
     });
@@ -53,7 +53,7 @@ describe('AES-GCM Cipher', () => {
     test('should fail with empty data', async () => {
       const emptyData = new Uint8Array(0);
       const result = await AESGCMCipher.encrypt(emptyData, testKey);
-      
+
       expect(result.success).toBe(false);
       expect(result.errorCode).toBe('INVALID_DATA_SIZE');
     });
@@ -62,9 +62,9 @@ describe('AES-GCM Cipher', () => {
       const additionalData = new TextEncoder().encode('test-context');
       const result = await AESGCMCipher.encrypt(testData, testKey, {
         purpose: 'vault-item',
-        additionalData
+        additionalData,
       });
-      
+
       expect(result.success).toBe(true);
     });
   });
@@ -73,9 +73,9 @@ describe('AES-GCM Cipher', () => {
     test('should decrypt data successfully', async () => {
       const encryptResult = await AESGCMCipher.encrypt(testData, testKey);
       expect(encryptResult.success).toBe(true);
-      
+
       const decryptResult = await AESGCMCipher.decrypt(encryptResult.data!, testKey);
-      
+
       expect(decryptResult.success).toBe(true);
       expect(TestUtils.arraysEqual(decryptResult.data!, testData)).toBe(true);
     });
@@ -86,9 +86,9 @@ describe('AES-GCM Cipher', () => {
         nonce: new Uint8Array(12),
         authTag: new Uint8Array(16),
         algorithm: 'WRONG-ALGORITHM' as any,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
-      
+
       const result = await AESGCMCipher.decrypt(fakeEncrypted, testKey);
       expect(result.success).toBe(false);
       expect(result.errorCode).toBe('ALGORITHM_NOT_SUPPORTED');
@@ -97,15 +97,15 @@ describe('AES-GCM Cipher', () => {
     test('should respect maxAge context', async () => {
       const encryptResult = await AESGCMCipher.encrypt(testData, testKey);
       expect(encryptResult.success).toBe(true);
-      
+
       // Modify timestamp to be old
       encryptResult.data!.timestamp = Date.now() - 10000;
-      
+
       const decryptResult = await AESGCMCipher.decrypt(encryptResult.data!, testKey, {
         expectedPurpose: 'vault-item',
-        maxAge: 5000
+        maxAge: 5000,
       });
-      
+
       expect(decryptResult.success).toBe(false);
       expect(decryptResult.errorCode).toBe('DATA_EXPIRED');
     });
@@ -117,13 +117,13 @@ describe('AES-GCM Cipher', () => {
         TestUtils.createTestData(1, 1),
         TestUtils.createTestData(100, 2),
         TestUtils.createTestData(1000, 3),
-        TestUtils.createTestData(10000, 4)
+        TestUtils.createTestData(10000, 4),
       ];
 
       for (const testCase of testCases) {
         const encryptResult = await AESGCMCipher.encrypt(testCase, testKey);
         expect(encryptResult.success).toBe(true);
-        
+
         const decryptResult = await AESGCMCipher.decrypt(encryptResult.data!, testKey);
         expect(decryptResult.success).toBe(true);
         expect(TestUtils.arraysEqual(decryptResult.data!, testCase)).toBe(true);
@@ -151,7 +151,7 @@ describe('XChaCha20-Poly1305 Cipher', () => {
     test('should validate nonce lengths', () => {
       const validNonce = new Uint8Array(24);
       const invalidNonce = new Uint8Array(12);
-      
+
       expect(XChaCha20Poly1305Cipher.validateNonce(validNonce)).toBe(true);
       expect(XChaCha20Poly1305Cipher.validateNonce(invalidNonce)).toBe(false);
     });
@@ -162,7 +162,7 @@ describe('XChaCha20-Poly1305 Cipher', () => {
       const libsodiumAvailable = XChaCha20Poly1305Cipher.isLibsodiumAvailable();
       const stableLibAvailable = XChaCha20Poly1305Cipher.isStableLibAvailable();
       const implementation = XChaCha20Poly1305Cipher.getImplementation();
-      
+
       expect(typeof libsodiumAvailable).toBe('boolean');
       expect(typeof stableLibAvailable).toBe('boolean');
       expect(typeof implementation).toBe('string');
@@ -179,7 +179,7 @@ describe('XChaCha20-Poly1305 Cipher', () => {
   describe('Encryption (Mock)', () => {
     test('should handle encryption when no implementation available', async () => {
       const result = await XChaCha20Poly1305Cipher.encrypt(testData, testKey);
-      
+
       // Since we don't have real implementations in test environment,
       // this should fail gracefully
       expect(result.success).toBe(false);
@@ -209,7 +209,7 @@ describe('Algorithm Selector', () => {
   describe('Algorithm Selection', () => {
     test('should select optimal algorithm', async () => {
       const selection = await AlgorithmSelector.selectOptimalAlgorithm();
-      
+
       expect(selection).toBeDefined();
       expect(['AES-256-GCM', 'XChaCha20-Poly1305']).toContain(selection.algorithm);
       expect(['hardware-acceleration', 'software-fallback']).toContain(selection.reason);
@@ -221,7 +221,7 @@ describe('Algorithm Selector', () => {
       const aesSelection = AlgorithmSelector.forceAlgorithm('AES-256-GCM');
       expect(aesSelection.algorithm).toBe('AES-256-GCM');
       expect(aesSelection.reason).toBe('user-preference');
-      
+
       const chachaSelection = AlgorithmSelector.forceAlgorithm('XChaCha20-Poly1305');
       expect(chachaSelection.algorithm).toBe('XChaCha20-Poly1305');
       expect(chachaSelection.reason).toBe('user-preference');
@@ -232,7 +232,7 @@ describe('Algorithm Selector', () => {
     test('should clear cache properly', async () => {
       await AlgorithmSelector.selectOptimalAlgorithm();
       AlgorithmSelector.clearCache();
-      
+
       // Should work without errors after cache clear
       const selection = await AlgorithmSelector.selectOptimalAlgorithm();
       expect(selection).toBeDefined();
@@ -254,7 +254,7 @@ describe('Argon2id Derivation', () => {
     test('should generate salts of custom length', () => {
       const salt16 = Argon2idDerivation.generateSalt(16);
       const salt64 = Argon2idDerivation.generateSalt(64);
-      
+
       expect(salt16.length).toBe(16);
       expect(salt64.length).toBe(64);
     });
@@ -268,7 +268,7 @@ describe('Argon2id Derivation', () => {
   describe('Key Derivation', () => {
     test('should derive keys with default parameters', async () => {
       const result = await Argon2idDerivation.deriveKey(testPassword, testSalt);
-      
+
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
       expect(result.data!.key).toBeInstanceOf(Uint8Array);
@@ -283,11 +283,11 @@ describe('Argon2id Derivation', () => {
         time: 2,
         memory: 16384,
         parallelism: 1,
-        outputLength: 64
+        outputLength: 64,
       };
-      
+
       const result = await Argon2idDerivation.deriveKey(testPassword, testSalt, customParams);
-      
+
       expect(result.success).toBe(true);
       expect(result.data!.key.length).toBe(64);
       expect(result.data!.params.time).toBe(2);
@@ -298,7 +298,7 @@ describe('Argon2id Derivation', () => {
       // Empty password
       const emptyPasswordResult = await Argon2idDerivation.deriveKey('', testSalt);
       expect(emptyPasswordResult.success).toBe(false);
-      
+
       // Short salt
       const shortSalt = new Uint8Array(8);
       const shortSaltResult = await Argon2idDerivation.deriveKey(testPassword, shortSalt);
@@ -308,7 +308,7 @@ describe('Argon2id Derivation', () => {
     test('should produce consistent results for same inputs', async () => {
       const result1 = await Argon2idDerivation.deriveKey(testPassword, testSalt);
       const result2 = await Argon2idDerivation.deriveKey(testPassword, testSalt);
-      
+
       expect(result1.success).toBe(true);
       expect(result2.success).toBe(true);
       expect(TestUtils.arraysEqual(result1.data!.key, result2.data!.key)).toBe(true);
@@ -320,7 +320,7 @@ describe('Argon2id Derivation', () => {
       const interactive = Argon2idDerivation.getRecommendedParams('interactive');
       const sensitive = Argon2idDerivation.getRecommendedParams('sensitive');
       const paranoid = Argon2idDerivation.getRecommendedParams('paranoid');
-      
+
       expect(interactive.time).toBeLessThan(sensitive.time!);
       expect(sensitive.time).toBeLessThan(paranoid.time!);
       expect(interactive.memory).toBeLessThan(paranoid.memory!);
@@ -329,9 +329,9 @@ describe('Argon2id Derivation', () => {
     test('should estimate derivation time', () => {
       const estimate = Argon2idDerivation.estimateDerivationTime({
         time: 3,
-        memory: 19456
+        memory: 19456,
       });
-      
+
       expect(typeof estimate).toBe('number');
       expect(estimate).toBeGreaterThan(0);
     });
@@ -342,11 +342,11 @@ describe('Argon2id Derivation', () => {
       const validKey = new Uint8Array(32);
       validKey.fill(1);
       validKey[0] = 2; // Make it non-uniform
-      
+
       const invalidKey = new Uint8Array(8);
       const uniformKey = new Uint8Array(32);
       uniformKey.fill(42);
-      
+
       expect(Argon2idDerivation.validateDerivedKey(validKey)).toBe(true);
       expect(Argon2idDerivation.validateDerivedKey(invalidKey)).toBe(false);
       expect(Argon2idDerivation.validateDerivedKey(uniformKey)).toBe(false);

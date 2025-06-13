@@ -5,12 +5,12 @@
  * @security Memory-efficient encryption for large datasets with integrity verification
  */
 
-import { 
+import {
   EncryptionResult,
   EncryptionContext,
   DecryptionContext,
   CryptoOperationResult,
-  FILE_ENCRYPTION
+  FILE_ENCRYPTION,
 } from '@zk-vault/shared';
 
 import { AESGCMCipher } from '../algorithms/aes-gcm';
@@ -73,7 +73,10 @@ export interface StreamingEncryption {
  */
 export interface StreamingDecryption {
   /** Processes an encrypted chunk */
-  processChunk(encryptedData: EncryptionResult, metadata: ChunkMetadata): Promise<CryptoOperationResult<Uint8Array>>;
+  processChunk(
+    encryptedData: EncryptionResult,
+    metadata: ChunkMetadata
+  ): Promise<CryptoOperationResult<Uint8Array>>;
   /** Finalizes the decryption session */
   finalize(): Promise<CryptoOperationResult<boolean>>;
   /** Gets current progress */
@@ -86,7 +89,6 @@ export interface StreamingDecryption {
  * @security Uses per-chunk keys and integrity verification
  */
 export class ChunkedEncryption {
-
   /**
    * Creates a streaming encryption session
    * @param masterKey Master encryption key
@@ -107,7 +109,7 @@ export class ChunkedEncryption {
         return {
           success: false,
           error: 'Master key must be 32 bytes',
-          errorCode: 'INVALID_MASTER_KEY_LENGTH'
+          errorCode: 'INVALID_MASTER_KEY_LENGTH',
         };
       }
 
@@ -115,15 +117,18 @@ export class ChunkedEncryption {
         return {
           success: false,
           error: 'Total size must be positive',
-          errorCode: 'INVALID_TOTAL_SIZE'
+          errorCode: 'INVALID_TOTAL_SIZE',
         };
       }
 
-      if (chunkSize < FILE_ENCRYPTION.MIN_CHUNK_SIZE || chunkSize > FILE_ENCRYPTION.MAX_CHUNK_SIZE) {
+      if (
+        chunkSize < FILE_ENCRYPTION.MIN_CHUNK_SIZE ||
+        chunkSize > FILE_ENCRYPTION.MAX_CHUNK_SIZE
+      ) {
         return {
           success: false,
           error: `Chunk size must be between ${FILE_ENCRYPTION.MIN_CHUNK_SIZE} and ${FILE_ENCRYPTION.MAX_CHUNK_SIZE} bytes`,
-          errorCode: 'INVALID_CHUNK_SIZE'
+          errorCode: 'INVALID_CHUNK_SIZE',
         };
       }
 
@@ -137,21 +142,20 @@ export class ChunkedEncryption {
         totalChunks,
         processedChunks: 0,
         createdAt: Date.now(),
-        chunks: []
+        chunks: [],
       };
 
       const stream = new ChunkedEncryptionStream(masterKey, session, context);
 
       return {
         success: true,
-        data: stream
+        data: stream,
       };
-
     } catch (error) {
       return {
         success: false,
         error: `Failed to create encryption stream: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'STREAM_CREATION_FAILED'
+        errorCode: 'STREAM_CREATION_FAILED',
       };
     }
   }
@@ -174,7 +178,7 @@ export class ChunkedEncryption {
         return {
           success: false,
           error: 'Master key must be 32 bytes',
-          errorCode: 'INVALID_MASTER_KEY_LENGTH'
+          errorCode: 'INVALID_MASTER_KEY_LENGTH',
         };
       }
 
@@ -182,7 +186,7 @@ export class ChunkedEncryption {
         return {
           success: false,
           error: 'Invalid session metadata',
-          errorCode: 'INVALID_SESSION'
+          errorCode: 'INVALID_SESSION',
         };
       }
 
@@ -190,14 +194,13 @@ export class ChunkedEncryption {
 
       return {
         success: true,
-        data: stream
+        data: stream,
       };
-
     } catch (error) {
       return {
         success: false,
         error: `Failed to create decryption stream: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'STREAM_CREATION_FAILED'
+        errorCode: 'STREAM_CREATION_FAILED',
       };
     }
   }
@@ -215,19 +218,21 @@ export class ChunkedEncryption {
     masterKey: Uint8Array,
     chunkSize: number = FILE_ENCRYPTION.CHUNK_SIZE,
     context?: EncryptionContext
-  ): Promise<CryptoOperationResult<{
-    session: ChunkedEncryptionSession;
-    encryptedChunks: EncryptionResult[];
-  }>> {
+  ): Promise<
+    CryptoOperationResult<{
+      session: ChunkedEncryptionSession;
+      encryptedChunks: EncryptionResult[];
+    }>
+  > {
     try {
       // Create encryption stream
       const streamResult = this.createEncryptionStream(masterKey, data.length, chunkSize, context);
-      
+
       if (!streamResult.success || !streamResult.data) {
         return {
           success: false,
           error: streamResult.error || 'Failed to create encryption stream',
-          errorCode: streamResult.errorCode || 'STREAM_CREATION_FAILED'
+          errorCode: streamResult.errorCode || 'STREAM_CREATION_FAILED',
         };
       }
 
@@ -241,12 +246,12 @@ export class ChunkedEncryption {
         const chunk = data.slice(start, end);
 
         const chunkResult = await stream.processChunk(chunk);
-        
+
         if (!chunkResult.success || !chunkResult.data) {
           return {
             success: false,
             error: chunkResult.error || `Failed to encrypt chunk ${i}`,
-            errorCode: chunkResult.errorCode || 'CHUNK_ENCRYPTION_FAILED'
+            errorCode: chunkResult.errorCode || 'CHUNK_ENCRYPTION_FAILED',
           };
         }
 
@@ -255,12 +260,12 @@ export class ChunkedEncryption {
 
       // Finalize session
       const sessionResult = await stream.finalize();
-      
+
       if (!sessionResult.success || !sessionResult.data) {
         return {
           success: false,
           error: sessionResult.error || 'Failed to finalize encryption',
-          errorCode: sessionResult.errorCode || 'FINALIZATION_FAILED'
+          errorCode: sessionResult.errorCode || 'FINALIZATION_FAILED',
         };
       }
 
@@ -268,15 +273,14 @@ export class ChunkedEncryption {
         success: true,
         data: {
           session: sessionResult.data,
-          encryptedChunks
-        }
+          encryptedChunks,
+        },
       };
-
     } catch (error) {
       return {
         success: false,
         error: `Chunked encryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'CHUNKED_ENCRYPTION_FAILED'
+        errorCode: 'CHUNKED_ENCRYPTION_FAILED',
       };
     }
   }
@@ -298,12 +302,12 @@ export class ChunkedEncryption {
     try {
       // Create decryption stream
       const streamResult = this.createDecryptionStream(masterKey, session, context);
-      
+
       if (!streamResult.success || !streamResult.data) {
         return {
           success: false,
           error: streamResult.error || 'Failed to create decryption stream',
-          errorCode: streamResult.errorCode || 'STREAM_CREATION_FAILED'
+          errorCode: streamResult.errorCode || 'STREAM_CREATION_FAILED',
         };
       }
 
@@ -319,17 +323,17 @@ export class ChunkedEncryption {
           return {
             success: false,
             error: `Missing metadata for chunk ${i}`,
-            errorCode: 'MISSING_CHUNK_METADATA'
+            errorCode: 'MISSING_CHUNK_METADATA',
           };
         }
 
         const chunkResult = await stream.processChunk(encryptedChunk, metadata);
-        
+
         if (!chunkResult.success || !chunkResult.data) {
           return {
             success: false,
             error: chunkResult.error || `Failed to decrypt chunk ${i}`,
-            errorCode: chunkResult.errorCode || 'CHUNK_DECRYPTION_FAILED'
+            errorCode: chunkResult.errorCode || 'CHUNK_DECRYPTION_FAILED',
           };
         }
 
@@ -338,19 +342,19 @@ export class ChunkedEncryption {
 
       // Finalize session
       const finalizeResult = await stream.finalize();
-      
+
       if (!finalizeResult.success) {
         return {
           success: false,
           error: finalizeResult.error || 'Failed to finalize decryption',
-          errorCode: finalizeResult.errorCode || 'FINALIZATION_FAILED'
+          errorCode: finalizeResult.errorCode || 'FINALIZATION_FAILED',
         };
       }
 
       // Combine chunks
       const totalLength = decryptedChunks.reduce((sum, chunk) => sum + chunk.length, 0);
       const combined = new Uint8Array(totalLength);
-      
+
       let offset = 0;
       for (const chunk of decryptedChunks) {
         combined.set(chunk, offset);
@@ -359,14 +363,13 @@ export class ChunkedEncryption {
 
       return {
         success: true,
-        data: combined
+        data: combined,
       };
-
     } catch (error) {
       return {
         success: false,
         error: `Chunked decryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'CHUNKED_DECRYPTION_FAILED'
+        errorCode: 'CHUNKED_DECRYPTION_FAILED',
       };
     }
   }
@@ -390,9 +393,12 @@ export class ChunkedEncryption {
     return (
       session &&
       typeof session.sessionId === 'string' &&
-      typeof session.totalSize === 'number' && session.totalSize > 0 &&
-      typeof session.chunkSize === 'number' && session.chunkSize > 0 &&
-      typeof session.totalChunks === 'number' && session.totalChunks > 0 &&
+      typeof session.totalSize === 'number' &&
+      session.totalSize > 0 &&
+      typeof session.chunkSize === 'number' &&
+      session.chunkSize > 0 &&
+      typeof session.totalChunks === 'number' &&
+      session.totalChunks > 0 &&
       Array.isArray(session.chunks)
     );
   }
@@ -442,7 +448,7 @@ class ChunkedEncryptionStream implements StreamingEncryption {
         return {
           success: false,
           error: 'Failed to derive chunk key',
-          errorCode: 'CHUNK_KEY_DERIVATION_FAILED'
+          errorCode: 'CHUNK_KEY_DERIVATION_FAILED',
         };
       }
 
@@ -455,7 +461,7 @@ class ChunkedEncryptionStream implements StreamingEncryption {
         return {
           success: false,
           error: 'Failed to encrypt chunk',
-          errorCode: 'CHUNK_ENCRYPTION_FAILED'
+          errorCode: 'CHUNK_ENCRYPTION_FAILED',
         };
       }
 
@@ -468,7 +474,7 @@ class ChunkedEncryptionStream implements StreamingEncryption {
         originalSize: data.length,
         encryptedSize: encryptResult.data.ciphertext.length,
         hash,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
 
       this.session.chunks.push(metadata);
@@ -476,12 +482,11 @@ class ChunkedEncryptionStream implements StreamingEncryption {
       this.processedBytes += data.length;
 
       return encryptResult;
-
     } catch (error) {
       return {
         success: false,
         error: `Chunk processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'CHUNK_PROCESSING_FAILED'
+        errorCode: 'CHUNK_PROCESSING_FAILED',
       };
     }
   }
@@ -489,17 +494,16 @@ class ChunkedEncryptionStream implements StreamingEncryption {
   async finalize(): Promise<CryptoOperationResult<ChunkedEncryptionSession>> {
     try {
       this.session.processedChunks = this.currentChunk;
-      
+
       return {
         success: true,
-        data: this.session
+        data: this.session,
       };
-
     } catch (error) {
       return {
         success: false,
         error: `Finalization failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'FINALIZATION_FAILED'
+        errorCode: 'FINALIZATION_FAILED',
       };
     }
   }
@@ -508,7 +512,7 @@ class ChunkedEncryptionStream implements StreamingEncryption {
     return {
       processed: this.processedBytes,
       total: this.session.totalSize,
-      percentage: (this.processedBytes / this.session.totalSize) * 100
+      percentage: (this.processedBytes / this.session.totalSize) * 100,
     };
   }
 }
@@ -537,7 +541,7 @@ class ChunkedDecryptionStream implements StreamingDecryption {
         return {
           success: false,
           error: `Chunk out of order. Expected ${this.currentChunk}, got ${metadata.index}`,
-          errorCode: 'CHUNK_OUT_OF_ORDER'
+          errorCode: 'CHUNK_OUT_OF_ORDER',
         };
       }
 
@@ -553,7 +557,7 @@ class ChunkedDecryptionStream implements StreamingDecryption {
         return {
           success: false,
           error: 'Failed to derive chunk key',
-          errorCode: 'CHUNK_KEY_DERIVATION_FAILED'
+          errorCode: 'CHUNK_KEY_DERIVATION_FAILED',
         };
       }
 
@@ -566,7 +570,7 @@ class ChunkedDecryptionStream implements StreamingDecryption {
         return {
           success: false,
           error: 'Failed to decrypt chunk',
-          errorCode: 'CHUNK_DECRYPTION_FAILED'
+          errorCode: 'CHUNK_DECRYPTION_FAILED',
         };
       }
 
@@ -578,7 +582,7 @@ class ChunkedDecryptionStream implements StreamingDecryption {
         return {
           success: false,
           error: 'Chunk integrity verification failed',
-          errorCode: 'CHUNK_INTEGRITY_FAILED'
+          errorCode: 'CHUNK_INTEGRITY_FAILED',
         };
       }
 
@@ -587,14 +591,13 @@ class ChunkedDecryptionStream implements StreamingDecryption {
 
       return {
         success: true,
-        data: decryptedData
+        data: decryptedData,
       };
-
     } catch (error) {
       return {
         success: false,
         error: `Chunk processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'CHUNK_PROCESSING_FAILED'
+        errorCode: 'CHUNK_PROCESSING_FAILED',
       };
     }
   }
@@ -606,20 +609,19 @@ class ChunkedDecryptionStream implements StreamingDecryption {
         return {
           success: false,
           error: `Incomplete decryption. Expected ${this.session.totalChunks} chunks, processed ${this.currentChunk}`,
-          errorCode: 'INCOMPLETE_DECRYPTION'
+          errorCode: 'INCOMPLETE_DECRYPTION',
         };
       }
 
       return {
         success: true,
-        data: true
+        data: true,
       };
-
     } catch (error) {
       return {
         success: false,
         error: `Finalization failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errorCode: 'FINALIZATION_FAILED'
+        errorCode: 'FINALIZATION_FAILED',
       };
     }
   }
@@ -628,7 +630,7 @@ class ChunkedDecryptionStream implements StreamingDecryption {
     return {
       processed: this.processedBytes,
       total: this.session.totalSize,
-      percentage: (this.processedBytes / this.session.totalSize) * 100
+      percentage: (this.processedBytes / this.session.totalSize) * 100,
     };
   }
 }

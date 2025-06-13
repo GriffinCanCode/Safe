@@ -23,10 +23,10 @@ export class MemoryProtection {
    */
   static enableGlobalProtection(): void {
     this.globalProtectionEnabled = true;
-    
+
     // Set up periodic memory cleaning
     this.setupPeriodicCleaning();
-    
+
     // Set up emergency cleanup on page unload
     this.setupEmergencyCleanup();
   }
@@ -86,16 +86,16 @@ export class MemoryProtection {
   static secureAlloc(size: number, alignment: number = MEMORY_PROTECTION.ALIGNMENT): Uint8Array {
     // Allocate slightly larger buffer for alignment and canaries
     const canarySize = 8;
-    const totalSize = size + (alignment - 1) + (canarySize * 2);
+    const totalSize = size + (alignment - 1) + canarySize * 2;
     const buffer = new Uint8Array(totalSize);
-    
+
     // Add canary values at the beginning and end
     const canary = this.generateCanary();
     buffer.set(canary, 0);
     buffer.set(canary, totalSize - canarySize);
-    
+
     // Return the aligned portion
-    const alignedOffset = canarySize + (alignment - (canarySize % alignment)) % alignment;
+    const alignedOffset = canarySize + ((alignment - (canarySize % alignment)) % alignment);
     return buffer.subarray(alignedOffset, alignedOffset + size);
   }
 
@@ -104,7 +104,7 @@ export class MemoryProtection {
    * @param buffer Buffer to validate
    * @returns True if memory integrity is intact
    */
-  static validateMemoryIntegrity(buffer: Uint8Array): boolean {
+  static validateMemoryIntegrity(_buffer: Uint8Array): boolean {
     // This is a simplified implementation
     // In a real system, you'd track canary locations
     return true; // Placeholder
@@ -118,11 +118,11 @@ export class MemoryProtection {
    */
   static obfuscateMemory(data: Uint8Array, key: Uint8Array): Uint8Array {
     const obfuscated = new Uint8Array(data.length);
-    
+
     for (let i = 0; i < data.length; i++) {
       obfuscated[i] = data[i] ^ key[i % key.length];
     }
-    
+
     return obfuscated;
   }
 
@@ -146,13 +146,13 @@ export class MemoryProtection {
   static fragmentMemory(data: Uint8Array, fragmentCount: number = 4): Uint8Array[] {
     const fragments: Uint8Array[] = [];
     const fragmentSize = Math.ceil(data.length / fragmentCount);
-    
+
     for (let i = 0; i < fragmentCount; i++) {
       const start = i * fragmentSize;
       const end = Math.min(start + fragmentSize, data.length);
       fragments.push(data.slice(start, end));
     }
-    
+
     return fragments;
   }
 
@@ -164,13 +164,13 @@ export class MemoryProtection {
   static reconstructFromFragments(fragments: Uint8Array[]): Uint8Array {
     const totalLength = fragments.reduce((sum, fragment) => sum + fragment.length, 0);
     const reconstructed = new Uint8Array(totalLength);
-    
+
     let offset = 0;
     for (const fragment of fragments) {
       reconstructed.set(fragment, offset);
       offset += fragment.length;
     }
-    
+
     return reconstructed;
   }
 
@@ -180,12 +180,15 @@ export class MemoryProtection {
    * @param seed Scrambling seed
    * @returns Scrambled data and unscrambling info
    */
-  static scrambleMemory(data: Uint8Array, seed: number = Date.now()): {
+  static scrambleMemory(
+    data: Uint8Array,
+    seed: number = Date.now()
+  ): {
     scrambled: Uint8Array;
     indices: number[];
   } {
     const indices = Array.from({ length: data.length }, (_, i) => i);
-    
+
     // Fisher-Yates shuffle with deterministic seed
     let rng = seed;
     for (let i = indices.length - 1; i > 0; i--) {
@@ -193,12 +196,12 @@ export class MemoryProtection {
       const j = rng % (i + 1);
       [indices[i], indices[j]] = [indices[j], indices[i]];
     }
-    
+
     const scrambled = new Uint8Array(data.length);
     for (let i = 0; i < data.length; i++) {
       scrambled[i] = data[indices[i]];
     }
-    
+
     return { scrambled, indices };
   }
 
@@ -210,11 +213,11 @@ export class MemoryProtection {
    */
   static unscrambleMemory(scrambled: Uint8Array, indices: number[]): Uint8Array {
     const unscrambled = new Uint8Array(scrambled.length);
-    
+
     for (let i = 0; i < scrambled.length; i++) {
       unscrambled[indices[i]] = scrambled[i];
     }
-    
+
     return unscrambled;
   }
 
@@ -254,7 +257,7 @@ export class MemoryProtection {
       window.addEventListener('beforeunload', () => {
         this.clearAllProtectedRegions();
       });
-      
+
       window.addEventListener('pagehide', () => {
         this.clearAllProtectedRegions();
       });
@@ -266,7 +269,7 @@ export class MemoryProtection {
    */
   private static performPeriodicCleanup(): void {
     const now = Date.now();
-    
+
     for (const [id, region] of this.protectedRegions) {
       if (region.isExpired(now)) {
         this.destroyProtectedRegion(id);
@@ -278,7 +281,7 @@ export class MemoryProtection {
    * Clears all protected memory regions
    */
   private static clearAllProtectedRegions(): void {
-    for (const [id, region] of this.protectedRegions) {
+    for (const [, region] of this.protectedRegions) {
       region.destroy();
     }
     this.protectedRegions.clear();
@@ -321,7 +324,7 @@ export class ProtectedMemoryRegion {
     this.buffer = MemoryProtection.secureAlloc(size);
     this.createdAt = Date.now();
     this.lastAccessed = this.createdAt;
-    
+
     if (this.options.obfuscate) {
       this.obfuscationKey = new Uint8Array(32);
       crypto.getRandomValues(this.obfuscationKey);
@@ -337,21 +340,21 @@ export class ProtectedMemoryRegion {
     if (this.destroyed) {
       throw new Error('Cannot write to destroyed memory region');
     }
-    
+
     this.lastAccessed = Date.now();
-    
+
     let processedData = data;
-    
+
     if (this.options.obfuscate && this.obfuscationKey) {
       processedData = MemoryProtection.obfuscateMemory(data, this.obfuscationKey);
     }
-    
+
     if (this.options.scramble) {
       const scrambleResult = MemoryProtection.scrambleMemory(processedData);
       processedData = scrambleResult.scrambled;
       this.scrambleIndices = scrambleResult.indices;
     }
-    
+
     if (this.options.fragment) {
       this.fragments = MemoryProtection.fragmentMemory(processedData);
     } else {
@@ -369,25 +372,25 @@ export class ProtectedMemoryRegion {
     if (this.destroyed) {
       throw new Error('Cannot read from destroyed memory region');
     }
-    
+
     this.lastAccessed = Date.now();
-    
+
     let data: Uint8Array;
-    
+
     if (this.fragments) {
       data = MemoryProtection.reconstructFromFragments(this.fragments);
     } else {
       data = this.buffer.slice(offset, offset + length);
     }
-    
+
     if (this.options.scramble && this.scrambleIndices) {
       data = MemoryProtection.unscrambleMemory(data, this.scrambleIndices);
     }
-    
+
     if (this.options.obfuscate && this.obfuscationKey) {
       data = MemoryProtection.deobfuscateMemory(data, this.obfuscationKey);
     }
-    
+
     return data;
   }
 
@@ -399,10 +402,10 @@ export class ProtectedMemoryRegion {
   isExpired(currentTime: number = Date.now()): boolean {
     const maxLifetime = this.options.maxLifetime || MEMORY_PROTECTION.MAX_LIFETIME;
     const autoClearTimeout = this.options.autoClearTimeout || MEMORY_PROTECTION.AUTO_CLEAR_TIMEOUT;
-    
+
     return (
-      (currentTime - this.createdAt) > maxLifetime ||
-      (currentTime - this.lastAccessed) > autoClearTimeout
+      currentTime - this.createdAt > maxLifetime ||
+      currentTime - this.lastAccessed > autoClearTimeout
     );
   }
 
@@ -412,17 +415,17 @@ export class ProtectedMemoryRegion {
   destroy(): void {
     if (!this.destroyed) {
       ConstantTime.secureClear(this.buffer);
-      
+
       if (this.obfuscationKey) {
         ConstantTime.secureClear(this.obfuscationKey);
       }
-      
+
       if (this.fragments) {
         for (const fragment of this.fragments) {
           ConstantTime.secureClear(fragment);
         }
       }
-      
+
       this.destroyed = true;
     }
   }

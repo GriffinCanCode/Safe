@@ -2,12 +2,16 @@
   "name": "functions",
   "scripts": {
     "lint": "eslint --ext .js,.ts .",
+    "prebuild": "cd ../packages/shared && npm run build && cd ../crypto && npm run build",
     "build": "tsc",
     "serve": "npm run build && firebase emulators:start --only functions",
     "shell": "npm run build && firebase functions:shell",
     "start": "npm run shell",
-    "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "deploy": "npm run build && firebase deploy --only functions",
+    "logs": "firebase functions:log",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "engines": {
     "node": "18"
@@ -16,20 +20,23 @@
   "dependencies": {
     "firebase-admin": "^11.10.1",
     "firebase-functions": "^4.4.0",
-    "@zk-vault/shared": "*",
-    "@zk-vault/crypto": "*",
+    "@zk-vault/shared": "file:../packages/shared",
+    "@zk-vault/crypto": "file:../packages/crypto",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "express-rate-limit": "^6.10.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.13",
+    "@types/jest": "^29.5.14",
     "@typescript-eslint/eslint-plugin": "^5.12.0",
     "@typescript-eslint/parser": "^5.12.0",
     "eslint": "^8.9.0",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-import": "^2.25.4",
     "firebase-functions-test": "^3.1.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.0",
     "typescript": "^4.9.5"
   },
   "private": true

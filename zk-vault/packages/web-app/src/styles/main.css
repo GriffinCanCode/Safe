@@ -1,0 +1,290 @@
+/**
+ * ZK-Vault Main Styles
+ * Tailwind CSS v4.0 with modern CSS features
+ */
+
+/* Import Tailwind CSS v4 - single line, zero config! */
+@import "tailwindcss";
+
+/* Custom theme configuration imported after Tailwind */
+@import "./variables.css";
+
+/* === BASE STYLES === */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: var(--font-family-sans);
+    background: oklch(98% 0.003 264);
+    color: oklch(19% 0.009 264);
+    line-height: 1.6;
+  }
+
+  /* Modern CSS reset for interactive elements */
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+    color: inherit;
+  }
+
+  button {
+    border: none;
+    background: none;
+    cursor: pointer;
+  }
+
+  /* Focus management with modern CSS */
+  :focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+    border-radius: var(--border-radius-sm);
+  }
+
+  /* High contrast media queries */
+  @media (prefers-contrast: high) {
+    :focus-visible {
+      outline-width: 3px;
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* Modern scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--color-neutral-100);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-neutral-300);
+    border-radius: var(--border-radius-lg);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-neutral-400);
+  }
+}
+
+/* === COMPONENT STYLES === */
+@layer components {
+  /* Button base styles using modern CSS features */
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg transition-all;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    
+    /* Using CSS color-mix for dynamic hover states */
+    &:hover:not(:disabled) {
+      background-color: color-mix(in oklab, currentColor 10%, transparent);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+  }
+
+  .btn-primary {
+    @apply bg-primary-600 text-white hover:bg-primary-700;
+    box-shadow: var(--shadow-sm);
+    
+    &:hover:not(:disabled) {
+      box-shadow: var(--shadow-md);
+    }
+  }
+
+  .btn-secondary {
+    @apply bg-neutral-200 text-neutral-900 hover:bg-neutral-300;
+    
+    @media (prefers-color-scheme: dark) {
+      @apply bg-neutral-700 text-neutral-100 hover:bg-neutral-600;
+    }
+  }
+
+  .btn-danger {
+    @apply bg-danger-600 text-white hover:bg-danger-700;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Input styles with modern features */
+  .input {
+    @apply w-full px-3 py-2 border border-neutral-300 rounded-lg bg-white text-neutral-900;
+    @apply focus:border-primary-500 focus:ring-1 focus:ring-primary-500;
+    @apply placeholder-neutral-500;
+    transition: var(--transition-fast);
+    
+    @media (prefers-color-scheme: dark) {
+      @apply bg-neutral-800 border-neutral-600 text-neutral-100;
+    }
+
+    &:invalid {
+      @apply border-danger-500 focus:border-danger-500 focus:ring-danger-500;
+    }
+  }
+
+  /* Card components with container queries */
+  .card {
+    @apply @container bg-white rounded-xl shadow-sm border border-neutral-200 p-6;
+    
+    @media (prefers-color-scheme: dark) {
+      @apply bg-neutral-800 border-neutral-700;
+    }
+
+    /* Container query breakpoint */
+    @container (min-width: 320px) {
+      .card-content {
+        @apply grid grid-cols-2 gap-4;
+      }
+    }
+  }
+
+  /* Loading states with modern animations */
+  .loading-spinner {
+    @apply w-6 h-6 border-2 border-neutral-300 border-t-primary-600 rounded-full;
+    animation: spin 1s linear infinite;
+  }
+
+  /* Security strength indicators */
+  .strength-weak {
+    @apply text-danger-600 bg-danger-50;
+  }
+  
+  .strength-fair {
+    @apply text-warning-600 bg-warning-50;
+  }
+  
+  .strength-good {
+    @apply text-success-600 bg-success-50;
+  }
+  
+  .strength-strong {
+    @apply text-primary-600 bg-primary-50;
+  }
+
+  /* Modern glass morphism effect */
+  .glass {
+    background: color-mix(in oklab, white 80%, transparent);
+    backdrop-filter: blur(12px);
+    border: 1px solid color-mix(in oklab, white 20%, transparent);
+    
+    @media (prefers-color-scheme: dark) {
+      background: color-mix(in oklab, black 40%, transparent);
+      border-color: color-mix(in oklab, white 10%, transparent);
+    }
+  }
+}
+
+/* === UTILITY STYLES === */
+@layer utilities {
+  /* Custom scrollbar utilities */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Print styles */
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+  }
+
+  /* High contrast mode utilities */
+  @media (prefers-contrast: high) {
+    .text-primary {
+      color: var(--color-primary-700) !important;
+    }
+  }
+
+  /* Focus utilities for keyboard navigation */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
+  }
+
+  /* 3D transform utilities (new in Tailwind v4) */
+  .transform-3d {
+    transform-style: preserve-3d;
+  }
+}
+
+/* === ANIMATIONS === */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Using @starting-style for enter animations (new in v4) */
+.modal-content {
+  transition: opacity var(--transition-normal), scale var(--transition-normal);
+  
+  @starting-style {
+    opacity: 0;
+    scale: 0.9;
+  }
+}
+
+/* === DARK MODE === */
+@media (prefers-color-scheme: dark) {
+  body {
+    background: oklch(13% 0.006 264);
+    color: oklch(96% 0.006 264);
+  }
+}

@@ -32,12 +32,12 @@ export * from './memory/constant-time';
 
 // Export vault operations
 export * from './vault/password-encryption';
-export { 
+export {
   FileChunk as CryptoFileChunk,
   EncryptedFileMetadata,
   EncryptedFile,
   FileProgressCallback,
-  FileEncryption
+  FileEncryption,
 } from './vault/file-encryption';
 export * from './vault/chunked-encryption';
 
