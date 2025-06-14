@@ -6,9 +6,9 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { handleError } from "../utils/error-handler";
-import { checkRateLimit } from "../utils/rate-limiting";
-import { validateFunctionContext } from "../utils/validation.utils";
+import {handleError} from "../utils/error-handler";
+import {checkRateLimit} from "../utils/rate-limiting";
+import {validateFunctionContext} from "../utils/validation.utils";
 
 const db = admin.firestore();
 
@@ -29,6 +29,18 @@ export enum AuditEventType {
 }
 
 /**
+ * Interface for device information
+ */
+interface DeviceInfo {
+  platform?: string;
+  browser?: string;
+  version?: string;
+  os?: string;
+  isMobile?: boolean;
+  [key: string]: unknown;
+}
+
+/**
  * Interface for audit log entries
  */
 interface VaultAuditEntry {
@@ -41,11 +53,147 @@ interface VaultAuditEntry {
     timestamp: admin.firestore.Timestamp;
     ipAddress?: string;
     userAgent?: string;
-    deviceInfo?: any;
+    deviceInfo?: DeviceInfo;
     success: boolean;
     errorCode?: string;
-    additionalData?: Record<string, any>;
+    additionalData?: Record<string, unknown>;
   };
+}
+
+/**
+ * Interface for logging audit event data
+ */
+interface LogAuditEventData {
+  eventType: AuditEventType;
+  itemId?: string;
+  itemType?: string;
+  targetUserId?: string;
+  success?: boolean;
+  errorCode?: string;
+  additionalData?: Record<string, unknown>;
+  ipAddress?: string;
+  userAgent?: string;
+  deviceInfo?: DeviceInfo;
+}
+
+/**
+ * Interface for getting user audit logs data
+ */
+interface GetUserAuditLogsData {
+  startDate?: string;
+  endDate?: string;
+  eventTypes?: AuditEventType[];
+  limit?: number;
+  offset?: number;
+}
+
+/**
+ * Interface for audit log response
+ */
+interface AuditLogResponse {
+  id: string;
+  eventType: AuditEventType;
+  itemId?: string;
+  itemType?: string;
+  targetUserId?: string;
+  timestamp?: string;
+  success: boolean;
+  errorCode?: string;
+  ipAddress?: string;
+  userAgent?: string;
+  additionalData?: Record<string, unknown>;
+}
+
+/**
+ * Interface for user audit stats data
+ */
+interface GetUserAuditStatsData {
+  period?: number;
+}
+
+/**
+ * Interface for sharing activity stats
+ */
+interface SharingActivityStats {
+  itemsShared: number;
+  itemsUnshared: number;
+  uniqueRecipients: number;
+}
+
+/**
+ * Interface for user audit statistics
+ */
+interface UserAuditStats {
+  totalEvents: number;
+  eventsByType: Record<string, number>;
+  eventsByDay: Record<string, number>;
+  successfulEvents: number;
+  failedEvents: number;
+  mostActiveDay: string;
+  mostCommonEventType: string;
+  itemTypes: Record<string, number>;
+  sharingActivity: SharingActivityStats;
+}
+
+/**
+ * Interface for system audit analytics data
+ */
+interface GetSystemAuditAnalyticsData {
+  period?: number;
+}
+
+/**
+ * Interface for sharing metrics
+ */
+interface SharingMetrics {
+  totalShares: number;
+  totalUnshares: number;
+  activeShares: number;
+}
+
+/**
+ * Interface for system audit analytics
+ */
+interface SystemAuditAnalytics {
+  totalEvents: number;
+  uniqueUsers: number;
+  eventsByType: Record<string, number>;
+  eventsByDay: Record<string, number>;
+  successRate: number;
+  topUsers: Record<string, number>;
+  securityEvents: number;
+  sharingMetrics: SharingMetrics;
+}
+
+/**
+ * Interface for security alert details
+ */
+interface SecurityAlertDetails {
+  exportCount?: number;
+  shareCount?: number;
+  timeWindow: string;
+  threshold: number;
+}
+
+/**
+ * Interface for security alert
+ */
+interface SecurityAlert {
+  type: string;
+  userId: string;
+  eventType: AuditEventType;
+  severity: "low" | "medium" | "high" | "critical";
+  details: SecurityAlertDetails;
+  timestamp: admin.firestore.FieldValue;
+  status: "active" | "resolved" | "dismissed";
+}
+
+/**
+ * Interface for user data
+ */
+interface UserData {
+  isAdmin?: boolean;
+  [key: string]: unknown;
 }
 
 /**
@@ -53,7 +201,7 @@ interface VaultAuditEntry {
  * Records vault operations for security and compliance while preserving zero-knowledge
  */
 export const logVaultAuditEvent = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: LogAuditEventData, context: functions.https.CallableContext) => {
     try {
       // Validate context
       const validation = validateFunctionContext(context);
@@ -64,8 +212,16 @@ export const logVaultAuditEvent = functions.https.onCall(
         );
       }
 
+      const userId = context.auth?.uid;
+      if (!userId) {
+        throw new functions.https.HttpsError(
+          "unauthenticated",
+          "User ID is required",
+        );
+      }
+
       // Apply rate limiting
-      await checkRateLimit(context.auth!.uid, "audit", 50);
+      await checkRateLimit(userId, "audit", 50);
 
       const {
         eventType,
@@ -90,19 +246,19 @@ export const logVaultAuditEvent = functions.https.onCall(
 
       // Create audit entry
       const auditEntry: VaultAuditEntry = {
-        userId: context.auth!.uid,
+        userId,
         eventType,
-        itemId: itemId || null,
-        itemType: itemType || null,
-        targetUserId: targetUserId || null,
+        itemId: itemId || undefined,
+        itemType: itemType || undefined,
+        targetUserId: targetUserId || undefined,
         metadata: {
           timestamp:
             admin.firestore.FieldValue.serverTimestamp() as admin.firestore.Timestamp,
           ipAddress: ipAddress || context.rawRequest?.ip,
           userAgent: userAgent || context.rawRequest?.get("user-agent"),
-          deviceInfo: deviceInfo || null,
+          deviceInfo: deviceInfo || undefined,
           success,
-          errorCode: errorCode || null,
+          errorCode: errorCode || undefined,
           additionalData,
         },
       };
@@ -111,10 +267,10 @@ export const logVaultAuditEvent = functions.https.onCall(
       const auditRef = await db.collection("vaultAuditLogs").add(auditEntry);
 
       // Update user's audit statistics
-      await updateUserAuditStats(context.auth!.uid, eventType, success);
+      await updateUserAuditStats(userId, eventType, success);
 
       // Check for suspicious activity patterns
-      await checkSuspiciousActivity(context.auth!.uid, eventType);
+      await checkSuspiciousActivity(userId, eventType);
 
       return {
         success: true,
@@ -122,7 +278,7 @@ export const logVaultAuditEvent = functions.https.onCall(
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
-      return handleError(error, "logVaultAuditEvent");
+      return handleError(error as import("../utils/error-handler").GenericError, "logVaultAuditEvent");
     }
   },
 );
@@ -132,7 +288,7 @@ export const logVaultAuditEvent = functions.https.onCall(
  * Provides access to user's own audit trail
  */
 export const getUserAuditLogs = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: GetUserAuditLogsData, context: functions.https.CallableContext) => {
     try {
       // Validate context
       const validation = validateFunctionContext(context);
@@ -143,8 +299,16 @@ export const getUserAuditLogs = functions.https.onCall(
         );
       }
 
+      const userId = context.auth?.uid;
+      if (!userId) {
+        throw new functions.https.HttpsError(
+          "unauthenticated",
+          "User ID is required",
+        );
+      }
+
       // Apply rate limiting
-      await checkRateLimit(context.auth!.uid, "audit", 20);
+      await checkRateLimit(userId, "audit", 20);
 
       const {
         startDate,
@@ -153,8 +317,6 @@ export const getUserAuditLogs = functions.https.onCall(
         limit = 50,
         offset = 0,
       } = data || {};
-
-      const userId = context.auth!.uid;
 
       // Build query
       let query = db
@@ -184,7 +346,7 @@ export const getUserAuditLogs = functions.https.onCall(
       const snapshot = await query.get();
 
       // Process results
-      const auditLogs = snapshot.docs
+      const auditLogs: AuditLogResponse[] = snapshot.docs
         .map((doc) => {
           const data = doc.data() as VaultAuditEntry;
           return {
@@ -219,7 +381,7 @@ export const getUserAuditLogs = functions.https.onCall(
         hasMore: auditLogs.length === limit,
       };
     } catch (error) {
-      return handleError(error, "getUserAuditLogs");
+      return handleError(error as import("../utils/error-handler").GenericError, "getUserAuditLogs");
     }
   },
 );
@@ -229,7 +391,7 @@ export const getUserAuditLogs = functions.https.onCall(
  * Provides insights into vault usage patterns
  */
 export const getUserAuditStats = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: GetUserAuditStatsData, context: functions.https.CallableContext) => {
     try {
       // Validate context
       const validation = validateFunctionContext(context);
@@ -240,12 +402,19 @@ export const getUserAuditStats = functions.https.onCall(
         );
       }
 
+      const userId = context.auth?.uid;
+      if (!userId) {
+        throw new functions.https.HttpsError(
+          "unauthenticated",
+          "User ID is required",
+        );
+      }
+
       // Apply rate limiting
-      await checkRateLimit(context.auth!.uid, "audit", 10);
+      await checkRateLimit(userId, "audit", 10);
 
-      const { period = 30 } = data || {}; // Default to last 30 days
+      const {period = 30} = data || {}; // Default to last 30 days
 
-      const userId = context.auth!.uid;
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - period);
 
@@ -261,21 +430,23 @@ export const getUserAuditStats = functions.https.onCall(
         .get();
 
       // Analyze statistics
-      const stats = {
+      const stats: UserAuditStats = {
         totalEvents: snapshot.size,
-        eventsByType: {} as Record<string, number>,
-        eventsByDay: {} as Record<string, number>,
+        eventsByType: {},
+        eventsByDay: {},
         successfulEvents: 0,
         failedEvents: 0,
         mostActiveDay: "",
         mostCommonEventType: "",
-        itemTypes: {} as Record<string, number>,
+        itemTypes: {},
         sharingActivity: {
           itemsShared: 0,
           itemsUnshared: 0,
-          uniqueRecipients: new Set<string>(),
+          uniqueRecipients: 0,
         },
       };
+
+      const uniqueRecipients = new Set<string>();
 
       snapshot.docs.forEach((doc) => {
         const data = doc.data() as VaultAuditEntry;
@@ -307,7 +478,7 @@ export const getUserAuditStats = functions.https.onCall(
         if (eventType === AuditEventType.VAULT_ITEM_SHARED) {
           stats.sharingActivity.itemsShared++;
           if (data.targetUserId) {
-            stats.sharingActivity.uniqueRecipients.add(data.targetUserId);
+            uniqueRecipients.add(data.targetUserId);
           }
         } else if (eventType === AuditEventType.VAULT_ITEM_UNSHARED) {
           stats.sharingActivity.itemsUnshared++;
@@ -326,12 +497,8 @@ export const getUserAuditStats = functions.https.onCall(
           ([, a], [, b]) => b - a,
         )[0]?.[0] || "";
 
-      // Convert Set to count
-      const uniqueRecipientsCount = stats.sharingActivity.uniqueRecipients.size;
-      stats.sharingActivity = {
-        ...stats.sharingActivity,
-        uniqueRecipients: uniqueRecipientsCount as any,
-      };
+      // Set unique recipients count
+      stats.sharingActivity.uniqueRecipients = uniqueRecipients.size;
 
       return {
         success: true,
@@ -339,7 +506,7 @@ export const getUserAuditStats = functions.https.onCall(
         stats,
       };
     } catch (error) {
-      return handleError(error, "getUserAuditStats");
+      return handleError(error as import("../utils/error-handler").GenericError, "getUserAuditStats");
     }
   },
 );
@@ -349,7 +516,7 @@ export const getUserAuditStats = functions.https.onCall(
  * Provides overview of vault usage across all users
  */
 export const getSystemAuditAnalytics = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: GetSystemAuditAnalyticsData, context: functions.https.CallableContext) => {
     try {
       // Validate context
       const validation = validateFunctionContext(context);
@@ -360,9 +527,17 @@ export const getSystemAuditAnalytics = functions.https.onCall(
         );
       }
 
+      const userId = context.auth?.uid;
+      if (!userId) {
+        throw new functions.https.HttpsError(
+          "unauthenticated",
+          "User ID is required",
+        );
+      }
+
       // Check admin privileges
-      const userDoc = await db.collection("users").doc(context.auth!.uid).get();
-      const userData = userDoc.data();
+      const userDoc = await db.collection("users").doc(userId).get();
+      const userData = userDoc.data() as UserData | undefined;
 
       if (!userData?.isAdmin) {
         throw new functions.https.HttpsError(
@@ -372,9 +547,9 @@ export const getSystemAuditAnalytics = functions.https.onCall(
       }
 
       // Apply rate limiting
-      await checkRateLimit(context.auth!.uid, "admin", 5);
+      await checkRateLimit(userId, "admin", 5);
 
-      const { period = 7 } = data || {}; // Default to last 7 days
+      const {period = 7} = data || {}; // Default to last 7 days
 
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - period);
@@ -390,13 +565,13 @@ export const getSystemAuditAnalytics = functions.https.onCall(
         .get();
 
       // Analyze system-wide statistics
-      const analytics = {
+      const analytics: SystemAuditAnalytics = {
         totalEvents: snapshot.size,
-        uniqueUsers: new Set<string>(),
-        eventsByType: {} as Record<string, number>,
-        eventsByDay: {} as Record<string, number>,
+        uniqueUsers: 0,
+        eventsByType: {},
+        eventsByDay: {},
         successRate: 0,
-        topUsers: {} as Record<string, number>,
+        topUsers: {},
         securityEvents: 0,
         sharingMetrics: {
           totalShares: 0,
@@ -405,6 +580,7 @@ export const getSystemAuditAnalytics = functions.https.onCall(
         },
       };
 
+      const uniqueUsers = new Set<string>();
       let successfulEvents = 0;
 
       snapshot.docs.forEach((doc) => {
@@ -415,7 +591,7 @@ export const getSystemAuditAnalytics = functions.https.onCall(
           data.metadata.timestamp?.toDate()?.toISOString().split("T")[0] || "";
 
         // Track unique users
-        analytics.uniqueUsers.add(userId);
+        uniqueUsers.add(userId);
 
         // Count by event type
         analytics.eventsByType[eventType] =
@@ -450,13 +626,12 @@ export const getSystemAuditAnalytics = functions.https.onCall(
 
       // Calculate success rate
       analytics.successRate =
-        analytics.totalEvents > 0
-          ? Math.round((successfulEvents / analytics.totalEvents) * 100)
-          : 100;
+        analytics.totalEvents > 0 ?
+          Math.round((successfulEvents / analytics.totalEvents) * 100) :
+          100;
 
-      // Convert unique users set to count
-      const uniqueUsersCount = analytics.uniqueUsers.size;
-      analytics.uniqueUsers = uniqueUsersCount as any;
+      // Set unique users count
+      analytics.uniqueUsers = uniqueUsers.size;
 
       // Calculate active shares (approximate)
       analytics.sharingMetrics.activeShares = Math.max(
@@ -471,7 +646,7 @@ export const getSystemAuditAnalytics = functions.https.onCall(
         analytics,
       };
     } catch (error) {
-      return handleError(error, "getSystemAuditAnalytics");
+      return handleError(error as import("../utils/error-handler").GenericError, "getSystemAuditAnalytics");
     }
   },
 );
@@ -495,7 +670,7 @@ async function updateUserAuditStats(
         failedEvents: admin.firestore.FieldValue.increment(success ? 0 : 1),
         [`eventCounts.${eventType}`]: admin.firestore.FieldValue.increment(1),
       },
-      { merge: true },
+      {merge: true},
     );
   } catch (error) {
     console.error("Error updating user audit stats:", error);
@@ -528,7 +703,7 @@ async function checkSuspiciousActivity(
 
       if (recentExports.size >= 5) {
         // Create security alert
-        await db.collection("securityAlerts").add({
+        const alert: SecurityAlert = {
           type: "suspicious_vault_activity",
           userId,
           eventType,
@@ -540,7 +715,9 @@ async function checkSuspiciousActivity(
           },
           timestamp: admin.firestore.FieldValue.serverTimestamp(),
           status: "active",
-        });
+        };
+
+        await db.collection("securityAlerts").add(alert);
       }
     }
 
@@ -561,7 +738,7 @@ async function checkSuspiciousActivity(
 
       if (recentShares.size >= 20) {
         // Create security alert
-        await db.collection("securityAlerts").add({
+        const alert: SecurityAlert = {
           type: "excessive_sharing_activity",
           userId,
           eventType,
@@ -573,7 +750,9 @@ async function checkSuspiciousActivity(
           },
           timestamp: admin.firestore.FieldValue.serverTimestamp(),
           status: "active",
-        });
+        };
+
+        await db.collection("securityAlerts").add(alert);
       }
     }
   } catch (error) {
@@ -588,6 +767,7 @@ async function checkSuspiciousActivity(
  */
 export const cleanupOldAuditLogs = functions.pubsub
   .schedule("every 24 hours")
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .onRun(async (context) => {
     try {
       // Delete audit logs older than 1 year

@@ -4,61 +4,31 @@
  * @description Cloud Functions for advanced vault item sharing in ZK-Vault
  * @security Zero-knowledge sharing with encrypted key exchange and granular permissions
  */
-var __createBinding =
-  (this && this.__createBinding) ||
-  (Object.create
-    ? function (o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        var desc = Object.getOwnPropertyDescriptor(m, k);
-        if (
-          !desc ||
-          ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)
-        ) {
-          desc = {
-            enumerable: true,
-            get: function () {
-              return m[k];
-            },
-          };
-        }
-        Object.defineProperty(o, k2, desc);
-      }
-    : function (o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        o[k2] = m[k];
-      });
-var __setModuleDefault =
-  (this && this.__setModuleDefault) ||
-  (Object.create
-    ? function (o, v) {
-        Object.defineProperty(o, "default", { enumerable: true, value: v });
-      }
-    : function (o, v) {
-        o["default"] = v;
-      });
-var __importStar =
-  (this && this.__importStar) ||
-  function (mod) {
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
     var result = {};
-    if (mod != null)
-      for (var k in mod)
-        if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k))
-          __createBinding(result, mod, k);
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
     __setModuleDefault(result, mod);
     return result;
-  };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cleanupExpiredShares =
-  exports.trackShareAccess =
-  exports.revokeShare =
-  exports.updateSharePermissions =
-  exports.getUserShares =
-  exports.respondToShareInvitation =
-  exports.createAdvancedShare =
-  exports.ShareStatus =
-  exports.SharingPermission =
-    void 0;
+exports.cleanupExpiredShares = exports.trackShareAccess = exports.revokeShare = exports.updateSharePermissions = exports.getUserShares = exports.respondToShareInvitation = exports.createAdvancedShare = exports.ShareStatus = exports.SharingPermission = void 0;
 const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const error_handler_1 = require("../utils/error-handler");
@@ -70,746 +40,623 @@ const db = admin.firestore();
  */
 var SharingPermission;
 (function (SharingPermission) {
-  SharingPermission["READ"] = "read";
-  SharingPermission["WRITE"] = "write";
-  SharingPermission["ADMIN"] = "admin";
-})(
-  (SharingPermission =
-    exports.SharingPermission || (exports.SharingPermission = {})),
-);
+    SharingPermission["READ"] = "read";
+    SharingPermission["WRITE"] = "write";
+    SharingPermission["ADMIN"] = "admin";
+})(SharingPermission = exports.SharingPermission || (exports.SharingPermission = {}));
 /**
  * Share status types
  */
 var ShareStatus;
 (function (ShareStatus) {
-  ShareStatus["PENDING"] = "pending";
-  ShareStatus["ACCEPTED"] = "accepted";
-  ShareStatus["DECLINED"] = "declined";
-  ShareStatus["REVOKED"] = "revoked";
-  ShareStatus["EXPIRED"] = "expired";
-})((ShareStatus = exports.ShareStatus || (exports.ShareStatus = {})));
+    ShareStatus["PENDING"] = "pending";
+    ShareStatus["ACCEPTED"] = "accepted";
+    ShareStatus["DECLINED"] = "declined";
+    ShareStatus["REVOKED"] = "revoked";
+    ShareStatus["EXPIRED"] = "expired";
+})(ShareStatus = exports.ShareStatus || (exports.ShareStatus = {}));
 /**
  * Creates an advanced vault item share
  * Supports granular permissions and access controls
  */
 exports.createAdvancedShare = functions.https.onCall(async (data, context) => {
-  try {
-    // Validate context
-    const validation = (0, validation_utils_1.validateFunctionContext)(context);
-    if (!validation.isValid) {
-      throw new functions.https.HttpsError(
-        "unauthenticated",
-        validation.error || "Authentication required",
-      );
+    try {
+        // Validate context
+        const validation = (0, validation_utils_1.validateFunctionContext)(context);
+        if (!validation.isValid) {
+            throw new functions.https.HttpsError("unauthenticated", validation.error || "Authentication required");
+        }
+        // Apply rate limiting
+        await (0, rate_limiting_1.checkRateLimit)(context.auth.uid, "sharing", 15);
+        const { itemId, recipientEmail, encryptedKeys, permissions = [SharingPermission.READ], config = {}, } = data;
+        // Validate required fields
+        if (!itemId || !recipientEmail || !encryptedKeys?.itemKey) {
+            throw new functions.https.HttpsError("invalid-argument", "Missing required sharing data");
+        }
+        if (!(0, validation_utils_1.isValidEmail)(recipientEmail)) {
+            throw new functions.https.HttpsError("invalid-argument", "Invalid recipient email format");
+        }
+        // Validate permissions
+        const validPermissions = permissions.every((p) => Object.values(SharingPermission).includes(p));
+        if (!validPermissions) {
+            throw new functions.https.HttpsError("invalid-argument", "Invalid permissions specified");
+        }
+        // Get vault item to verify ownership
+        const itemDoc = await db
+            .collection("vaults")
+            .doc(context.auth.uid)
+            .collection("items")
+            .doc(itemId)
+            .get();
+        if (!itemDoc.exists) {
+            throw new functions.https.HttpsError("not-found", "Vault item not found");
+        }
+        // Find recipient user
+        const recipientQuery = await db
+            .collection("users")
+            .where("email", "==", recipientEmail.toLowerCase())
+            .limit(1)
+            .get();
+        if (recipientQuery.empty) {
+            throw new functions.https.HttpsError("not-found", "Recipient user not found");
+        }
+        const recipientDoc = recipientQuery.docs[0];
+        const recipientId = recipientDoc.id;
+        // Prevent self-sharing
+        if (recipientId === context.auth.uid) {
+            throw new functions.https.HttpsError("invalid-argument", "Cannot share with yourself");
+        }
+        // Check for existing share
+        const existingShareQuery = await db
+            .collection("vaultShares")
+            .where("itemId", "==", itemId)
+            .where("ownerId", "==", context.auth.uid)
+            .where("sharedWithUserId", "==", recipientId)
+            .where("status", "in", [ShareStatus.PENDING, ShareStatus.ACCEPTED])
+            .limit(1)
+            .get();
+        if (!existingShareQuery.empty) {
+            throw new functions.https.HttpsError("already-exists", "Item is already shared with this user");
+        }
+        // Process sharing configuration
+        const processedConfig = {
+            permissions,
+            expiresAt: config.expiresAt ? new Date(config.expiresAt) : undefined,
+            maxAccess: config.maxAccess || undefined,
+            requiresAcceptance: config.requiresAcceptance !== false,
+            allowResharing: config.allowResharing || false,
+            notifyOnAccess: config.notifyOnAccess !== false,
+            accessRestrictions: config.accessRestrictions || {},
+        };
+        // Create share record
+        const shareData = {
+            itemId,
+            ownerId: context.auth.uid,
+            sharedWithUserId: recipientId,
+            sharedWithEmail: recipientEmail.toLowerCase(),
+            encryptedKeys,
+            permissions,
+            config: processedConfig,
+            status: processedConfig.requiresAcceptance ?
+                ShareStatus.PENDING :
+                ShareStatus.ACCEPTED,
+            metadata: {
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                accessCount: 0,
+            },
+        };
+        const shareRef = await db.collection("vaultShares").add(shareData);
+        // Create notification for recipient
+        await createSharingNotification(recipientId, {
+            type: "share_received",
+            shareId: shareRef.id,
+            fromUserId: context.auth.uid,
+            itemId,
+            permissions,
+            requiresAcceptance: processedConfig.requiresAcceptance,
+        });
+        // Log audit event
+        await logSharingAuditEvent(context.auth.uid, "share_created", {
+            shareId: shareRef.id,
+            itemId,
+            recipientId,
+            permissions,
+        });
+        return {
+            success: true,
+            shareId: shareRef.id,
+            status: shareData.status,
+            requiresAcceptance: processedConfig.requiresAcceptance,
+        };
     }
-    // Apply rate limiting
-    await (0, rate_limiting_1.checkRateLimit)(context.auth.uid, "sharing", 15);
-    const {
-      itemId,
-      recipientEmail,
-      encryptedKeys,
-      permissions = [SharingPermission.READ],
-      config = {},
-    } = data;
-    // Validate required fields
-    if (!itemId || !recipientEmail || !encryptedKeys?.itemKey) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Missing required sharing data",
-      );
+    catch (error) {
+        return (0, error_handler_1.handleError)(error, "createAdvancedShare");
     }
-    if (!(0, validation_utils_1.isValidEmail)(recipientEmail)) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Invalid recipient email format",
-      );
-    }
-    // Validate permissions
-    const validPermissions = permissions.every((p) =>
-      Object.values(SharingPermission).includes(p),
-    );
-    if (!validPermissions) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Invalid permissions specified",
-      );
-    }
-    // Get vault item to verify ownership
-    const itemDoc = await db
-      .collection("vaults")
-      .doc(context.auth.uid)
-      .collection("items")
-      .doc(itemId)
-      .get();
-    if (!itemDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Vault item not found");
-    }
-    // Find recipient user
-    const recipientQuery = await db
-      .collection("users")
-      .where("email", "==", recipientEmail.toLowerCase())
-      .limit(1)
-      .get();
-    if (recipientQuery.empty) {
-      throw new functions.https.HttpsError(
-        "not-found",
-        "Recipient user not found",
-      );
-    }
-    const recipientDoc = recipientQuery.docs[0];
-    const recipientId = recipientDoc.id;
-    // Prevent self-sharing
-    if (recipientId === context.auth.uid) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Cannot share with yourself",
-      );
-    }
-    // Check for existing share
-    const existingShareQuery = await db
-      .collection("vaultShares")
-      .where("itemId", "==", itemId)
-      .where("ownerId", "==", context.auth.uid)
-      .where("sharedWithUserId", "==", recipientId)
-      .where("status", "in", [ShareStatus.PENDING, ShareStatus.ACCEPTED])
-      .limit(1)
-      .get();
-    if (!existingShareQuery.empty) {
-      throw new functions.https.HttpsError(
-        "already-exists",
-        "Item is already shared with this user",
-      );
-    }
-    // Process sharing configuration
-    const processedConfig = {
-      permissions,
-      expiresAt: config.expiresAt ? new Date(config.expiresAt) : undefined,
-      maxAccess: config.maxAccess || undefined,
-      requiresAcceptance: config.requiresAcceptance !== false,
-      allowResharing: config.allowResharing || false,
-      notifyOnAccess: config.notifyOnAccess !== false,
-      accessRestrictions: config.accessRestrictions || {},
-    };
-    // Create share record
-    const shareData = {
-      itemId,
-      ownerId: context.auth.uid,
-      sharedWithUserId: recipientId,
-      sharedWithEmail: recipientEmail.toLowerCase(),
-      encryptedKeys,
-      permissions,
-      config: processedConfig,
-      status: processedConfig.requiresAcceptance
-        ? ShareStatus.PENDING
-        : ShareStatus.ACCEPTED,
-      metadata: {
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        accessCount: 0,
-      },
-    };
-    const shareRef = await db.collection("vaultShares").add(shareData);
-    // Create notification for recipient
-    await createSharingNotification(recipientId, {
-      type: "share_received",
-      shareId: shareRef.id,
-      fromUserId: context.auth.uid,
-      itemId,
-      permissions,
-      requiresAcceptance: processedConfig.requiresAcceptance,
-    });
-    // Log audit event
-    await logSharingAuditEvent(context.auth.uid, "share_created", {
-      shareId: shareRef.id,
-      itemId,
-      recipientId,
-      permissions,
-    });
-    return {
-      success: true,
-      shareId: shareRef.id,
-      status: shareData.status,
-      requiresAcceptance: processedConfig.requiresAcceptance,
-    };
-  } catch (error) {
-    return (0, error_handler_1.handleError)(error, "createAdvancedShare");
-  }
 });
 /**
  * Responds to a share invitation (accept/decline)
  */
-exports.respondToShareInvitation = functions.https.onCall(
-  async (data, context) => {
+exports.respondToShareInvitation = functions.https.onCall(async (data, context) => {
     try {
-      // Validate context
-      const validation = (0, validation_utils_1.validateFunctionContext)(
-        context,
-      );
-      if (!validation.isValid) {
-        throw new functions.https.HttpsError(
-          "unauthenticated",
-          validation.error || "Authentication required",
-        );
-      }
-      // Apply rate limiting
-      await (0, rate_limiting_1.checkRateLimit)(
-        context.auth.uid,
-        "sharing",
-        10,
-      );
-      const { shareId, response } = data; // response: 'accept' | 'decline'
-      if (!shareId || !["accept", "decline"].includes(response)) {
-        throw new functions.https.HttpsError(
-          "invalid-argument",
-          "Valid shareId and response required",
-        );
-      }
-      // Get share record
-      const shareDoc = await db.collection("vaultShares").doc(shareId).get();
-      if (!shareDoc.exists) {
-        throw new functions.https.HttpsError(
-          "not-found",
-          "Share invitation not found",
-        );
-      }
-      const shareData = shareDoc.data();
-      // Verify user is the intended recipient
-      if (shareData.sharedWithUserId !== context.auth.uid) {
-        throw new functions.https.HttpsError(
-          "permission-denied",
-          "You are not authorized to respond to this invitation",
-        );
-      }
-      // Check if share is still pending
-      if (shareData.status !== ShareStatus.PENDING) {
-        throw new functions.https.HttpsError(
-          "failed-precondition",
-          "Share invitation is no longer pending",
-        );
-      }
-      // Check if share has expired
-      if (
-        shareData.config.expiresAt &&
-        new Date() > shareData.config.expiresAt
-      ) {
-        await shareDoc.ref.update({
-          status: ShareStatus.EXPIRED,
-          "metadata.updatedAt": admin.firestore.FieldValue.serverTimestamp(),
+        // Validate context
+        const validation = (0, validation_utils_1.validateFunctionContext)(context);
+        if (!validation.isValid) {
+            throw new functions.https.HttpsError("unauthenticated", validation.error || "Authentication required");
+        }
+        // Apply rate limiting
+        await (0, rate_limiting_1.checkRateLimit)(context.auth.uid, "sharing", 10);
+        const { shareId, response } = data; // response: 'accept' | 'decline'
+        if (!shareId || !["accept", "decline"].includes(response)) {
+            throw new functions.https.HttpsError("invalid-argument", "Valid shareId and response required");
+        }
+        // Get share record
+        const shareDoc = await db.collection("vaultShares").doc(shareId).get();
+        if (!shareDoc.exists) {
+            throw new functions.https.HttpsError("not-found", "Share invitation not found");
+        }
+        const shareData = shareDoc.data();
+        // Verify user is the intended recipient
+        if (shareData.sharedWithUserId !== context.auth.uid) {
+            throw new functions.https.HttpsError("permission-denied", "You are not authorized to respond to this invitation");
+        }
+        // Check if share is still pending
+        if (shareData.status !== ShareStatus.PENDING) {
+            throw new functions.https.HttpsError("failed-precondition", "Share invitation is no longer pending");
+        }
+        // Check if share has expired
+        if (shareData.config.expiresAt &&
+            new Date() > shareData.config.expiresAt) {
+            await shareDoc.ref.update({
+                "status": ShareStatus.EXPIRED,
+                "metadata.updatedAt": admin.firestore.FieldValue.serverTimestamp(),
+            });
+            throw new functions.https.HttpsError("deadline-exceeded", "Share invitation has expired");
+        }
+        // Update share status
+        const newStatus = response === "accept" ? ShareStatus.ACCEPTED : ShareStatus.DECLINED;
+        const updateData = {
+            "status": newStatus,
+            "metadata.updatedAt": admin.firestore.FieldValue.serverTimestamp(),
+        };
+        if (response === "accept") {
+            updateData["metadata.acceptedAt"] =
+                admin.firestore.FieldValue.serverTimestamp();
+        }
+        await shareDoc.ref.update(updateData);
+        // Create notification for owner
+        await createSharingNotification(shareData.ownerId, {
+            type: `share_${response}ed`,
+            shareId,
+            fromUserId: context.auth.uid,
+            itemId: shareData.itemId,
         });
-        throw new functions.https.HttpsError(
-          "deadline-exceeded",
-          "Share invitation has expired",
-        );
-      }
-      // Update share status
-      const newStatus =
-        response === "accept" ? ShareStatus.ACCEPTED : ShareStatus.DECLINED;
-      const updateData = {
-        status: newStatus,
-        "metadata.updatedAt": admin.firestore.FieldValue.serverTimestamp(),
-      };
-      if (response === "accept") {
-        updateData["metadata.acceptedAt"] =
-          admin.firestore.FieldValue.serverTimestamp();
-      }
-      await shareDoc.ref.update(updateData);
-      // Create notification for owner
-      await createSharingNotification(shareData.ownerId, {
-        type: `share_${response}ed`,
-        shareId,
-        fromUserId: context.auth.uid,
-        itemId: shareData.itemId,
-      });
-      // Log audit event
-      await logSharingAuditEvent(context.auth.uid, `share_${response}ed`, {
-        shareId,
-        itemId: shareData.itemId,
-        ownerId: shareData.ownerId,
-      });
-      return {
-        success: true,
-        shareId,
-        status: newStatus,
-      };
-    } catch (error) {
-      return (0, error_handler_1.handleError)(
-        error,
-        "respondToShareInvitation",
-      );
+        // Log audit event
+        await logSharingAuditEvent(context.auth.uid, `share_${response}ed`, {
+            shareId,
+            itemId: shareData.itemId,
+            ownerId: shareData.ownerId,
+        });
+        return {
+            success: true,
+            shareId,
+            status: newStatus,
+        };
     }
-  },
-);
+    catch (error) {
+        return (0, error_handler_1.handleError)(error, "respondToShareInvitation");
+    }
+});
 /**
  * Gets all shares for a user (sent and received)
  */
 exports.getUserShares = functions.https.onCall(async (data, context) => {
-  try {
-    // Validate context
-    const validation = (0, validation_utils_1.validateFunctionContext)(context);
-    if (!validation.isValid) {
-      throw new functions.https.HttpsError(
-        "unauthenticated",
-        validation.error || "Authentication required",
-      );
+    try {
+        // Validate context
+        const validation = (0, validation_utils_1.validateFunctionContext)(context);
+        if (!validation.isValid) {
+            throw new functions.https.HttpsError("unauthenticated", validation.error || "Authentication required");
+        }
+        // Apply rate limiting
+        await (0, rate_limiting_1.checkRateLimit)(context.auth.uid, "sharing", 20);
+        const { type = "all", // 'sent' | 'received' | 'all'
+        status = "all", // ShareStatus or 'all'
+        limit = 50, offset = 0, } = data || {};
+        const userId = context.auth.uid;
+        const shares = [];
+        // Get sent shares
+        if (type === "sent" || type === "all") {
+            let sentQuery = db
+                .collection("vaultShares")
+                .where("ownerId", "==", userId)
+                .orderBy("metadata.createdAt", "desc");
+            if (status !== "all") {
+                sentQuery = sentQuery.where("status", "==", status);
+            }
+            const sentSnapshot = await sentQuery.limit(limit).offset(offset).get();
+            for (const doc of sentSnapshot.docs) {
+                const shareData = doc.data();
+                // Get recipient info
+                const recipientDoc = await db
+                    .collection("users")
+                    .doc(shareData.sharedWithUserId)
+                    .get();
+                const recipientData = recipientDoc.data();
+                // Get item info (just metadata, not content)
+                const itemDoc = await db
+                    .collection("vaults")
+                    .doc(userId)
+                    .collection("items")
+                    .doc(shareData.itemId)
+                    .get();
+                const itemData = itemDoc.exists ? itemDoc.data() : null;
+                shares.push({
+                    id: doc.id,
+                    type: "sent",
+                    itemId: shareData.itemId,
+                    itemType: itemData?.type,
+                    recipient: {
+                        userId: shareData.sharedWithUserId,
+                        email: shareData.sharedWithEmail,
+                        displayName: recipientData?.displayName || shareData.sharedWithEmail,
+                    },
+                    permissions: shareData.permissions,
+                    status: shareData.status,
+                    config: shareData.config,
+                    createdAt: shareData.metadata.createdAt?.toDate()?.toISOString(),
+                    acceptedAt: shareData.metadata.acceptedAt?.toDate()?.toISOString(),
+                    lastAccessedAt: shareData.metadata.lastAccessedAt
+                        ?.toDate()
+                        ?.toISOString(),
+                    accessCount: shareData.metadata.accessCount,
+                });
+            }
+        }
+        // Get received shares
+        if (type === "received" || type === "all") {
+            let receivedQuery = db
+                .collection("vaultShares")
+                .where("sharedWithUserId", "==", userId)
+                .orderBy("metadata.createdAt", "desc");
+            if (status !== "all") {
+                receivedQuery = receivedQuery.where("status", "==", status);
+            }
+            const receivedSnapshot = await receivedQuery
+                .limit(limit)
+                .offset(offset)
+                .get();
+            for (const doc of receivedSnapshot.docs) {
+                const shareData = doc.data();
+                // Get owner info
+                const ownerDoc = await db
+                    .collection("users")
+                    .doc(shareData.ownerId)
+                    .get();
+                const ownerData = ownerDoc.data();
+                // Get item info from owner's vault
+                const itemDoc = await db
+                    .collection("vaults")
+                    .doc(shareData.ownerId)
+                    .collection("items")
+                    .doc(shareData.itemId)
+                    .get();
+                const itemData = itemDoc.exists ? itemDoc.data() : null;
+                shares.push({
+                    id: doc.id,
+                    type: "received",
+                    itemId: shareData.itemId,
+                    itemType: itemData?.type,
+                    owner: {
+                        userId: shareData.ownerId,
+                        email: ownerData?.email,
+                        displayName: ownerData?.displayName || ownerData?.email,
+                    },
+                    encryptedKeys: shareData.encryptedKeys,
+                    permissions: shareData.permissions,
+                    status: shareData.status,
+                    config: shareData.config,
+                    createdAt: shareData.metadata.createdAt?.toDate()?.toISOString(),
+                    acceptedAt: shareData.metadata.acceptedAt?.toDate()?.toISOString(),
+                    lastAccessedAt: shareData.metadata.lastAccessedAt
+                        ?.toDate()
+                        ?.toISOString(),
+                    accessCount: shareData.metadata.accessCount,
+                });
+            }
+        }
+        // Sort by creation date
+        shares.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        return {
+            success: true,
+            shares: shares.slice(0, limit),
+            count: shares.length,
+            hasMore: shares.length === limit,
+        };
     }
-    // Apply rate limiting
-    await (0, rate_limiting_1.checkRateLimit)(context.auth.uid, "sharing", 20);
-    const {
-      type = "all", // 'sent' | 'received' | 'all'
-      status = "all", // ShareStatus or 'all'
-      limit = 50,
-      offset = 0,
-    } = data || {};
-    const userId = context.auth.uid;
-    const shares = [];
-    // Get sent shares
-    if (type === "sent" || type === "all") {
-      let sentQuery = db
-        .collection("vaultShares")
-        .where("ownerId", "==", userId)
-        .orderBy("metadata.createdAt", "desc");
-      if (status !== "all") {
-        sentQuery = sentQuery.where("status", "==", status);
-      }
-      const sentSnapshot = await sentQuery.limit(limit).offset(offset).get();
-      for (const doc of sentSnapshot.docs) {
-        const shareData = doc.data();
-        // Get recipient info
-        const recipientDoc = await db
-          .collection("users")
-          .doc(shareData.sharedWithUserId)
-          .get();
-        const recipientData = recipientDoc.data();
-        // Get item info (just metadata, not content)
-        const itemDoc = await db
-          .collection("vaults")
-          .doc(userId)
-          .collection("items")
-          .doc(shareData.itemId)
-          .get();
-        const itemData = itemDoc.exists ? itemDoc.data() : null;
-        shares.push({
-          id: doc.id,
-          type: "sent",
-          itemId: shareData.itemId,
-          itemType: itemData?.type,
-          recipient: {
-            userId: shareData.sharedWithUserId,
-            email: shareData.sharedWithEmail,
-            displayName:
-              recipientData?.displayName || shareData.sharedWithEmail,
-          },
-          permissions: shareData.permissions,
-          status: shareData.status,
-          config: shareData.config,
-          createdAt: shareData.metadata.createdAt?.toDate()?.toISOString(),
-          acceptedAt: shareData.metadata.acceptedAt?.toDate()?.toISOString(),
-          lastAccessedAt: shareData.metadata.lastAccessedAt
-            ?.toDate()
-            ?.toISOString(),
-          accessCount: shareData.metadata.accessCount,
-        });
-      }
+    catch (error) {
+        return (0, error_handler_1.handleError)(error, "getUserShares");
     }
-    // Get received shares
-    if (type === "received" || type === "all") {
-      let receivedQuery = db
-        .collection("vaultShares")
-        .where("sharedWithUserId", "==", userId)
-        .orderBy("metadata.createdAt", "desc");
-      if (status !== "all") {
-        receivedQuery = receivedQuery.where("status", "==", status);
-      }
-      const receivedSnapshot = await receivedQuery
-        .limit(limit)
-        .offset(offset)
-        .get();
-      for (const doc of receivedSnapshot.docs) {
-        const shareData = doc.data();
-        // Get owner info
-        const ownerDoc = await db
-          .collection("users")
-          .doc(shareData.ownerId)
-          .get();
-        const ownerData = ownerDoc.data();
-        // Get item info from owner's vault
-        const itemDoc = await db
-          .collection("vaults")
-          .doc(shareData.ownerId)
-          .collection("items")
-          .doc(shareData.itemId)
-          .get();
-        const itemData = itemDoc.exists ? itemDoc.data() : null;
-        shares.push({
-          id: doc.id,
-          type: "received",
-          itemId: shareData.itemId,
-          itemType: itemData?.type,
-          owner: {
-            userId: shareData.ownerId,
-            email: ownerData?.email,
-            displayName: ownerData?.displayName || ownerData?.email,
-          },
-          encryptedKeys: shareData.encryptedKeys,
-          permissions: shareData.permissions,
-          status: shareData.status,
-          config: shareData.config,
-          createdAt: shareData.metadata.createdAt?.toDate()?.toISOString(),
-          acceptedAt: shareData.metadata.acceptedAt?.toDate()?.toISOString(),
-          lastAccessedAt: shareData.metadata.lastAccessedAt
-            ?.toDate()
-            ?.toISOString(),
-          accessCount: shareData.metadata.accessCount,
-        });
-      }
-    }
-    // Sort by creation date
-    shares.sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    );
-    return {
-      success: true,
-      shares: shares.slice(0, limit),
-      count: shares.length,
-      hasMore: shares.length === limit,
-    };
-  } catch (error) {
-    return (0, error_handler_1.handleError)(error, "getUserShares");
-  }
 });
 /**
  * Updates permissions for an existing share
  */
-exports.updateSharePermissions = functions.https.onCall(
-  async (data, context) => {
+exports.updateSharePermissions = functions.https.onCall(async (data, context) => {
     try {
-      // Validate context
-      const validation = (0, validation_utils_1.validateFunctionContext)(
-        context,
-      );
-      if (!validation.isValid) {
-        throw new functions.https.HttpsError(
-          "unauthenticated",
-          validation.error || "Authentication required",
-        );
-      }
-      // Apply rate limiting
-      await (0, rate_limiting_1.checkRateLimit)(
-        context.auth.uid,
-        "sharing",
-        10,
-      );
-      const { shareId, permissions, config } = data;
-      if (!shareId || !permissions || !Array.isArray(permissions)) {
-        throw new functions.https.HttpsError(
-          "invalid-argument",
-          "Valid shareId and permissions required",
-        );
-      }
-      // Validate permissions
-      const validPermissions = permissions.every((p) =>
-        Object.values(SharingPermission).includes(p),
-      );
-      if (!validPermissions) {
-        throw new functions.https.HttpsError(
-          "invalid-argument",
-          "Invalid permissions specified",
-        );
-      }
-      // Get share record
-      const shareDoc = await db.collection("vaultShares").doc(shareId).get();
-      if (!shareDoc.exists) {
-        throw new functions.https.HttpsError("not-found", "Share not found");
-      }
-      const shareData = shareDoc.data();
-      // Verify user is the owner
-      if (shareData.ownerId !== context.auth.uid) {
-        throw new functions.https.HttpsError(
-          "permission-denied",
-          "You are not authorized to modify this share",
-        );
-      }
-      // Check if share is active
-      if (
-        ![ShareStatus.PENDING, ShareStatus.ACCEPTED].includes(shareData.status)
-      ) {
-        throw new functions.https.HttpsError(
-          "failed-precondition",
-          "Cannot modify inactive share",
-        );
-      }
-      // Update share
-      const updateData = {
-        permissions,
-        "metadata.updatedAt": admin.firestore.FieldValue.serverTimestamp(),
-      };
-      if (config) {
-        updateData.config = { ...shareData.config, ...config };
-      }
-      await shareDoc.ref.update(updateData);
-      // Create notification for recipient
-      await createSharingNotification(shareData.sharedWithUserId, {
-        type: "share_updated",
-        shareId,
-        fromUserId: context.auth.uid,
-        itemId: shareData.itemId,
-        permissions,
-      });
-      // Log audit event
-      await logSharingAuditEvent(context.auth.uid, "share_updated", {
-        shareId,
-        itemId: shareData.itemId,
-        recipientId: shareData.sharedWithUserId,
-        oldPermissions: shareData.permissions,
-        newPermissions: permissions,
-      });
-      return {
-        success: true,
-        shareId,
-        permissions,
-      };
-    } catch (error) {
-      return (0, error_handler_1.handleError)(error, "updateSharePermissions");
+        // Validate context
+        const validation = (0, validation_utils_1.validateFunctionContext)(context);
+        if (!validation.isValid) {
+            throw new functions.https.HttpsError("unauthenticated", validation.error || "Authentication required");
+        }
+        // Apply rate limiting
+        await (0, rate_limiting_1.checkRateLimit)(context.auth.uid, "sharing", 10);
+        const { shareId, permissions, config } = data;
+        if (!shareId || !permissions || !Array.isArray(permissions)) {
+            throw new functions.https.HttpsError("invalid-argument", "Valid shareId and permissions required");
+        }
+        // Validate permissions
+        const validPermissions = permissions.every((p) => Object.values(SharingPermission).includes(p));
+        if (!validPermissions) {
+            throw new functions.https.HttpsError("invalid-argument", "Invalid permissions specified");
+        }
+        // Get share record
+        const shareDoc = await db.collection("vaultShares").doc(shareId).get();
+        if (!shareDoc.exists) {
+            throw new functions.https.HttpsError("not-found", "Share not found");
+        }
+        const shareData = shareDoc.data();
+        // Verify user is the owner
+        if (shareData.ownerId !== context.auth.uid) {
+            throw new functions.https.HttpsError("permission-denied", "You are not authorized to modify this share");
+        }
+        // Check if share is active
+        if (![ShareStatus.PENDING, ShareStatus.ACCEPTED].includes(shareData.status)) {
+            throw new functions.https.HttpsError("failed-precondition", "Cannot modify inactive share");
+        }
+        // Update share
+        const updateData = {
+            permissions,
+            "metadata.updatedAt": admin.firestore.FieldValue.serverTimestamp(),
+        };
+        if (config) {
+            updateData.config = { ...shareData.config, ...config };
+        }
+        await shareDoc.ref.update(updateData);
+        // Create notification for recipient
+        await createSharingNotification(shareData.sharedWithUserId, {
+            type: "share_updated",
+            shareId,
+            fromUserId: context.auth.uid,
+            itemId: shareData.itemId,
+            permissions,
+        });
+        // Log audit event
+        await logSharingAuditEvent(context.auth.uid, "share_updated", {
+            shareId,
+            itemId: shareData.itemId,
+            recipientId: shareData.sharedWithUserId,
+            oldPermissions: shareData.permissions,
+            newPermissions: permissions,
+        });
+        return {
+            success: true,
+            shareId,
+            permissions,
+        };
     }
-  },
-);
+    catch (error) {
+        return (0, error_handler_1.handleError)(error, "updateSharePermissions");
+    }
+});
 /**
  * Revokes a vault item share
  */
 exports.revokeShare = functions.https.onCall(async (data, context) => {
-  try {
-    // Validate context
-    const validation = (0, validation_utils_1.validateFunctionContext)(context);
-    if (!validation.isValid) {
-      throw new functions.https.HttpsError(
-        "unauthenticated",
-        validation.error || "Authentication required",
-      );
+    try {
+        // Validate context
+        const validation = (0, validation_utils_1.validateFunctionContext)(context);
+        if (!validation.isValid) {
+            throw new functions.https.HttpsError("unauthenticated", validation.error || "Authentication required");
+        }
+        // Apply rate limiting
+        await (0, rate_limiting_1.checkRateLimit)(context.auth.uid, "sharing", 10);
+        const { shareId } = data;
+        if (!shareId) {
+            throw new functions.https.HttpsError("invalid-argument", "ShareId is required");
+        }
+        // Get share record
+        const shareDoc = await db.collection("vaultShares").doc(shareId).get();
+        if (!shareDoc.exists) {
+            throw new functions.https.HttpsError("not-found", "Share not found");
+        }
+        const shareData = shareDoc.data();
+        // Verify user is the owner
+        if (shareData.ownerId !== context.auth.uid) {
+            throw new functions.https.HttpsError("permission-denied", "You are not authorized to revoke this share");
+        }
+        // Check if share can be revoked
+        if (shareData.status === ShareStatus.REVOKED) {
+            throw new functions.https.HttpsError("failed-precondition", "Share is already revoked");
+        }
+        // Revoke share
+        await shareDoc.ref.update({
+            "status": ShareStatus.REVOKED,
+            "metadata.updatedAt": admin.firestore.FieldValue.serverTimestamp(),
+        });
+        // Create notification for recipient
+        await createSharingNotification(shareData.sharedWithUserId, {
+            type: "share_revoked",
+            shareId,
+            fromUserId: context.auth.uid,
+            itemId: shareData.itemId,
+        });
+        // Log audit event
+        await logSharingAuditEvent(context.auth.uid, "share_revoked", {
+            shareId,
+            itemId: shareData.itemId,
+            recipientId: shareData.sharedWithUserId,
+        });
+        return {
+            success: true,
+            shareId,
+        };
     }
-    // Apply rate limiting
-    await (0, rate_limiting_1.checkRateLimit)(context.auth.uid, "sharing", 10);
-    const { shareId } = data;
-    if (!shareId) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "ShareId is required",
-      );
+    catch (error) {
+        return (0, error_handler_1.handleError)(error, "revokeShare");
     }
-    // Get share record
-    const shareDoc = await db.collection("vaultShares").doc(shareId).get();
-    if (!shareDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Share not found");
-    }
-    const shareData = shareDoc.data();
-    // Verify user is the owner
-    if (shareData.ownerId !== context.auth.uid) {
-      throw new functions.https.HttpsError(
-        "permission-denied",
-        "You are not authorized to revoke this share",
-      );
-    }
-    // Check if share can be revoked
-    if (shareData.status === ShareStatus.REVOKED) {
-      throw new functions.https.HttpsError(
-        "failed-precondition",
-        "Share is already revoked",
-      );
-    }
-    // Revoke share
-    await shareDoc.ref.update({
-      status: ShareStatus.REVOKED,
-      "metadata.updatedAt": admin.firestore.FieldValue.serverTimestamp(),
-    });
-    // Create notification for recipient
-    await createSharingNotification(shareData.sharedWithUserId, {
-      type: "share_revoked",
-      shareId,
-      fromUserId: context.auth.uid,
-      itemId: shareData.itemId,
-    });
-    // Log audit event
-    await logSharingAuditEvent(context.auth.uid, "share_revoked", {
-      shareId,
-      itemId: shareData.itemId,
-      recipientId: shareData.sharedWithUserId,
-    });
-    return {
-      success: true,
-      shareId,
-    };
-  } catch (error) {
-    return (0, error_handler_1.handleError)(error, "revokeShare");
-  }
 });
 /**
  * Tracks access to a shared vault item
  */
 exports.trackShareAccess = functions.https.onCall(async (data, context) => {
-  try {
-    // Validate context
-    const validation = (0, validation_utils_1.validateFunctionContext)(context);
-    if (!validation.isValid) {
-      throw new functions.https.HttpsError(
-        "unauthenticated",
-        validation.error || "Authentication required",
-      );
+    try {
+        // Validate context
+        const validation = (0, validation_utils_1.validateFunctionContext)(context);
+        if (!validation.isValid) {
+            throw new functions.https.HttpsError("unauthenticated", validation.error || "Authentication required");
+        }
+        const { shareId, accessType = "view" } = data;
+        if (!shareId) {
+            throw new functions.https.HttpsError("invalid-argument", "ShareId is required");
+        }
+        // Get share record
+        const shareDoc = await db.collection("vaultShares").doc(shareId).get();
+        if (!shareDoc.exists) {
+            throw new functions.https.HttpsError("not-found", "Share not found");
+        }
+        const shareData = shareDoc.data();
+        // Verify user has access
+        if (shareData.sharedWithUserId !== context.auth.uid) {
+            throw new functions.https.HttpsError("permission-denied", "You do not have access to this share");
+        }
+        // Check if share is active
+        if (shareData.status !== ShareStatus.ACCEPTED) {
+            throw new functions.https.HttpsError("failed-precondition", "Share is not active");
+        }
+        // Check access limits
+        if (shareData.config.maxAccess &&
+            shareData.metadata.accessCount >= shareData.config.maxAccess) {
+            throw new functions.https.HttpsError("resource-exhausted", "Maximum access limit reached");
+        }
+        // Check expiration
+        if (shareData.config.expiresAt &&
+            new Date() > shareData.config.expiresAt) {
+            await shareDoc.ref.update({ status: ShareStatus.EXPIRED });
+            throw new functions.https.HttpsError("deadline-exceeded", "Share has expired");
+        }
+        // Update access tracking
+        await shareDoc.ref.update({
+            "metadata.lastAccessedAt": admin.firestore.FieldValue.serverTimestamp(),
+            "metadata.accessCount": admin.firestore.FieldValue.increment(1),
+            "metadata.updatedAt": admin.firestore.FieldValue.serverTimestamp(),
+        });
+        // Create access log
+        await db.collection("shareAccessLogs").add({
+            shareId,
+            userId: context.auth.uid,
+            itemId: shareData.itemId,
+            ownerId: shareData.ownerId,
+            accessType,
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            metadata: {
+                userAgent: context.rawRequest?.get("user-agent"),
+                ip: context.rawRequest?.ip,
+            },
+        });
+        // Notify owner if configured
+        if (shareData.config.notifyOnAccess) {
+            await createSharingNotification(shareData.ownerId, {
+                type: "share_accessed",
+                shareId,
+                fromUserId: context.auth.uid,
+                itemId: shareData.itemId,
+                accessType,
+            });
+        }
+        return {
+            success: true,
+            shareId,
+            accessCount: shareData.metadata.accessCount + 1,
+        };
     }
-    const { shareId, accessType = "view" } = data;
-    if (!shareId) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "ShareId is required",
-      );
+    catch (error) {
+        return (0, error_handler_1.handleError)(error, "trackShareAccess");
     }
-    // Get share record
-    const shareDoc = await db.collection("vaultShares").doc(shareId).get();
-    if (!shareDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Share not found");
-    }
-    const shareData = shareDoc.data();
-    // Verify user has access
-    if (shareData.sharedWithUserId !== context.auth.uid) {
-      throw new functions.https.HttpsError(
-        "permission-denied",
-        "You do not have access to this share",
-      );
-    }
-    // Check if share is active
-    if (shareData.status !== ShareStatus.ACCEPTED) {
-      throw new functions.https.HttpsError(
-        "failed-precondition",
-        "Share is not active",
-      );
-    }
-    // Check access limits
-    if (
-      shareData.config.maxAccess &&
-      shareData.metadata.accessCount >= shareData.config.maxAccess
-    ) {
-      throw new functions.https.HttpsError(
-        "resource-exhausted",
-        "Maximum access limit reached",
-      );
-    }
-    // Check expiration
-    if (shareData.config.expiresAt && new Date() > shareData.config.expiresAt) {
-      await shareDoc.ref.update({ status: ShareStatus.EXPIRED });
-      throw new functions.https.HttpsError(
-        "deadline-exceeded",
-        "Share has expired",
-      );
-    }
-    // Update access tracking
-    await shareDoc.ref.update({
-      "metadata.lastAccessedAt": admin.firestore.FieldValue.serverTimestamp(),
-      "metadata.accessCount": admin.firestore.FieldValue.increment(1),
-      "metadata.updatedAt": admin.firestore.FieldValue.serverTimestamp(),
-    });
-    // Create access log
-    await db.collection("shareAccessLogs").add({
-      shareId,
-      userId: context.auth.uid,
-      itemId: shareData.itemId,
-      ownerId: shareData.ownerId,
-      accessType,
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      metadata: {
-        userAgent: context.rawRequest?.get("user-agent"),
-        ip: context.rawRequest?.ip,
-      },
-    });
-    // Notify owner if configured
-    if (shareData.config.notifyOnAccess) {
-      await createSharingNotification(shareData.ownerId, {
-        type: "share_accessed",
-        shareId,
-        fromUserId: context.auth.uid,
-        itemId: shareData.itemId,
-        accessType,
-      });
-    }
-    return {
-      success: true,
-      shareId,
-      accessCount: shareData.metadata.accessCount + 1,
-    };
-  } catch (error) {
-    return (0, error_handler_1.handleError)(error, "trackShareAccess");
-  }
 });
 /**
  * Helper function to create sharing notifications
  */
 async function createSharingNotification(userId, notificationData) {
-  try {
-    await db.collection("notifications").add({
-      userId,
-      type: notificationData.type,
-      data: notificationData,
-      read: false,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-  } catch (error) {
-    console.error("Error creating sharing notification:", error);
-    // Don't throw error as this is a background operation
-  }
+    try {
+        await db.collection("notifications").add({
+            userId,
+            type: notificationData.type,
+            data: notificationData,
+            read: false,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+    }
+    catch (error) {
+        console.error("Error creating sharing notification:", error);
+        // Don't throw error as this is a background operation
+    }
 }
 /**
  * Helper function to log sharing audit events
  */
 async function logSharingAuditEvent(userId, eventType, eventData) {
-  try {
-    await db.collection("vaultAuditLogs").add({
-      userId,
-      eventType: `sharing_${eventType}`,
-      itemId: eventData.itemId,
-      targetUserId: eventData.recipientId || eventData.ownerId,
-      metadata: {
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
-        success: true,
-        additionalData: eventData,
-      },
-    });
-  } catch (error) {
-    console.error("Error logging sharing audit event:", error);
-    // Don't throw error as this is a background operation
-  }
+    try {
+        await db.collection("vaultAuditLogs").add({
+            userId,
+            eventType: `sharing_${eventType}`,
+            itemId: eventData.itemId,
+            targetUserId: eventData.recipientId || eventData.ownerId,
+            metadata: {
+                timestamp: admin.firestore.FieldValue.serverTimestamp(),
+                success: true,
+                additionalData: eventData,
+            },
+        });
+    }
+    catch (error) {
+        console.error("Error logging sharing audit event:", error);
+        // Don't throw error as this is a background operation
+    }
 }
 /**
  * Cleanup expired shares
  * Runs daily to clean up expired share invitations and access
  */
 exports.cleanupExpiredShares = functions.pubsub
-  .schedule("every 24 hours")
-  .onRun(async (context) => {
+    .schedule("every 24 hours")
+    .onRun(async (context) => {
     try {
-      const now = admin.firestore.Timestamp.now();
-      // Find shares with expiration dates that have passed
-      const expiredSharesSnapshot = await db
-        .collection("vaultShares")
-        .where("config.expiresAt", "<", now.toDate())
-        .where("status", "in", [ShareStatus.PENDING, ShareStatus.ACCEPTED])
-        .limit(500)
-        .get();
-      if (expiredSharesSnapshot.empty) {
-        console.log("No expired shares to clean up");
-        return null;
-      }
-      // Update expired shares
-      const batch = db.batch();
-      expiredSharesSnapshot.docs.forEach((doc) => {
-        batch.update(doc.ref, {
-          status: ShareStatus.EXPIRED,
-          "metadata.updatedAt": admin.firestore.FieldValue.serverTimestamp(),
+        const now = admin.firestore.Timestamp.now();
+        // Find shares with expiration dates that have passed
+        const expiredSharesSnapshot = await db
+            .collection("vaultShares")
+            .where("config.expiresAt", "<", now.toDate())
+            .where("status", "in", [ShareStatus.PENDING, ShareStatus.ACCEPTED])
+            .limit(500)
+            .get();
+        if (expiredSharesSnapshot.empty) {
+            console.log("No expired shares to clean up");
+            return null;
+        }
+        // Update expired shares
+        const batch = db.batch();
+        expiredSharesSnapshot.docs.forEach((doc) => {
+            batch.update(doc.ref, {
+                "status": ShareStatus.EXPIRED,
+                "metadata.updatedAt": admin.firestore.FieldValue.serverTimestamp(),
+            });
         });
-      });
-      await batch.commit();
-      console.log(`Marked ${expiredSharesSnapshot.size} shares as expired`);
-      return null;
-    } catch (error) {
-      console.error("Error cleaning up expired shares:", error);
-      return null;
+        await batch.commit();
+        console.log(`Marked ${expiredSharesSnapshot.size} shares as expired`);
+        return null;
     }
-  });
+    catch (error) {
+        console.error("Error cleaning up expired shares:", error);
+        return null;
+    }
+});
 //# sourceMappingURL=sharing.functions.js.map

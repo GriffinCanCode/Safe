@@ -28,33 +28,33 @@ export class TestHelper {
   static createCallableContext(
     uid?: string,
     email?: string,
-    isAdmin: boolean = false,
+    isAdmin = false,
     customClaims: Record<string, any> = {},
   ) {
-    const auth = uid
-      ? {
-          uid,
+    const auth = uid ?
+      {
+        uid,
+        email: email || `test-${uid}@example.com`,
+        token: {
+          iss: "https://securetoken.google.com/zk-vault-test",
+          aud: "zk-vault-test",
+          auth_time: Math.floor(Date.now() / 1000),
+          user_id: uid,
+          sub: uid,
+          iat: Math.floor(Date.now() / 1000),
+          exp: Math.floor(Date.now() / 1000) + 3600,
           email: email || `test-${uid}@example.com`,
-          token: {
-            iss: "https://securetoken.google.com/zk-vault-test",
-            aud: "zk-vault-test",
-            auth_time: Math.floor(Date.now() / 1000),
-            user_id: uid,
-            sub: uid,
-            iat: Math.floor(Date.now() / 1000),
-            exp: Math.floor(Date.now() / 1000) + 3600,
-            email: email || `test-${uid}@example.com`,
-            email_verified: true,
-            firebase: {
-              identities: {
-                email: [email || `test-${uid}@example.com`],
-              },
-              sign_in_provider: "custom",
+          email_verified: true,
+          firebase: {
+            identities: {
+              email: [email || `test-${uid}@example.com`],
             },
-            ...customClaims,
+            sign_in_provider: "custom",
           },
-        }
-      : undefined;
+          ...customClaims,
+        },
+      } :
+      undefined;
 
     return {
       auth,
@@ -70,7 +70,7 @@ export class TestHelper {
   /**
    * Creates test user data
    */
-  static createTestUser(uid: string = "test-user-123") {
+  static createTestUser(uid = "test-user-123") {
     return {
       uid,
       email: `test-${uid}@example.com`,
@@ -82,7 +82,7 @@ export class TestHelper {
   /**
    * Creates test file data
    */
-  static createTestFileData(size: number = 1024): Uint8Array {
+  static createTestFileData(size = 1024): Uint8Array {
     const data = new Uint8Array(size);
     for (let i = 0; i < size; i++) {
       data[i] = i % 256;
@@ -168,7 +168,7 @@ export class TestHelper {
   /**
    * Generates a random string
    */
-  static randomString(length: number = 10): string {
+  static randomString(length = 10): string {
     const chars =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     let result = "";
@@ -184,7 +184,7 @@ export class TestHelper {
   static async createTestRateLimit(
     userId: string,
     endpoint: string,
-    count: number = 0,
+    count = 0,
   ) {
     const db = admin.firestore();
     await db.collection("rateLimits").doc(`user_${userId}_${endpoint}`).set({
@@ -200,7 +200,7 @@ export class TestHelper {
   /**
    * Creates test admin user
    */
-  static async createTestAdmin(uid: string = "admin-user-123") {
+  static async createTestAdmin(uid = "admin-user-123") {
     const db = admin.firestore();
     await db
       .collection("users")
@@ -217,7 +217,7 @@ export class TestHelper {
 }
 
 // Export test environment
-export { test };
+export {test};
 
 // Global test teardown
 export const teardown = () => {

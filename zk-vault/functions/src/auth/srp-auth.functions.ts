@@ -5,18 +5,17 @@
  */
 
 import * as functions from "firebase-functions";
-import * as admin from "firebase-admin";
-import { handleError } from "../utils/error-handler";
-import { checkRateLimit } from "../utils/rate-limiting";
+import {handleError} from "../utils/error-handler";
+import {checkRateLimit} from "../utils/rate-limiting";
 
 /**
  * Validates SRP parameters
  * Ensures SRP parameters meet security requirements
  */
 export const validateSRPParameters = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: {verifier: string; salt: string}) => {
     try {
-      const { verifier, salt } = data;
+      const {verifier, salt} = data;
 
       if (!verifier || !salt) {
         throw new functions.https.HttpsError(
@@ -57,7 +56,7 @@ export const validateSRPParameters = functions.https.onCall(
         verifierLength: verifier.length,
       };
     } catch (error) {
-      return handleError(error, "validateSRPParameters");
+      return handleError(error as Error, "validateSRPParameters");
     }
   },
 );
@@ -67,7 +66,7 @@ export const validateSRPParameters = functions.https.onCall(
  * Returns current SRP configuration and security parameters
  */
 export const getSRPSecuritySettings = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async () => {
     try {
       // Apply rate limiting
       await checkRateLimit("anonymous", "getSRPSettings", 10);
@@ -92,7 +91,7 @@ export const getSRPSecuritySettings = functions.https.onCall(
         settings,
       };
     } catch (error) {
-      return handleError(error, "getSRPSecuritySettings");
+      return handleError(error as Error, "getSRPSecuritySettings");
     }
   },
 );

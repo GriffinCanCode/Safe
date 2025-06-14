@@ -6,18 +6,102 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { handleError } from "../utils/error-handler";
-import { checkRateLimit } from "../utils/rate-limiting";
+import {checkRateLimit} from "../utils/rate-limiting";
 
 const db = admin.firestore();
-const storage = admin.storage();
-const bucket = storage.bucket();
+
+// TypeScript interfaces for type safety
+interface CheckFileExistsData {
+  fileHash: string;
+  encryptionType?: string;
+}
+
+interface CheckFileExistsResponse {
+  exists: boolean;
+  ownedByUser?: boolean;
+  fileId?: string;
+}
+
+interface RegisterFileHashData {
+  fileId: string;
+  fileHash: string;
+  encryptionType?: string;
+  chunkHashes?: string[];
+}
+
+interface RegisterFileHashResponse {
+  success: boolean;
+  fileId: string;
+  fileHash: string;
+}
+
+interface CreateDeduplicationReferenceData {
+  fileHash: string;
+  fileName: string;
+  totalSize: number;
+  encryptedMetadata: string;
+  encryptionType?: string;
+}
+
+interface CreateDeduplicationReferenceResponse {
+  success: boolean;
+  fileId: string;
+  isDeduplicated: boolean;
+  sourceFileId: string;
+}
+
+interface FileData {
+  userId: string;
+  fileName: string;
+  totalSize: number;
+  totalChunks: number;
+  uploadedChunks: number;
+  contentType: string;
+  encryptedMetadata: string;
+  status: string;
+  fileHash?: string;
+  encryptionType?: string;
+  isDeduplicated?: boolean;
+  sourceFileId?: string;
+  chunkPaths?: string[];
+  createdAt: admin.firestore.Timestamp;
+  updatedAt: admin.firestore.Timestamp;
+  expiresAt?: admin.firestore.Timestamp;
+}
+
+interface DeduplicationIndexData {
+  fileHash: string;
+  encryptionType: string;
+  fileIds: string[];
+  userIds: string[];
+  referenceCount: number;
+  createdAt: admin.firestore.Timestamp;
+  updatedAt: admin.firestore.Timestamp;
+}
+
+interface DuplicateFile {
+  fileId: string;
+  fileName: string;
+  totalSize: number;
+  createdAt: Date | null;
+}
+
+interface DuplicateGroup {
+  fileHash: string;
+  duplicateCount: number;
+  totalSize: number;
+  files: DuplicateFile[];
+}
+
+interface FindUserDuplicatesResponse {
+  duplicates: DuplicateGroup[];
+}
 
 /**
  * Checks if a file with the same hash already exists
  * Enables client-side deduplication without revealing file contents
  */
-export const checkFileExists = functions.https.onCall(async (data, context) => {
+export const checkFileExists = functions.https.onCall(async (data: CheckFileExistsData, context): Promise<CheckFileExistsResponse> => {
   try {
     // Ensure user is authenticated
     if (!context.auth) {
@@ -62,7 +146,7 @@ export const checkFileExists = functions.https.onCall(async (data, context) => {
     }
 
     // File with same hash exists
-    const existingFile = filesSnapshot.docs[0].data();
+    const existingFile = filesSnapshot.docs[0].data() as FileData;
 
     // Check if the current user already owns this file
     if (existingFile.userId === context.auth.uid) {
@@ -80,7 +164,9 @@ export const checkFileExists = functions.https.onCall(async (data, context) => {
       ownedByUser: false,
     };
   } catch (error) {
-    return handleError(error, "checkFileExists");
+    console.error("Error in checkFileExists:", error);
+    throw error instanceof functions.https.HttpsError ? error :
+      new functions.https.HttpsError("internal", "An unexpected error occurred");
   }
 });
 
@@ -89,7 +175,7 @@ export const checkFileExists = functions.https.onCall(async (data, context) => {
  * Called after successful file upload to enable future deduplication
  */
 export const registerFileHash = functions.https.onCall(
-  async (data, context) => {
+  async (data: RegisterFileHashData, context): Promise<RegisterFileHashResponse> => {
     try {
       // Ensure user is authenticated
       if (!context.auth) {
@@ -128,7 +214,7 @@ export const registerFileHash = functions.https.onCall(
         );
       }
 
-      const fileData = fileDoc.data();
+      const fileData = fileDoc.data() as FileData;
 
       // Security check: ensure user owns this file
       if (fileData?.userId !== context.auth.uid) {
@@ -143,9 +229,9 @@ export const registerFileHash = functions.https.onCall(
         fileHash,
         encryptionType,
         chunkHashes:
-          chunkHashes.length > 0
-            ? chunkHashes
-            : admin.firestore.FieldValue.delete(),
+          chunkHashes.length > 0 ?
+            chunkHashes :
+            admin.firestore.FieldValue.delete(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
@@ -154,6 +240,11 @@ export const registerFileHash = functions.https.onCall(
 
       await db.runTransaction(async (transaction) => {
         const dedupDoc = await transaction.get(dedupRef);
+        const userId = context.auth?.uid;
+
+        if (!userId) {
+          throw new Error("User ID is required");
+        }
 
         if (!dedupDoc.exists) {
           // Create new deduplication entry
@@ -161,14 +252,14 @@ export const registerFileHash = functions.https.onCall(
             fileHash,
             encryptionType,
             fileIds: [fileId],
-            userIds: [context.auth!.uid],
+            userIds: [userId],
             referenceCount: 1,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           });
         } else {
           // Update existing deduplication entry
-          const dedupData = dedupDoc.data();
+          const dedupData = dedupDoc.data() as DeduplicationIndexData;
           if (!dedupData) {
             throw new Error("Deduplication data is missing");
           }
@@ -181,8 +272,8 @@ export const registerFileHash = functions.https.onCall(
             fileIds.push(fileId);
           }
 
-          if (!userIds.includes(context.auth!.uid)) {
-            userIds.push(context.auth!.uid);
+          if (!userIds.includes(userId)) {
+            userIds.push(userId);
           }
 
           transaction.update(dedupRef, {
@@ -200,7 +291,9 @@ export const registerFileHash = functions.https.onCall(
         fileHash,
       };
     } catch (error) {
-      return handleError(error, "registerFileHash");
+      console.error("Error in registerFileHash:", error);
+      throw error instanceof functions.https.HttpsError ? error :
+        new functions.https.HttpsError("internal", "An unexpected error occurred");
     }
   },
 );
@@ -210,7 +303,7 @@ export const registerFileHash = functions.https.onCall(
  * Allows efficient storage without compromising zero-knowledge principle
  */
 export const createDeduplicationReference = functions.https.onCall(
-  async (data, context) => {
+  async (data: CreateDeduplicationReferenceData, context): Promise<CreateDeduplicationReferenceResponse> => {
     try {
       // Ensure user is authenticated
       if (!context.auth) {
@@ -254,7 +347,7 @@ export const createDeduplicationReference = functions.https.onCall(
         );
       }
 
-      const dedupData = dedupDoc.data();
+      const dedupData = dedupDoc.data() as DeduplicationIndexData;
 
       if (!dedupData) {
         throw new functions.https.HttpsError(
@@ -284,7 +377,7 @@ export const createDeduplicationReference = functions.https.onCall(
         );
       }
 
-      const sourceFileData = sourceFileDoc.data();
+      const sourceFileData = sourceFileDoc.data() as FileData;
 
       if (!sourceFileData) {
         throw new functions.https.HttpsError(
@@ -333,7 +426,9 @@ export const createDeduplicationReference = functions.https.onCall(
         sourceFileId,
       };
     } catch (error) {
-      return handleError(error, "createDeduplicationReference");
+      console.error("Error in createDeduplicationReference:", error);
+      throw error instanceof functions.https.HttpsError ? error :
+        new functions.https.HttpsError("internal", "An unexpected error occurred");
     }
   },
 );
@@ -346,7 +441,7 @@ export const handleDeduplicationOnDelete = functions.firestore
   .document("files/{fileId}")
   .onDelete(async (snapshot, context) => {
     try {
-      const fileData = snapshot.data();
+      const fileData = snapshot.data() as FileData;
       const fileId = context.params.fileId;
 
       // Check if this file has a hash for deduplication
@@ -363,7 +458,7 @@ export const handleDeduplicationOnDelete = functions.firestore
         return null; // No deduplication entry exists
       }
 
-      const dedupData = dedupDoc.data();
+      const dedupData = dedupDoc.data() as DeduplicationIndexData;
 
       if (!dedupData) {
         return null; // No valid deduplication data
@@ -385,7 +480,7 @@ export const handleDeduplicationOnDelete = functions.firestore
             .collection("files")
             .doc(remainingFileId)
             .get();
-          const remainingData = remainingFileDoc.data();
+          const remainingData = remainingFileDoc.data() as FileData;
           return (
             remainingFileDoc.exists &&
             remainingData &&
@@ -423,7 +518,7 @@ export const handleDeduplicationOnDelete = functions.firestore
  * Helps users identify and clean up duplicate files
  */
 export const findUserDuplicates = functions.https.onCall(
-  async (data, context) => {
+  async (data: unknown, context): Promise<FindUserDuplicatesResponse> => {
     try {
       // Ensure user is authenticated
       if (!context.auth) {
@@ -444,22 +539,14 @@ export const findUserDuplicates = functions.https.onCall(
         .get();
 
       if (filesSnapshot.empty) {
-        return { duplicates: [] };
+        return {duplicates: []};
       }
 
       // Group files by hash
-      const filesByHash: Record<
-        string,
-        Array<{
-          fileId: string;
-          fileName: string;
-          totalSize: number;
-          createdAt: Date | null;
-        }>
-      > = {};
+      const filesByHash: Record<string, DuplicateFile[]> = {};
 
       filesSnapshot.forEach((doc) => {
-        const file = doc.data();
+        const file = doc.data() as FileData;
         const fileId = doc.id;
 
         if (file.fileHash) {
@@ -477,7 +564,7 @@ export const findUserDuplicates = functions.https.onCall(
       });
 
       // Find hashes with multiple files (duplicates)
-      const duplicateGroups = [];
+      const duplicateGroups: DuplicateGroup[] = [];
 
       for (const [hash, files] of Object.entries(filesByHash)) {
         if (files.length > 1) {
@@ -500,7 +587,9 @@ export const findUserDuplicates = functions.https.onCall(
         ),
       };
     } catch (error) {
-      return handleError(error, "findUserDuplicates");
+      console.error("Error in findUserDuplicates:", error);
+      throw error instanceof functions.https.HttpsError ? error :
+        new functions.https.HttpsError("internal", "An unexpected error occurred");
     }
   },
 );

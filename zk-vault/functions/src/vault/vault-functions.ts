@@ -5,13 +5,91 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { withErrorHandling } from "../utils/error-handler";
+
+// TypeScript interfaces
+interface EncryptedData {
+  data: string;
+  iv: string;
+  algorithm: string;
+}
+
+interface VaultItemMetadata {
+  createdAt?: admin.firestore.FieldValue | admin.firestore.Timestamp;
+  updatedAt?: admin.firestore.FieldValue | admin.firestore.Timestamp;
+  [key: string]: unknown;
+}
+
+interface CreateVaultItemRequest {
+  encrypted: EncryptedData;
+  type: string;
+  metadata?: Record<string, unknown>;
+  id?: string | null;
+}
+
+interface GetVaultItemsRequest {
+  type?: string;
+  lastUpdated?: string;
+  limit?: number;
+}
+
+interface DeleteVaultItemRequest {
+  id: string;
+}
+
+interface ShareVaultItemRequest {
+  itemId: string;
+  recipientEmail: string;
+  encryptedKey: string;
+  metadata?: Record<string, unknown>;
+}
+
+// Type for getSharedItems - currently accepts no parameters
+type GetSharedItemsRequest = Record<string, never>;
+
+interface VaultItem {
+  id: string;
+  type: string;
+  encrypted: EncryptedData;
+  metadata: VaultItemMetadata;
+}
+
+interface SharedItem extends VaultItem {
+  shareId: string;
+  from: string;
+  encryptedKey: string;
+  sharedAt?: admin.firestore.Timestamp;
+}
+
+interface CreateVaultItemResponse {
+  id: string;
+  success: boolean;
+}
+
+interface GetVaultItemsResponse {
+  items: VaultItem[];
+  count: number;
+}
+
+interface DeleteVaultItemResponse {
+  success: boolean;
+  id: string;
+}
+
+interface ShareVaultItemResponse {
+  success: boolean;
+  shareId: string;
+}
+
+interface GetSharedItemsResponse {
+  items: SharedItem[];
+  count: number;
+}
 
 /**
  * Creates or updates a vault item
  */
 export const createVaultItem = functions.https.onCall(
-  withErrorHandling(async (data: any, context): Promise<any> => {
+  async (data: CreateVaultItemRequest, context): Promise<CreateVaultItemResponse> => {
     // Ensure user is authenticated
     if (!context.auth) {
       throw new functions.https.HttpsError(
@@ -33,7 +111,7 @@ export const createVaultItem = functions.https.onCall(
       );
     }
 
-    const { type, metadata = {}, id = null } = data;
+    const {type, metadata = {}, id = null} = data;
 
     try {
       const userId = context.auth.uid;
@@ -71,7 +149,12 @@ export const createVaultItem = functions.https.onCall(
       }
 
       // Prepare item data
-      const itemData = {
+      const itemData: {
+        id: string;
+        type: string;
+        encrypted: EncryptedData;
+        metadata: VaultItemMetadata;
+      } = {
         id: itemId,
         type,
         encrypted: data.encrypted,
@@ -87,7 +170,7 @@ export const createVaultItem = functions.https.onCall(
       }
 
       // Write to Firestore
-      await itemRef.set(itemData, { merge: true });
+      await itemRef.set(itemData, {merge: true});
 
       // Update user's vault summary
       await updateVaultSummary(userId);
@@ -103,14 +186,14 @@ export const createVaultItem = functions.https.onCall(
         "Failed to create vault item",
       );
     }
-  }),
+  },
 );
 
 /**
  * Retrieves all vault items for the user
  */
 export const getVaultItems = functions.https.onCall(
-  withErrorHandling(async (data: any, context): Promise<any> => {
+  async (data: GetVaultItemsRequest, context): Promise<GetVaultItemsResponse> => {
     // Ensure user is authenticated
     if (!context.auth) {
       throw new functions.https.HttpsError(
@@ -121,7 +204,7 @@ export const getVaultItems = functions.https.onCall(
 
     try {
       const userId = context.auth.uid;
-      const { type, lastUpdated, limit = 100 } = data || {};
+      const {type, lastUpdated, limit = 100} = data || {};
 
       // Create base query
       let query: admin.firestore.Query = admin
@@ -146,7 +229,7 @@ export const getVaultItems = functions.https.onCall(
         .get();
 
       // Process results
-      const items = snapshot.docs.map((doc) => {
+      const items: VaultItem[] = snapshot.docs.map((doc) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -167,14 +250,14 @@ export const getVaultItems = functions.https.onCall(
         "Failed to retrieve vault items",
       );
     }
-  }),
+  },
 );
 
 /**
  * Deletes a vault item
  */
 export const deleteVaultItem = functions.https.onCall(
-  withErrorHandling(async (data: any, context): Promise<any> => {
+  async (data: DeleteVaultItemRequest, context): Promise<DeleteVaultItemResponse> => {
     // Ensure user is authenticated
     if (!context.auth) {
       throw new functions.https.HttpsError(
@@ -229,14 +312,14 @@ export const deleteVaultItem = functions.https.onCall(
         "Failed to delete vault item",
       );
     }
-  }),
+  },
 );
 
 /**
  * Shares a vault item with another user
  */
 export const shareVaultItem = functions.https.onCall(
-  withErrorHandling(async (data: any, context): Promise<any> => {
+  async (data: ShareVaultItemRequest, context): Promise<ShareVaultItemResponse> => {
     // Ensure user is authenticated
     if (!context.auth) {
       throw new functions.https.HttpsError(
@@ -255,7 +338,7 @@ export const shareVaultItem = functions.https.onCall(
 
     try {
       const senderId = context.auth.uid;
-      const { itemId, recipientEmail, encryptedKey, metadata = {} } = data;
+      const {itemId, recipientEmail, encryptedKey, metadata = {}} = data;
 
       // Verify that the sender owns the item
       const itemRef = admin
@@ -324,14 +407,14 @@ export const shareVaultItem = functions.https.onCall(
         "Failed to share vault item",
       );
     }
-  }),
+  },
 );
 
 /**
  * Gets all items shared with the user
  */
 export const getSharedItems = functions.https.onCall(
-  withErrorHandling(async (data: any, context): Promise<any> => {
+  async (data: GetSharedItemsRequest, context): Promise<GetSharedItemsResponse> => {
     // Ensure user is authenticated
     if (!context.auth) {
       throw new functions.https.HttpsError(
@@ -350,7 +433,7 @@ export const getSharedItems = functions.https.onCall(
         .where("to", "==", userId)
         .get();
 
-      const sharedItems = [];
+      const sharedItems: SharedItem[] = [];
 
       for (const shareDoc of sharesQuery.docs) {
         const share = shareDoc.data();
@@ -391,7 +474,7 @@ export const getSharedItems = functions.https.onCall(
         "Failed to retrieve shared items",
       );
     }
-  }),
+  },
 );
 
 /**
@@ -423,7 +506,7 @@ async function updateVaultSummary(userId: string): Promise<void> {
         typeCounts,
         lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
       },
-      { merge: true },
+      {merge: true},
     );
   } catch (error) {
     console.error("Error updating vault summary:", error);

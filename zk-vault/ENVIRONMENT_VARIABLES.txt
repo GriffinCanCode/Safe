@@ -1,0 +1,281 @@
+# =============================================================
+# ZK-VAULT COMPREHENSIVE ENVIRONMENT VARIABLES
+# =============================================================
+# This file contains ALL environment variables used throughout the ZK-Vault system
+# Copy this to .env.local and fill in your actual values
+# For production, use appropriate production values
+
+# =============================================================
+# CORE APPLICATION SETTINGS
+# =============================================================
+NODE_ENV=development
+DEBUG=false
+LOG_LEVEL=info
+PORT=3000
+
+# =============================================================
+# FIREBASE CONFIGURATION (Required)
+# =============================================================
+# Get these from Firebase Console > Project Settings > Web App Config
+VITE_FIREBASE_API_KEY=your-firebase-api-key-here
+VITE_FIREBASE_AUTH_DOMAIN=your-project-id.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your-project-id
+VITE_FIREBASE_STORAGE_BUCKET=your-project-id.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=123456789012
+VITE_FIREBASE_APP_ID=1:123456789012:web:abcdefghijklmnop
+VITE_FIREBASE_MEASUREMENT_ID=G-ABCDEFGHIJ
+
+# Firebase Admin/Backend (for Functions and Admin)
+FIREBASE_PROJECT_ID=your-project-id
+FIREBASE_TOKEN=your-firebase-ci-token
+FIREBASE_EMULATOR_HUB=0.0.0.0:4400
+
+# =============================================================
+# ENVIRONMENT-SPECIFIC FIREBASE TOKENS
+# =============================================================
+FIREBASE_TOKEN_DEV=your-dev-firebase-token
+FIREBASE_TOKEN_STAGING=your-staging-firebase-token
+FIREBASE_TOKEN_PROD=your-production-firebase-token
+
+# =============================================================
+# VITE BUILD CONFIGURATION
+# =============================================================
+VITE_APP_NAME=ZK-Vault
+VITE_APP_VERSION=1.0.0
+VITE_API_URL=http://localhost:3000/api
+VITE_PORT=3000
+VITE_HOST=0.0.0.0
+VITE_USE_EMULATORS=true
+VITE_ENABLE_DEBUG_LOGS=true
+VITE_ANALYTICS_ENABLED=false
+
+# =============================================================
+# GOOGLE CLOUD PLATFORM CONFIGURATION
+# =============================================================
+# For Terraform deployments
+TF_VAR_project_id=your-gcp-project-id
+TF_VAR_environment=development
+TF_VAR_region=us-central1
+TF_VAR_zone=us-central1-a
+TF_VAR_billing_account=your-billing-account-id
+TF_VAR_org_id=your-organization-id
+TF_VAR_folder_id=your-folder-id
+
+# Google Cloud Credentials
+GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json
+GOOGLE_CLOUD_PROJECT=your-gcp-project-id
+
+# =============================================================
+# TERRAFORM CONFIGURATION
+# =============================================================
+TF_VAR_firebase_config_web_app_display_name=ZK-Vault Web App
+TF_VAR_firebase_config_enable_analytics=true
+TF_VAR_firebase_config_enable_app_check=true
+TF_VAR_firebase_config_enable_performance=true
+TF_VAR_firebase_config_enable_crashlytics=true
+
+# Authentication Configuration
+TF_VAR_auth_config_enable_anonymous=true
+TF_VAR_auth_config_enable_email_password=true
+TF_VAR_auth_config_enable_phone_auth=false
+TF_VAR_auth_config_enable_google_auth=true
+TF_VAR_auth_config_enable_microsoft_auth=false
+TF_VAR_auth_config_enable_apple_auth=false
+TF_VAR_auth_config_password_policy_enabled=true
+TF_VAR_auth_config_mfa_enabled=true
+TF_VAR_auth_config_session_timeout_minutes=60
+
+# Database Configuration
+TF_VAR_firestore_config_location_id=us-central1
+TF_VAR_firestore_config_type=FIRESTORE_NATIVE
+TF_VAR_firestore_config_concurrency_mode=OPTIMISTIC
+TF_VAR_firestore_config_app_engine_integration_mode=DISABLED
+TF_VAR_firestore_config_point_in_time_recovery_enablement=POINT_IN_TIME_RECOVERY_ENABLED
+TF_VAR_firestore_config_delete_protection_state=DELETE_PROTECTION_ENABLED
+
+# Storage Configuration
+TF_VAR_storage_config_location=US
+TF_VAR_storage_config_storage_class=STANDARD
+TF_VAR_storage_config_versioning=true
+
+# Security Configuration
+TF_VAR_security_config_enable_audit_logs=true
+TF_VAR_security_config_enable_data_loss_prevention=true
+TF_VAR_security_config_enable_secret_manager=true
+TF_VAR_security_config_enable_kms=true
+TF_VAR_security_config_key_rotation_period=7776000s
+TF_VAR_security_config_backup_retention_days=30
+
+# Monitoring Configuration
+TF_VAR_monitoring_config_enable_logging=true
+TF_VAR_monitoring_config_enable_monitoring=true
+TF_VAR_monitoring_config_enable_alerting=true
+TF_VAR_monitoring_config_log_retention_days=30
+TF_VAR_monitoring_config_enable_uptime_checks=true
+
+# Network Configuration
+TF_VAR_network_config_create_vpc=false
+TF_VAR_network_config_vpc_name=zk-vault-vpc
+TF_VAR_network_config_subnet_cidr=10.0.0.0/24
+TF_VAR_network_config_enable_private_google_access=true
+TF_VAR_network_config_enable_flow_logs=true
+
+# Cost Management
+TF_VAR_cost_config_budget_amount=100
+TF_VAR_cost_config_enable_cost_alerts=true
+
+# Backup Configuration
+TF_VAR_backup_config_enable_scheduled_backups=true
+TF_VAR_backup_config_backup_schedule=0 2 * * *
+TF_VAR_backup_config_backup_retention_days=30
+TF_VAR_backup_config_cross_region_backup=false
+TF_VAR_backup_config_backup_location=us-central1
+
+# Feature Flags
+TF_VAR_feature_flags_enable_cdn=true
+TF_VAR_feature_flags_enable_load_balancer=false
+TF_VAR_feature_flags_enable_custom_domain=false
+TF_VAR_feature_flags_enable_ssl_certificates=true
+TF_VAR_feature_flags_enable_rate_limiting=true
+TF_VAR_feature_flags_enable_ddos_protection=true
+
+# =============================================================
+# CI/CD GITHUB ACTIONS CONFIGURATION
+# =============================================================
+# These are typically set as GitHub Secrets, not in .env files
+# Listed here for completeness
+
+# Firebase Deployment Tokens
+# FIREBASE_TOKEN_DEV (GitHub Secret)
+# FIREBASE_TOKEN_STAGING (GitHub Secret) 
+# FIREBASE_TOKEN_PROD (GitHub Secret)
+
+# Google Cloud Service Account
+# GCP_SA_KEY (GitHub Secret - Service Account JSON)
+
+# Security Scanning
+# GITGUARDIAN_API_KEY (GitHub Secret)
+
+# GitHub Actions Debug
+GITHUB_ACTIONS_STEP_DEBUG=false
+
+# =============================================================
+# DEVELOPMENT TOOLS CONFIGURATION
+# =============================================================
+# Webpack Dev Server
+API_BASE_URL=http://localhost:8080
+HTTPS_KEY_PATH=
+HTTPS_CERT_PATH=
+
+# Testing
+VITEST_INTEGRATION_TEST=false
+
+# Bundle Analysis
+ANALYZE=false
+
+# =============================================================
+# DOCKER CONFIGURATION
+# =============================================================
+# These are used in docker-compose.yml and Dockerfiles
+DOCKER_BUILDKIT=1
+COMPOSE_DOCKER_CLI_BUILD=1
+
+# =============================================================
+# ENCRYPTION & SECURITY
+# =============================================================
+# These should be generated securely in production
+ENCRYPTION_KEY=your-32-byte-hex-encryption-key
+JWT_SECRET=your-jwt-secret-key
+SESSION_SECRET=your-session-secret
+
+# =============================================================
+# OAUTH CONFIGURATION
+# =============================================================
+# Google OAuth (for Google Sign-In)
+GOOGLE_CLIENT_ID=your-google-oauth-client-id
+GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
+
+# Microsoft OAuth (if enabled)
+MICROSOFT_CLIENT_ID=your-microsoft-oauth-client-id
+MICROSOFT_CLIENT_SECRET=your-microsoft-oauth-client-secret
+
+# Apple OAuth (if enabled) 
+APPLE_CLIENT_ID=your-apple-oauth-client-id
+APPLE_PRIVATE_KEY=your-apple-private-key
+APPLE_KEY_ID=your-apple-key-id
+APPLE_TEAM_ID=your-apple-team-id
+
+# =============================================================
+# MONITORING & ANALYTICS
+# =============================================================
+# Google Analytics (if different from Firebase Analytics)
+GA_TRACKING_ID=GA-XXXXXXXXX
+
+# Error Tracking (Sentry, etc.)
+SENTRY_DSN=your-sentry-dsn
+SENTRY_ENVIRONMENT=development
+
+# Performance Monitoring
+NEW_RELIC_LICENSE_KEY=your-new-relic-license-key
+NEW_RELIC_APP_NAME=ZK-Vault
+
+# =============================================================
+# EMAIL SERVICE CONFIGURATION
+# =============================================================
+# SendGrid, Mailgun, or similar
+EMAIL_SERVICE_API_KEY=your-email-service-api-key
+EMAIL_FROM_ADDRESS=noreply@zk-vault.com
+EMAIL_FROM_NAME=ZK-Vault
+
+# =============================================================
+# BACKUP & STORAGE
+# =============================================================
+# External backup storage (AWS S3, etc.)
+BACKUP_STORAGE_ACCESS_KEY_ID=your-backup-access-key
+BACKUP_STORAGE_SECRET_ACCESS_KEY=your-backup-secret-key
+BACKUP_STORAGE_BUCKET=your-backup-bucket-name
+BACKUP_STORAGE_REGION=us-west-2
+
+# =============================================================
+# API RATE LIMITING & SECURITY
+# =============================================================
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+RATE_LIMIT_SKIP_SUCCESSFUL_REQUESTS=false
+
+# =============================================================
+# ENVIRONMENT-SPECIFIC OVERRIDES
+# =============================================================
+# These values change based on environment
+
+# Development Environment
+# NODE_ENV=development
+# VITE_API_URL=http://localhost:3000/api
+# FIREBASE_PROJECT_ID=zk-vault-dev
+# TF_VAR_environment=development
+
+# Staging Environment  
+# NODE_ENV=staging
+# VITE_API_URL=https://api-staging.zk-vault.com
+# FIREBASE_PROJECT_ID=zk-vault-staging
+# TF_VAR_environment=staging
+
+# Production Environment
+# NODE_ENV=production
+# VITE_API_URL=https://api.zk-vault.com
+# FIREBASE_PROJECT_ID=zk-vault-prod
+# TF_VAR_environment=production
+
+# =============================================================
+# NOTES
+# =============================================================
+# 1. Never commit sensitive values to version control
+# 2. Use different values for dev/staging/production
+# 3. Use GitHub Secrets for CI/CD variables
+# 4. Generate secure random values for encryption keys
+# 5. Rotate secrets regularly
+# 6. Use environment-specific .env files (.env.development, .env.production)
+# 7. The VITE_ prefix is required for variables used in Vite frontend
+# 8. Process secrets through Google Secret Manager in production
+# 9. Use TF_VAR_ prefix for Terraform variables
+# 10. Some variables are computed/derived and don't need manual setting 

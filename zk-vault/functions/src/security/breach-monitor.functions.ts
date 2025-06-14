@@ -6,8 +6,8 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { handleError } from "../utils/error-handler";
-import { checkRateLimit } from "../utils/rate-limiting";
+import {handleError} from "../utils/error-handler";
+import {checkRateLimit} from "../utils/rate-limiting";
 import * as crypto from "crypto";
 
 const db = admin.firestore();
@@ -30,7 +30,7 @@ const BREACH_CONFIG = {
  */
 export const monitorFailedLogins = functions.firestore
   .document("loginAttempts/{attemptId}")
-  .onCreate(async (snapshot, context) => {
+  .onCreate(async (snapshot) => {
     try {
       const attemptData = snapshot.data();
       const userId = attemptData.userId;
@@ -83,9 +83,9 @@ export const monitorFailedLogins = functions.firestore
           ipFailedCount,
           timestamp: admin.firestore.FieldValue.serverTimestamp(),
           severity:
-            userFailedCount > BREACH_CONFIG.MAX_FAILED_LOGINS * 2
-              ? "high"
-              : "medium",
+            userFailedCount > BREACH_CONFIG.MAX_FAILED_LOGINS * 2 ?
+              "high" :
+              "medium",
           status: "new",
           details: {
             windowMinutes: BREACH_CONFIG.FAILED_LOGIN_WINDOW,
@@ -136,7 +136,7 @@ export const checkLeakedCredentials = functions.https.onCall(
       // Apply rate limiting
       await checkRateLimit(context.auth.uid, "checkLeakedCredentials", 5);
 
-      const { emailHash, passwordHash } = data;
+      const {emailHash, passwordHash} = data;
 
       // Validate input
       if (!emailHash) {
@@ -214,7 +214,7 @@ export const checkLeakedCredentials = functions.https.onCall(
         recommendPasswordChange: isEmailBreached || isPasswordBreached,
       };
     } catch (error) {
-      return handleError(error, "checkLeakedCredentials");
+      return handleError(error as Error, "checkLeakedCredentials");
     }
   },
 );
@@ -225,7 +225,7 @@ export const checkLeakedCredentials = functions.https.onCall(
  */
 export const scheduleCredentialBreachChecks = functions.pubsub
   .schedule("every 168 hours") // Weekly
-  .onRun(async (context) => {
+  .onRun(async () => {
     try {
       // Get users who haven't been checked in the configured interval
       const checkThreshold = admin.firestore.Timestamp.fromDate(
@@ -289,7 +289,7 @@ export const scheduleCredentialBreachChecks = functions.pubsub
  */
 export const processBreachCheckTask = functions.firestore
   .document("breachCheckTasks/{taskId}")
-  .onCreate(async (snapshot, context) => {
+  .onCreate(async (snapshot) => {
     try {
       const taskData = snapshot.data();
       const taskRef = snapshot.ref;
@@ -367,7 +367,7 @@ export const processBreachCheckTask = functions.firestore
  */
 export const monitorEncryptionOperations = functions.firestore
   .document("encryptionOperations/{operationId}")
-  .onCreate(async (snapshot, context) => {
+  .onCreate(async (snapshot) => {
     try {
       const operationData = snapshot.data();
       const userId = operationData.userId;
@@ -419,7 +419,7 @@ export const monitorEncryptionOperations = functions.firestore
               admin.firestore.FieldValue.serverTimestamp(),
             "analytics.highVolumeEncryptionCount":
               admin.firestore.FieldValue.increment(1),
-            securityAlerts: admin.firestore.FieldValue.increment(1),
+            "securityAlerts": admin.firestore.FieldValue.increment(1),
           });
       }
 

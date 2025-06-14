@@ -6,17 +6,143 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { handleError } from "../utils/error-handler";
-import { checkRateLimit } from "../utils/rate-limiting";
+import {handleError} from "../utils/error-handler";
+import {checkRateLimit} from "../utils/rate-limiting";
 
 const db = admin.firestore();
+
+// TypeScript interfaces
+interface UserSettings {
+  autoLockTimeout: number;
+  theme: "light" | "dark" | "system";
+  notifications: boolean;
+  twoFactorEnabled: boolean;
+}
+
+interface UserPreferences {
+  [key: string]: string | number | boolean | null | undefined;
+}
+
+interface UpdateUserProfileData {
+  displayName?: string;
+  preferences?: UserPreferences;
+  settings?: Partial<UserSettings>;
+}
+
+interface StorageUsage {
+  totalFiles: number;
+  totalSize: number;
+  totalVaultItems: number;
+}
+
+interface PlanInfo {
+  plan: string;
+  storageLimit: number;
+  fileLimit: number;
+}
+
+interface UserProfile {
+  uid: string;
+  email?: string;
+  displayName?: string;
+  emailVerified?: boolean;
+  createdAt?: string;
+  lastLoginAt?: string;
+  preferences: UserPreferences;
+  settings: UserSettings;
+  storageUsage: StorageUsage;
+  planInfo: PlanInfo;
+}
+
+interface DeleteUserAccountData {
+  confirmationCode: string;
+}
+
+interface UpdateUserEmailData {
+  newEmail: string;
+}
+
+interface UpdateTwoFactorAuthData {
+  enabled: boolean;
+  backupCodes?: string[];
+  ip?: string;
+  userAgent?: string;
+}
+
+interface SecurityAlert {
+  id: string;
+  type: string;
+  severity: string;
+  message: string;
+  timestamp?: string;
+}
+
+interface SecurityStatus {
+  twoFactorEnabled: boolean;
+  emailVerified: boolean;
+  lastPasswordChange?: string;
+  lastLoginAt?: string;
+  activeSessionsCount: number;
+  recentAlerts: SecurityAlert[];
+  securityScore: number;
+  recommendations: string[];
+}
+
+interface AdminManageUserData {
+  targetUserId: string;
+  action: "suspend" | "activate" | "verify_email" | "reset_2fa";
+  reason?: string;
+}
+
+interface UserData {
+  email?: string;
+  displayName?: string;
+  emailVerified?: boolean;
+  createdAt?: admin.firestore.Timestamp;
+  lastLoginAt?: admin.firestore.Timestamp;
+  preferences?: UserPreferences;
+  settings?: UserSettings;
+  totalFiles?: number;
+  totalStorageUsed?: number;
+  totalVaultItems?: number;
+  plan?: string;
+  storageLimit?: number;
+  fileLimit?: number;
+  isAdmin?: boolean;
+  suspended?: boolean;
+  suspendedAt?: admin.firestore.Timestamp;
+  suspensionReason?: string;
+  activatedAt?: admin.firestore.Timestamp;
+  security?: {
+    lastPasswordChange?: admin.firestore.Timestamp;
+    twoFactorUpdatedAt?: admin.firestore.Timestamp;
+    twoFactorResetAt?: admin.firestore.Timestamp;
+    twoFactorResetBy?: string;
+    backupCodes?: string[];
+  };
+  securityAlerts?: number;
+  lastAdminAction?: {
+    action: string;
+    adminId: string;
+    reason: string;
+    timestamp: admin.firestore.Timestamp;
+  };
+  updatedAt?: admin.firestore.Timestamp;
+  emailUpdatedAt?: admin.firestore.Timestamp;
+  [key: string]: string | number | boolean | admin.firestore.Timestamp | UserPreferences | UserSettings | object | null | undefined; // Allow additional properties for Firestore compatibility
+}
+
+interface FileData {
+  userId: string;
+  chunkPaths?: string[];
+}
 
 /**
  * Updates user profile information
  * Allows users to update their profile data
  */
 export const updateUserProfile = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: UpdateUserProfileData, context: functions.https.CallableContext) => {
     try {
       // Ensure user is authenticated
       if (!context.auth) {
@@ -29,10 +155,10 @@ export const updateUserProfile = functions.https.onCall(
       // Apply rate limiting
       await checkRateLimit(context.auth.uid, "updateProfile", 10);
 
-      const { displayName, preferences, settings } = data;
+      const {displayName, preferences, settings} = data;
 
       // Prepare update data (only allow specific fields)
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       };
 
@@ -46,7 +172,7 @@ export const updateUserProfile = functions.https.onCall(
 
       if (settings !== undefined) {
         // Validate settings structure
-        const validSettings = {
+        const validSettings: UserSettings = {
           autoLockTimeout: settings.autoLockTimeout || 15,
           theme: settings.theme || "system",
           notifications: settings.notifications || true,
@@ -63,7 +189,7 @@ export const updateUserProfile = functions.https.onCall(
         message: "Profile updated successfully",
       };
     } catch (error) {
-      return handleError(error, "updateUserProfile");
+      return handleError(error as Error, "updateUserProfile");
     }
   },
 );
@@ -73,7 +199,7 @@ export const updateUserProfile = functions.https.onCall(
  * Returns user's profile data (non-sensitive information only)
  */
 export const getUserProfile = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: Record<string, never>, context: functions.https.CallableContext) => {
     try {
       // Ensure user is authenticated
       if (!context.auth) {
@@ -96,10 +222,10 @@ export const getUserProfile = functions.https.onCall(
         );
       }
 
-      const userData = userDoc.data();
+      const userData = userDoc.data() as UserData;
 
       // Return only safe profile data
-      const profile = {
+      const profile: UserProfile = {
         uid: context.auth.uid,
         email: userData?.email,
         displayName: userData?.displayName,
@@ -130,7 +256,7 @@ export const getUserProfile = functions.https.onCall(
         profile,
       };
     } catch (error) {
-      return handleError(error, "getUserProfile");
+      return handleError(error as Error, "getUserProfile");
     }
   },
 );
@@ -140,7 +266,7 @@ export const getUserProfile = functions.https.onCall(
  * Permanent deletion with data cleanup
  */
 export const deleteUserAccount = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: DeleteUserAccountData, context: functions.https.CallableContext) => {
     try {
       // Ensure user is authenticated
       if (!context.auth) {
@@ -153,7 +279,7 @@ export const deleteUserAccount = functions.https.onCall(
       // Apply rate limiting
       await checkRateLimit(context.auth.uid, "deleteAccount", 2);
 
-      const { confirmationCode } = data;
+      const {confirmationCode} = data;
 
       // For security, require confirmation code
       if (!confirmationCode || confirmationCode !== "DELETE_MY_ACCOUNT") {
@@ -175,7 +301,7 @@ export const deleteUserAccount = functions.https.onCall(
         .get();
 
       for (const fileDoc of filesSnapshot.docs) {
-        const fileData = fileDoc.data();
+        const fileData = fileDoc.data() as FileData;
 
         // Delete file chunks from storage
         if (fileData.chunkPaths && Array.isArray(fileData.chunkPaths)) {
@@ -307,7 +433,7 @@ export const deleteUserAccount = functions.https.onCall(
         message: "Account successfully deleted",
       };
     } catch (error) {
-      return handleError(error, "deleteUserAccount");
+      return handleError(error as Error, "deleteUserAccount");
     }
   },
 );
@@ -317,7 +443,7 @@ export const deleteUserAccount = functions.https.onCall(
  * Handles email verification and security checks
  */
 export const updateUserEmail = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: UpdateUserEmailData, context: functions.https.CallableContext) => {
     try {
       // Ensure user is authenticated
       if (!context.auth) {
@@ -330,7 +456,7 @@ export const updateUserEmail = functions.https.onCall(
       // Apply rate limiting
       await checkRateLimit(context.auth.uid, "updateEmail", 3);
 
-      const { newEmail } = data;
+      const {newEmail} = data;
 
       // Validate email format
       if (!newEmail || !newEmail.includes("@")) {
@@ -347,8 +473,9 @@ export const updateUserEmail = functions.https.onCall(
           "already-exists",
           "Email address is already in use",
         );
-      } catch (error: any) {
-        if (error.code !== "auth/user-not-found") {
+      } catch (error: unknown) {
+        const firebaseError = error as { code?: string };
+        if (firebaseError.code !== "auth/user-not-found") {
           throw error;
         }
         // Email is available, continue
@@ -386,7 +513,7 @@ export const updateUserEmail = functions.https.onCall(
           "Email address updated successfully. Please verify your new email address.",
       };
     } catch (error) {
-      return handleError(error, "updateUserEmail");
+      return handleError(error as Error, "updateUserEmail");
     }
   },
 );
@@ -396,7 +523,7 @@ export const updateUserEmail = functions.https.onCall(
  * Manages 2FA settings for enhanced security
  */
 export const updateTwoFactorAuth = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: UpdateTwoFactorAuthData, context: functions.https.CallableContext) => {
     try {
       // Ensure user is authenticated
       if (!context.auth) {
@@ -409,7 +536,7 @@ export const updateTwoFactorAuth = functions.https.onCall(
       // Apply rate limiting
       await checkRateLimit(context.auth.uid, "update2FA", 5);
 
-      const { enabled, backupCodes } = data;
+      const {enabled, backupCodes} = data;
 
       if (typeof enabled !== "boolean") {
         throw new functions.https.HttpsError(
@@ -426,7 +553,7 @@ export const updateTwoFactorAuth = functions.https.onCall(
           "settings.twoFactorEnabled": enabled,
           "security.twoFactorUpdatedAt":
             admin.firestore.FieldValue.serverTimestamp(),
-          ...(backupCodes && { "security.backupCodes": backupCodes }),
+          ...(backupCodes && {"security.backupCodes": backupCodes}),
         });
 
       // Log security change
@@ -446,7 +573,7 @@ export const updateTwoFactorAuth = functions.https.onCall(
         message: `Two-factor authentication ${enabled ? "enabled" : "disabled"} successfully`,
       };
     } catch (error) {
-      return handleError(error, "updateTwoFactorAuth");
+      return handleError(error as Error, "updateTwoFactorAuth");
     }
   },
 );
@@ -456,7 +583,7 @@ export const updateTwoFactorAuth = functions.https.onCall(
  * Returns security-related information for the user
  */
 export const getUserSecurityStatus = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: Record<string, never>, context: functions.https.CallableContext) => {
     try {
       // Ensure user is authenticated
       if (!context.auth) {
@@ -476,7 +603,7 @@ export const getUserSecurityStatus = functions.https.onCall(
         throw new functions.https.HttpsError("not-found", "User not found");
       }
 
-      const userData = userDoc.data();
+      const userData = userDoc.data() as UserData;
 
       // Get recent security alerts
       const alertsSnapshot = await db
@@ -487,7 +614,7 @@ export const getUserSecurityStatus = functions.https.onCall(
         .limit(5)
         .get();
 
-      const alerts = alertsSnapshot.docs.map((doc) => {
+      const alerts: SecurityAlert[] = alertsSnapshot.docs.map((doc) => {
         const alert = doc.data();
         return {
           id: doc.id,
@@ -506,7 +633,7 @@ export const getUserSecurityStatus = functions.https.onCall(
         .where("expiresAt", ">", admin.firestore.Timestamp.now())
         .get();
 
-      const securityStatus = {
+      const securityStatus: SecurityStatus = {
         twoFactorEnabled: userData?.settings?.twoFactorEnabled || false,
         emailVerified: userData?.emailVerified || false,
         lastPasswordChange: userData?.security?.lastPasswordChange
@@ -524,7 +651,7 @@ export const getUserSecurityStatus = functions.https.onCall(
         securityStatus,
       };
     } catch (error) {
-      return handleError(error, "getUserSecurityStatus");
+      return handleError(error as Error, "getUserSecurityStatus");
     }
   },
 );
@@ -534,7 +661,7 @@ export const getUserSecurityStatus = functions.https.onCall(
  * Allows admins to suspend, activate, or modify user accounts
  */
 export const adminManageUser = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: AdminManageUserData, context: functions.https.CallableContext) => {
     try {
       // Ensure user is authenticated and an admin
       if (!context.auth) {
@@ -546,7 +673,7 @@ export const adminManageUser = functions.https.onCall(
 
       // Check if user is an admin
       const adminDoc = await db.collection("users").doc(context.auth.uid).get();
-      const adminData = adminDoc.data();
+      const adminData = adminDoc.data() as UserData;
 
       if (!adminData?.isAdmin) {
         throw new functions.https.HttpsError(
@@ -558,7 +685,7 @@ export const adminManageUser = functions.https.onCall(
       // Apply rate limiting
       await checkRateLimit(context.auth.uid, "adminManageUser", 10);
 
-      const { targetUserId, action, reason } = data;
+      const {targetUserId, action, reason} = data;
 
       if (!targetUserId || !action) {
         throw new functions.https.HttpsError(
@@ -580,7 +707,7 @@ export const adminManageUser = functions.https.onCall(
         );
       }
 
-      let updateData: any = {
+      const updateData: Record<string, unknown> = {
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         lastAdminAction: {
           action,
@@ -591,37 +718,35 @@ export const adminManageUser = functions.https.onCall(
       };
 
       switch (action) {
-        case "suspend":
-          updateData.suspended = true;
-          updateData.suspendedAt = admin.firestore.FieldValue.serverTimestamp();
-          updateData.suspensionReason = reason;
-          break;
+      case "suspend":
+        updateData.suspended = true;
+        updateData.suspendedAt = admin.firestore.FieldValue.serverTimestamp();
+        updateData.suspensionReason = reason;
+        break;
 
-        case "activate":
-          updateData.suspended = false;
-          updateData.activatedAt = admin.firestore.FieldValue.serverTimestamp();
-          break;
+      case "activate":
+        updateData.suspended = false;
+        updateData.activatedAt = admin.firestore.FieldValue.serverTimestamp();
+        break;
 
-        case "verify_email":
-          updateData.emailVerified = true;
-          updateData.emailVerifiedAt =
-            admin.firestore.FieldValue.serverTimestamp();
-          // Also update Firebase Auth
-          await admin.auth().updateUser(targetUserId, { emailVerified: true });
-          break;
+      case "verify_email":
+        updateData.emailVerified = true;
+        updateData.emailUpdatedAt = admin.firestore.FieldValue.serverTimestamp();
+        // Also update Firebase Auth
+        await admin.auth().updateUser(targetUserId, {emailVerified: true});
+        break;
 
-        case "reset_2fa":
-          updateData["settings.twoFactorEnabled"] = false;
-          updateData["security.twoFactorResetAt"] =
-            admin.firestore.FieldValue.serverTimestamp();
-          updateData["security.twoFactorResetBy"] = context.auth.uid;
-          break;
+      case "reset_2fa":
+        updateData["settings.twoFactorEnabled"] = false;
+        updateData["security.twoFactorResetAt"] = admin.firestore.FieldValue.serverTimestamp();
+        updateData["security.twoFactorResetBy"] = context.auth.uid;
+        break;
 
-        default:
-          throw new functions.https.HttpsError(
-            "invalid-argument",
-            "Invalid action",
-          );
+      default:
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          "Invalid action",
+        );
       }
 
       // Update user document
@@ -641,14 +766,14 @@ export const adminManageUser = functions.https.onCall(
         message: `User ${action} completed successfully`,
       };
     } catch (error) {
-      return handleError(error, "adminManageUser");
+      return handleError(error as Error, "adminManageUser");
     }
   },
 );
 
 // Helper functions
 
-function calculateSecurityScore(userData: any): number {
+function calculateSecurityScore(userData: UserData): number {
   let score = 0;
 
   // Email verified
@@ -671,7 +796,7 @@ function calculateSecurityScore(userData: any): number {
   return Math.min(score, 100);
 }
 
-function generateSecurityRecommendations(userData: any): string[] {
+function generateSecurityRecommendations(userData: UserData): string[] {
   const recommendations = [];
 
   if (!userData?.emailVerified) {

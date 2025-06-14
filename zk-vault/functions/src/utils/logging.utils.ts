@@ -301,21 +301,21 @@ export class StructuredLogger {
     };
 
     switch (entry.level) {
-      case LogLevel.DEBUG:
-        console.debug(JSON.stringify(logData));
-        break;
-      case LogLevel.INFO:
-        console.info(JSON.stringify(logData));
-        break;
-      case LogLevel.WARN:
-        console.warn(JSON.stringify(logData));
-        break;
-      case LogLevel.ERROR:
-      case LogLevel.CRITICAL:
-        console.error(JSON.stringify(logData));
-        break;
-      default:
-        console.log(JSON.stringify(logData));
+    case LogLevel.DEBUG:
+      console.debug(JSON.stringify(logData));
+      break;
+    case LogLevel.INFO:
+      console.info(JSON.stringify(logData));
+      break;
+    case LogLevel.WARN:
+      console.warn(JSON.stringify(logData));
+      break;
+    case LogLevel.ERROR:
+    case LogLevel.CRITICAL:
+      console.error(JSON.stringify(logData));
+      break;
+    default:
+      console.log(JSON.stringify(logData));
     }
   }
 

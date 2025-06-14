@@ -114,11 +114,12 @@
               @error="handleAuthError"
             />
 
-            <!-- Register Form -->
-            <RegisterForm
+            <!-- Secure Registration Form -->
+            <SecureRegistrationFlow
               v-else-if="currentView === 'register'"
               @success="handleRegisterSuccess"
               @error="handleAuthError"
+              @complete="handleRegistrationComplete"
             />
 
             <!-- Master Password Unlock -->
@@ -232,7 +233,7 @@ import BaseButton from '@/components/common/BaseButton.vue';
 import BaseModal from '@/components/common/BaseModal.vue';
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
 import LoginForm from '@/components/auth/LoginForm.vue';
-import RegisterForm from '@/components/auth/RegisterForm.vue';
+import SecureRegistrationFlow from '@/components/auth/SecureRegistrationFlow.vue';
 import MasterPasswordPrompt from '@/components/auth/MasterPasswordPrompt.vue';
 import BiometricAuth from '@/components/auth/BiometricAuth.vue';
 import { useAuthStore } from '@/store/auth.store';
@@ -458,6 +459,21 @@ const handleAuthError = (error: string) => {
 const handleSuccessModalClose = () => {
   showSuccessModal.value = false;
   router.push('/dashboard');
+};
+
+const handleRegistrationComplete = async (data: any) => {
+  globalLoading.value = true;
+  loadingMessage.value = 'Finalizing registration...';
+  loadingSubtext.value = 'Setting up your secure vault';
+
+  try {
+    // Registration is already complete, just redirect to dashboard
+    await router.push('/dashboard');
+  } catch (error: any) {
+    handleAuthError(error.message);
+  } finally {
+    globalLoading.value = false;
+  }
 };
 
 const clearError = () => {

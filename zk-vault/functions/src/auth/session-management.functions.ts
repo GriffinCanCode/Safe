@@ -1,13 +1,13 @@
 /**
  * @fileoverview Session Management Functions
- * @description Cloud Functions for managing user sessions and authentication state
- * @security Handles secure session management while maintaining zero-knowledge principles
+ * @description Cloud Functions for managing user sessions and authentication
+ * @security Handles secure session management while maintaining
+ * zero-knowledge principles
  */
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { handleError } from "../utils/error-handler";
-import { checkRateLimit } from "../utils/rate-limiting";
+import {checkRateLimit} from "../utils/rate-limiting";
 
 const db = admin.firestore();
 
@@ -34,6 +34,148 @@ interface UserSession {
   expiresAt: admin.firestore.Timestamp;
   isActive: boolean;
   lastActivity: admin.firestore.Timestamp;
+  terminatedAt?: admin.firestore.Timestamp;
+  terminationReason?: string;
+  cleanupAt?: admin.firestore.Timestamp;
+}
+
+/**
+ * Interface for device information
+ */
+interface DeviceInfo {
+  userAgent: string;
+  platform?: string;
+  browser?: string;
+  deviceId?: string;
+}
+
+/**
+ * Interface for geographical data
+ */
+interface GeoData {
+  ip: string;
+  city?: string;
+  country?: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+/**
+ * Interface for create session request
+ */
+interface CreateSessionData {
+  deviceInfo: DeviceInfo;
+  geoData?: GeoData;
+}
+
+/**
+ * Interface for create session response
+ */
+interface CreateSessionResponse {
+  success: boolean;
+  sessionId: string;
+  expiresAt: string;
+}
+
+/**
+ * Interface for update session activity request
+ */
+interface UpdateSessionActivityData {
+  sessionId: string;
+}
+
+/**
+ * Interface for update session activity response
+ */
+interface UpdateSessionActivityResponse {
+  success: boolean;
+  sessionId: string;
+}
+
+/**
+ * Interface for terminate session request
+ */
+interface TerminateSessionData {
+  sessionId?: string;
+  terminateAll?: boolean;
+}
+
+/**
+ * Interface for terminate session response
+ */
+interface TerminateSessionResponse {
+  success: boolean;
+  sessionId?: string;
+  terminatedSessions?: number;
+}
+
+/**
+ * Interface for get active sessions request
+ */
+interface GetActiveSessionsData {
+  currentSessionId?: string;
+}
+
+/**
+ * Interface for session info in response
+ */
+interface SessionInfo {
+  sessionId: string;
+  deviceInfo: DeviceInfo;
+  geoData?: GeoData;
+  createdAt: string | null;
+  lastActivity: string | null;
+  expiresAt: string | null;
+  isCurrent: boolean;
+}
+
+/**
+ * Interface for get active sessions response
+ */
+interface GetActiveSessionsResponse {
+  success: boolean;
+  sessions: SessionInfo[];
+  count: number;
+}
+
+/**
+ * Interface for validate session request
+ */
+interface ValidateSessionData {
+  sessionId: string;
+}
+
+/**
+ * Interface for validate session response
+ */
+interface ValidateSessionResponse {
+  valid: boolean;
+  reason?: string;
+  sessionId?: string;
+  expiresAt?: string;
+}
+
+/**
+ * Interface for user document updates
+ */
+interface UserUpdateData {
+  lastLoginAt?: admin.firestore.FieldValue;
+  lastLoginIP?: string;
+  activeSessionCount?: admin.firestore.FieldValue | number;
+  lastLogoutAt?: admin.firestore.FieldValue;
+  [key: string]: string | number | boolean | admin.firestore.FieldValue | null | undefined; // Allow additional properties for Firestore compatibility
+}
+
+/**
+ * Interface for session update data
+ */
+interface SessionUpdateData {
+  lastActivity?: admin.firestore.FieldValue;
+  isActive?: boolean;
+  terminatedAt?: admin.firestore.FieldValue;
+  terminationReason?: string;
+  cleanupAt?: admin.firestore.FieldValue;
+  [key: string]: string | number | boolean | admin.firestore.FieldValue | null | undefined; // Allow additional properties for Firestore compatibility
 }
 
 /**
@@ -41,7 +183,7 @@ interface UserSession {
  * Called when user successfully logs in
  */
 export const createSession = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: CreateSessionData, context: functions.https.CallableContext): Promise<CreateSessionResponse> => {
     try {
       // Ensure user is authenticated
       if (!context.auth) {
@@ -54,7 +196,7 @@ export const createSession = functions.https.onCall(
       // Apply rate limiting
       await checkRateLimit(context.auth.uid, "createSession", 10);
 
-      const { deviceInfo, geoData } = data;
+      const {deviceInfo, geoData} = data;
 
       // Validate required fields
       if (!deviceInfo || !deviceInfo.userAgent) {
@@ -64,8 +206,8 @@ export const createSession = functions.https.onCall(
         );
       }
 
-      const now =
-        admin.firestore.FieldValue.serverTimestamp() as admin.firestore.Timestamp;
+      const now = admin.firestore.FieldValue.serverTimestamp() as
+        admin.firestore.Timestamp;
       const expiresAt = admin.firestore.Timestamp.fromDate(
         new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
       );
@@ -103,14 +245,16 @@ export const createSession = functions.https.onCall(
       await sessionRef.set(sessionData);
 
       // Update user's last login time
+      const userUpdateData: UserUpdateData = {
+        lastLoginAt: now,
+        lastLoginIP: geoData?.ip || "unknown",
+        activeSessionCount: admin.firestore.FieldValue.increment(1),
+      };
+
       await db
         .collection("users")
         .doc(context.auth.uid)
-        .update({
-          lastLoginAt: now,
-          lastLoginIP: geoData?.ip || "unknown",
-          activeSessionCount: admin.firestore.FieldValue.increment(1),
-        });
+        .update(userUpdateData);
 
       // Clean up old sessions for this user (keep only last 10)
       await cleanupOldSessions(context.auth.uid);
@@ -121,7 +265,9 @@ export const createSession = functions.https.onCall(
         expiresAt: expiresAt.toDate().toISOString(),
       };
     } catch (error) {
-      return handleError(error, "createSession");
+      console.error("Error in createSession:", error);
+      throw error instanceof functions.https.HttpsError ? error :
+        new functions.https.HttpsError("internal", "An unexpected error occurred");
     }
   },
 );
@@ -131,7 +277,7 @@ export const createSession = functions.https.onCall(
  * Called periodically to keep session alive
  */
 export const updateSessionActivity = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: UpdateSessionActivityData, context: functions.https.CallableContext): Promise<UpdateSessionActivityResponse> => {
     try {
       // Ensure user is authenticated
       if (!context.auth) {
@@ -144,7 +290,7 @@ export const updateSessionActivity = functions.https.onCall(
       // Apply rate limiting
       await checkRateLimit(context.auth.uid, "updateSession", 60); // Allow frequent updates
 
-      const { sessionId } = data;
+      const {sessionId} = data;
 
       if (!sessionId) {
         throw new functions.https.HttpsError(
@@ -180,17 +326,21 @@ export const updateSessionActivity = functions.https.onCall(
       }
 
       // Update last activity
-      await sessionRef.update({
+      const updateData: SessionUpdateData = {
         lastActivity: admin.firestore.FieldValue.serverTimestamp(),
         isActive: true,
-      });
+      };
+
+      await sessionRef.update(updateData);
 
       return {
         success: true,
         sessionId,
       };
     } catch (error) {
-      return handleError(error, "updateSessionActivity");
+      console.error("Error in updateSessionActivity:", error);
+      throw error instanceof functions.https.HttpsError ? error :
+        new functions.https.HttpsError("internal", "An unexpected error occurred");
     }
   },
 );
@@ -200,7 +350,7 @@ export const updateSessionActivity = functions.https.onCall(
  * Called when user logs out or session needs to be invalidated
  */
 export const terminateSession = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: TerminateSessionData, context: functions.https.CallableContext): Promise<TerminateSessionResponse> => {
     try {
       // Ensure user is authenticated
       if (!context.auth) {
@@ -213,7 +363,7 @@ export const terminateSession = functions.https.onCall(
       // Apply rate limiting
       await checkRateLimit(context.auth.uid, "terminateSession", 20);
 
-      const { sessionId, terminateAll = false } = data;
+      const {sessionId, terminateAll = false} = data;
 
       if (terminateAll) {
         // Terminate all sessions for the user
@@ -225,21 +375,25 @@ export const terminateSession = functions.https.onCall(
 
         const batch = db.batch();
 
+        const batchUpdateData: SessionUpdateData = {
+          isActive: false,
+          terminatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          terminationReason: "user_logout_all",
+        };
+
         sessionsSnapshot.docs.forEach((doc) => {
-          batch.update(doc.ref, {
-            isActive: false,
-            terminatedAt: admin.firestore.FieldValue.serverTimestamp(),
-            terminationReason: "user_logout_all",
-          });
+          batch.update(doc.ref, batchUpdateData);
         });
 
         await batch.commit();
 
         // Update user's active session count
-        await db.collection("users").doc(context.auth.uid).update({
+        const userUpdateData: UserUpdateData = {
           activeSessionCount: 0,
           lastLogoutAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
+        };
+
+        await db.collection("users").doc(context.auth.uid).update(userUpdateData);
 
         return {
           success: true,
@@ -275,20 +429,24 @@ export const terminateSession = functions.https.onCall(
         }
 
         // Update session
-        await sessionRef.update({
+        const sessionUpdateData: SessionUpdateData = {
           isActive: false,
           terminatedAt: admin.firestore.FieldValue.serverTimestamp(),
           terminationReason: "user_logout",
-        });
+        };
+
+        await sessionRef.update(sessionUpdateData);
 
         // Update user's active session count
+        const userUpdateData: UserUpdateData = {
+          activeSessionCount: admin.firestore.FieldValue.increment(-1),
+          lastLogoutAt: admin.firestore.FieldValue.serverTimestamp(),
+        };
+
         await db
           .collection("users")
           .doc(context.auth.uid)
-          .update({
-            activeSessionCount: admin.firestore.FieldValue.increment(-1),
-            lastLogoutAt: admin.firestore.FieldValue.serverTimestamp(),
-          });
+          .update(userUpdateData);
 
         return {
           success: true,
@@ -296,7 +454,9 @@ export const terminateSession = functions.https.onCall(
         };
       }
     } catch (error) {
-      return handleError(error, "terminateSession");
+      console.error("Error in terminateSession:", error);
+      throw error instanceof functions.https.HttpsError ? error :
+        new functions.https.HttpsError("internal", "An unexpected error occurred");
     }
   },
 );
@@ -306,7 +466,7 @@ export const terminateSession = functions.https.onCall(
  * Allows users to see and manage their active sessions
  */
 export const getActiveSessions = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: GetActiveSessionsData, context: functions.https.CallableContext): Promise<GetActiveSessionsResponse> => {
     try {
       // Ensure user is authenticated
       if (!context.auth) {
@@ -329,15 +489,15 @@ export const getActiveSessions = functions.https.onCall(
         .orderBy("lastActivity", "desc")
         .get();
 
-      const sessions = sessionsSnapshot.docs.map((doc) => {
+      const sessions: SessionInfo[] = sessionsSnapshot.docs.map((doc) => {
         const session = doc.data() as UserSession;
         return {
           sessionId: doc.id,
           deviceInfo: session.deviceInfo,
           geoData: session.geoData,
-          createdAt: session.timestamp?.toDate()?.toISOString(),
-          lastActivity: session.lastActivity?.toDate()?.toISOString(),
-          expiresAt: session.expiresAt?.toDate()?.toISOString(),
+          createdAt: session.timestamp?.toDate()?.toISOString() || null,
+          lastActivity: session.lastActivity?.toDate()?.toISOString() || null,
+          expiresAt: session.expiresAt?.toDate()?.toISOString() || null,
           isCurrent: doc.id === data.currentSessionId,
         };
       });
@@ -348,7 +508,9 @@ export const getActiveSessions = functions.https.onCall(
         count: sessions.length,
       };
     } catch (error) {
-      return handleError(error, "getActiveSessions");
+      console.error("Error in getActiveSessions:", error);
+      throw error instanceof functions.https.HttpsError ? error :
+        new functions.https.HttpsError("internal", "An unexpected error occurred");
     }
   },
 );
@@ -358,7 +520,7 @@ export const getActiveSessions = functions.https.onCall(
  * Used by other functions to verify session validity
  */
 export const validateSession = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: ValidateSessionData, context: functions.https.CallableContext): Promise<ValidateSessionResponse> => {
     try {
       // Ensure user is authenticated
       if (!context.auth) {
@@ -368,7 +530,7 @@ export const validateSession = functions.https.onCall(
         );
       }
 
-      const { sessionId } = data;
+      const {sessionId} = data;
 
       if (!sessionId) {
         throw new functions.https.HttpsError(
@@ -411,10 +573,12 @@ export const validateSession = functions.https.onCall(
       // Check if session is expired
       if (session.expiresAt.toDate() < new Date()) {
         // Mark session as expired
-        await sessionDoc.ref.update({
+        const expiredUpdateData: SessionUpdateData = {
           isActive: false,
           terminationReason: "expired",
-        });
+        };
+
+        await sessionDoc.ref.update(expiredUpdateData);
 
         return {
           valid: false,
@@ -429,7 +593,9 @@ export const validateSession = functions.https.onCall(
         expiresAt: session.expiresAt.toDate().toISOString(),
       };
     } catch (error) {
-      return handleError(error, "validateSession");
+      console.error("Error in validateSession:", error);
+      throw error instanceof functions.https.HttpsError ? error :
+        new functions.https.HttpsError("internal", "An unexpected error occurred");
     }
   },
 );
@@ -440,7 +606,7 @@ export const validateSession = functions.https.onCall(
  */
 export const cleanupExpiredSessions = functions.pubsub
   .schedule("every 1 hours")
-  .onRun(async (context) => {
+  .onRun(async (): Promise<null> => {
     try {
       console.log("Starting expired session cleanup...");
 
@@ -463,12 +629,14 @@ export const cleanupExpiredSessions = functions.pubsub
       // Mark sessions as inactive and add cleanup timestamp
       const batch = db.batch();
 
+      const cleanupUpdateData: SessionUpdateData = {
+        isActive: false,
+        terminationReason: "expired",
+        cleanupAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
       expiredSessionsSnapshot.docs.forEach((doc) => {
-        batch.update(doc.ref, {
-          isActive: false,
-          terminationReason: "expired",
-          cleanupAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
+        batch.update(doc.ref, cleanupUpdateData);
       });
 
       await batch.commit();

@@ -6,8 +6,8 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { handleError } from "../utils/error-handler";
-import { RateLimitConfig } from "../utils/rate-limiting";
+import {handleError} from "../utils/error-handler";
+import {RateLimitConfig} from "../utils/rate-limiting";
 
 const db = admin.firestore();
 
@@ -77,7 +77,7 @@ export const updateRateLimitConfig = functions.https.onCall(
         );
       }
 
-      const { endpoint, config } = data;
+      const {endpoint, config} = data;
 
       // Validate input
       if (!endpoint || !config) {
@@ -109,7 +109,7 @@ export const updateRateLimitConfig = functions.https.onCall(
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             updatedBy: context.auth.uid,
           },
-          { merge: true },
+          {merge: true},
         );
 
       return {
@@ -118,7 +118,7 @@ export const updateRateLimitConfig = functions.https.onCall(
         config,
       };
     } catch (error) {
-      return handleError(error, "updateRateLimitConfig");
+      return handleError(error as Error, "updateRateLimitConfig");
     }
   },
 );
@@ -138,7 +138,7 @@ export const getRateLimitStatus = functions.https.onCall(
         );
       }
 
-      const { endpoint } = data;
+      const {endpoint} = data;
 
       // Validate input
       if (!endpoint) {
@@ -154,9 +154,9 @@ export const getRateLimitStatus = functions.https.onCall(
         .doc(`user_${context.auth.uid}_${endpoint}`);
 
       const userRateLimitDoc = await userRateLimitRef.get();
-      const userRateLimit = userRateLimitDoc.exists
-        ? userRateLimitDoc.data()
-        : null;
+      const userRateLimit = userRateLimitDoc.exists ?
+        userRateLimitDoc.data() :
+        null;
 
       // Get current rate limit configs
       const configsDoc = await db.collection("rateLimit").doc("configs").get();
@@ -212,7 +212,7 @@ export const getRateLimitStatus = functions.https.onCall(
         blocked: false,
       };
     } catch (error) {
-      return handleError(error, "getRateLimitStatus");
+      return handleError(error as Error, "getRateLimitStatus");
     }
   },
 );
@@ -242,7 +242,7 @@ export const blockUser = functions.https.onCall(async (data, context) => {
       );
     }
 
-    const { userId, ip, reason, durationMs = 24 * 60 * 60 * 1000 } = data; // Default 24 hours
+    const {userId, ip, reason, durationMs = 24 * 60 * 60 * 1000} = data; // Default 24 hours
 
     // Validate input
     if (!userId && !ip) {
@@ -280,7 +280,7 @@ export const blockUser = functions.https.onCall(async (data, context) => {
             reason: reason || "Manual block by admin",
             blockedBy: context.auth.uid,
           },
-          { merge: true },
+          {merge: true},
         );
       }
 
@@ -300,7 +300,7 @@ export const blockUser = functions.https.onCall(async (data, context) => {
             reason: reason || "Manual block by admin",
             blockedBy: context.auth.uid,
           },
-          { merge: true },
+          {merge: true},
         );
       }
     }
@@ -341,7 +341,7 @@ export const blockUser = functions.https.onCall(async (data, context) => {
       expiresAt: new Date(Date.now() + durationMs).toISOString(),
     };
   } catch (error) {
-    return handleError(error, "blockUser");
+    return handleError(error as Error, "blockUser");
   }
 });
 
@@ -370,7 +370,7 @@ export const unblockUser = functions.https.onCall(async (data, context) => {
       );
     }
 
-    const { userId, ip } = data;
+    const {userId, ip} = data;
 
     // Validate input
     if (!userId && !ip) {
@@ -437,7 +437,7 @@ export const unblockUser = functions.https.onCall(async (data, context) => {
       ip: ip || null,
     };
   } catch (error) {
-    return handleError(error, "unblockUser");
+    return handleError(error as Error, "unblockUser");
   }
 });
 
@@ -502,11 +502,11 @@ export const getBlockedEntities = functions.https.onCall(
           blockedBy: data.blockedBy || null,
           blockDurationMs: data.blockDurationMs || 0,
           blockExpiresAt:
-            data.blockedAt && data.blockDurationMs
-              ? new Date(
-                  data.blockedAt.toDate().getTime() + data.blockDurationMs,
-                )
-              : null,
+            data.blockedAt && data.blockDurationMs ?
+              new Date(
+                data.blockedAt.toDate().getTime() + data.blockDurationMs,
+              ) :
+              null,
         };
       });
 
@@ -515,7 +515,7 @@ export const getBlockedEntities = functions.https.onCall(
         blockedIps,
       };
     } catch (error) {
-      return handleError(error, "getBlockedEntities");
+      return handleError(error as Error, "getBlockedEntities");
     }
   },
 );

@@ -6,14 +6,13 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { handleError } from "../utils/error-handler";
-import { checkRateLimit } from "../utils/rate-limiting";
-import { validateFunctionContext } from "../utils/validation.utils";
-import { FileEncryption, EncryptionResult } from "@zk-vault/crypto";
+import {handleError} from "../utils/error-handler";
+import {checkRateLimit} from "../utils/rate-limiting";
+import {validateFunctionContext} from "../utils/validation.utils";
+// Crypto utilities available if needed
 
 const db = admin.firestore();
-const storage = admin.storage();
-const bucket = storage.bucket();
+// const storage = admin.storage(); // Available if needed for future file operations
 
 /**
  * Vault organization structure types
@@ -34,6 +33,59 @@ export enum BackupType {
   MANUAL = "manual",
   AUTOMATIC = "automatic",
   EMERGENCY = "emergency",
+}
+
+/**
+ * Interface for vault folder creation request
+ */
+interface CreateVaultFolderData {
+  name: string;
+  encryptedName: string;
+  parentId?: string;
+}
+
+/**
+ * Interface for vault search request
+ */
+interface SearchVaultItemsData {
+  encryptedQuery: string;
+  itemTypes?: VaultItemType[];
+  folderId?: string;
+  tags?: string[];
+  limit?: number;
+  offset?: number;
+}
+
+/**
+ * Interface for vault export request
+ */
+interface ExportVaultData {
+  includeSharedItems?: boolean;
+  format?: string;
+  encryptionKey: string;
+}
+
+/**
+ * Interface for vault import request
+ */
+interface ImportVaultData {
+  encryptedData: string;
+  decryptionKey: string;
+  mergeStrategy?: "skip" | "overwrite" | "merge";
+}
+
+/**
+ * Interface for vault analytics request
+ */
+interface GetVaultAnalyticsData {
+  period?: number;
+}
+
+/**
+ * Interface for vault optimization request
+ */
+interface OptimizeVaultData {
+  operations?: string[];
 }
 
 /**
@@ -72,10 +124,171 @@ interface VaultBackup {
 }
 
 /**
+ * Interface for vault item data
+ */
+interface VaultItemData {
+  id: string;
+  type: VaultItemType;
+  encrypted: {
+    data: string;
+    iv?: string;
+    algorithm?: string;
+  };
+  metadata: {
+    createdAt: admin.firestore.Timestamp;
+    updatedAt: admin.firestore.Timestamp;
+    importedAt?: admin.firestore.Timestamp;
+    originalId?: string;
+  };
+  tags?: string[];
+  folderId?: string;
+}
+
+/**
+ * Interface for export package data
+ */
+interface ExportPackageData {
+  version: string;
+  timestamp: string;
+  userId: string;
+  items: VaultItemData[];
+  folders: VaultFolder[];
+  sharedItems: SharedItemData[];
+  metadata: {
+    itemCount: number;
+    folderCount: number;
+    sharedItemCount: number;
+    format: string;
+  };
+}
+
+/**
+ * Interface for shared item data
+ */
+interface SharedItemData {
+  id: string;
+  itemId: string;
+  ownerId: string;
+  sharedWithUserId: string;
+  encryptedKeys: Record<string, string>;
+  permissions: string[];
+  status: string;
+}
+
+/**
+ * Interface for import statistics
+ */
+interface ImportStats {
+  itemsProcessed: number;
+  itemsImported: number;
+  itemsSkipped: number;
+  foldersImported: number;
+  errors: string[];
+}
+
+/**
+ * Interface for vault analytics overview
+ */
+interface VaultAnalyticsOverview {
+  totalItems: number;
+  itemsByType: Record<string, number>;
+  recentActivity: number;
+  lastUpdated: string | null;
+}
+
+/**
+ * Interface for vault security analytics
+ */
+interface VaultSecurityAnalytics {
+  passwordItems: number;
+  weakPasswords: number;
+  duplicatePasswords: number;
+  oldPasswords: number;
+  securityScore: number;
+}
+
+/**
+ * Interface for vault usage analytics
+ */
+interface VaultUsageAnalytics {
+  mostUsedTypes: Array<{ type: string; count: number }>;
+  accessPatterns: Record<string, number>;
+  sharingActivity: {
+    itemsShared: number;
+    itemsReceived: number;
+  };
+}
+
+/**
+ * Interface for vault growth analytics
+ */
+interface VaultGrowthAnalytics {
+  itemsAddedThisMonth: number;
+  itemsAddedThisWeek: number;
+  growthRate: number;
+}
+
+/**
+ * Interface for complete vault analytics
+ */
+interface VaultAnalytics {
+  overview: VaultAnalyticsOverview;
+  security: VaultSecurityAnalytics;
+  usage: VaultUsageAnalytics;
+  growth: VaultGrowthAnalytics;
+}
+
+/**
+ * Interface for optimization results
+ */
+interface OptimizationResults {
+  duplicatesRemoved: number;
+  emptyFoldersRemoved: number;
+  oldBackupsRemoved: number;
+  indexesRebuilt: number;
+}
+
+/**
+ * Interface for search result item
+ */
+interface SearchResultItem {
+  id: string;
+  type: VaultItemType;
+  encrypted: {
+    data: string;
+    iv?: string;
+    algorithm?: string;
+  };
+  metadata: {
+    createdAt: admin.firestore.Timestamp;
+    updatedAt: admin.firestore.Timestamp;
+  };
+  relevanceScore: number;
+}
+
+/**
+ * Interface for encrypted data result
+ */
+interface EncryptedDataResult {
+  success: boolean;
+  data?: {
+    encryptedData: string;
+  };
+}
+
+/**
+ * Interface for decrypted data result
+ */
+interface DecryptedDataResult {
+  success: boolean;
+  data?: string;
+}
+
+/**
  * Creates a vault folder for organization
  */
 export const createVaultFolder = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: CreateVaultFolderData, context: functions.https.CallableContext) => {
     try {
       // Validate context
       const validation = validateFunctionContext(context);
@@ -87,9 +300,15 @@ export const createVaultFolder = functions.https.onCall(
       }
 
       // Apply rate limiting
-      await checkRateLimit(context.auth!.uid, "vault", 20);
+      if (!context.auth?.uid) {
+        throw new functions.https.HttpsError(
+          "unauthenticated",
+          "User authentication required",
+        );
+      }
+      await checkRateLimit(context.auth.uid, "vault", 20);
 
-      const { name, encryptedName, parentId } = data;
+      const {name, encryptedName, parentId} = data;
 
       if (!name || !encryptedName) {
         throw new functions.https.HttpsError(
@@ -98,7 +317,7 @@ export const createVaultFolder = functions.https.onCall(
         );
       }
 
-      const userId = context.auth!.uid;
+      const userId = context.auth.uid;
 
       // Validate parent folder if provided
       if (parentId) {
@@ -119,7 +338,7 @@ export const createVaultFolder = functions.https.onCall(
       const folderData: Partial<VaultFolder> = {
         name,
         encryptedName,
-        parentId: parentId || null,
+        parentId: parentId || undefined,
         userId,
         itemCount: 0,
         metadata: {
@@ -138,7 +357,7 @@ export const createVaultFolder = functions.https.onCall(
         name,
       };
     } catch (error) {
-      return handleError(error, "createVaultFolder");
+      return handleError(error as Error, "createVaultFolder");
     }
   },
 );
@@ -147,7 +366,7 @@ export const createVaultFolder = functions.https.onCall(
  * Searches vault items using encrypted search
  */
 export const searchVaultItems = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: SearchVaultItemsData, context: functions.https.CallableContext) => {
     try {
       // Validate context
       const validation = validateFunctionContext(context);
@@ -159,7 +378,13 @@ export const searchVaultItems = functions.https.onCall(
       }
 
       // Apply rate limiting
-      await checkRateLimit(context.auth!.uid, "vault", 30);
+      if (!context.auth?.uid) {
+        throw new functions.https.HttpsError(
+          "unauthenticated",
+          "User authentication required",
+        );
+      }
+      await checkRateLimit(context.auth.uid, "vault", 30);
 
       const {
         encryptedQuery,
@@ -177,7 +402,7 @@ export const searchVaultItems = functions.https.onCall(
         );
       }
 
-      const userId = context.auth!.uid;
+      const userId = context.auth.uid;
 
       // Build base query
       let query: admin.firestore.Query = db
@@ -213,7 +438,7 @@ export const searchVaultItems = functions.https.onCall(
         hasMore: searchResults.length === limit,
       };
     } catch (error) {
-      return handleError(error, "searchVaultItems");
+      return handleError(error as Error, "searchVaultItems");
     }
   },
 );
@@ -222,7 +447,7 @@ export const searchVaultItems = functions.https.onCall(
  * Exports vault data as encrypted backup
  */
 export const exportVault = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: ExportVaultData, context: functions.https.CallableContext) => {
     try {
       // Validate context
       const validation = validateFunctionContext(context);
@@ -234,7 +459,13 @@ export const exportVault = functions.https.onCall(
       }
 
       // Apply rate limiting for security-sensitive operation
-      await checkRateLimit(context.auth!.uid, "vault", 3);
+      if (!context.auth?.uid) {
+        throw new functions.https.HttpsError(
+          "unauthenticated",
+          "User authentication required",
+        );
+      }
+      await checkRateLimit(context.auth.uid, "vault", 3);
 
       const {
         includeSharedItems = false,
@@ -249,7 +480,7 @@ export const exportVault = functions.https.onCall(
         );
       }
 
-      const userId = context.auth!.uid;
+      const userId = context.auth.uid;
 
       // Get all vault items
       const vaultSnapshot = await db
@@ -258,10 +489,10 @@ export const exportVault = functions.https.onCall(
         .collection("items")
         .get();
 
-      const items = vaultSnapshot.docs.map((doc) => ({
+      const items: VaultItemData[] = vaultSnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-      }));
+      } as VaultItemData));
 
       // Get folders
       const foldersSnapshot = await db
@@ -269,13 +500,13 @@ export const exportVault = functions.https.onCall(
         .where("userId", "==", userId)
         .get();
 
-      const folders = foldersSnapshot.docs.map((doc) => ({
+      const folders: VaultFolder[] = foldersSnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-      }));
+      } as VaultFolder));
 
       // Get shared items if requested
-      let sharedItems: any[] = [];
+      let sharedItems: SharedItemData[] = [];
       if (includeSharedItems) {
         const sharesSnapshot = await db
           .collection("vaultShares")
@@ -286,11 +517,11 @@ export const exportVault = functions.https.onCall(
         sharedItems = sharesSnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-        }));
+        } as SharedItemData));
       }
 
       // Create export package
-      const exportData = {
+      const exportData: ExportPackageData = {
         version: "1.0",
         timestamp: new Date().toISOString(),
         userId,
@@ -306,7 +537,7 @@ export const exportVault = functions.https.onCall(
       };
 
       // Encrypt export data (placeholder implementation)
-      const encryptedExport = {
+      const encryptedExport: EncryptedDataResult = {
         success: true,
         data: {
           encryptedData: Buffer.from(JSON.stringify(exportData)).toString(
@@ -338,21 +569,6 @@ export const exportVault = functions.https.onCall(
         },
       };
 
-      // Encrypt backup (placeholder implementation)
-      const encryptedBackup = {
-        success: true,
-        data: {
-          encryptedData: Buffer.from(JSON.stringify(backupData)).toString(
-            "base64",
-          ),
-        },
-      };
-
-      if (!encryptedBackup.success || !encryptedBackup.data) {
-        console.error(`Failed to encrypt backup for user ${userId}`);
-        return;
-      }
-
       const backupRef = await db.collection("vaultBackups").add(backupData);
 
       // Log audit event
@@ -370,7 +586,7 @@ export const exportVault = functions.https.onCall(
         size: encryptedExport.data.encryptedData.length,
       };
     } catch (error) {
-      return handleError(error, "exportVault");
+      return handleError(error as Error, "exportVault");
     }
   },
 );
@@ -379,7 +595,7 @@ export const exportVault = functions.https.onCall(
  * Imports vault data from encrypted backup
  */
 export const importVault = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: ImportVaultData, context: functions.https.CallableContext) => {
     try {
       // Validate context
       const validation = validateFunctionContext(context);
@@ -391,13 +607,18 @@ export const importVault = functions.https.onCall(
       }
 
       // Apply rate limiting for security-sensitive operation
-      await checkRateLimit(context.auth!.uid, "vault", 2);
+      if (!context.auth?.uid) {
+        throw new functions.https.HttpsError(
+          "unauthenticated",
+          "User authentication required",
+        );
+      }
+      await checkRateLimit(context.auth.uid, "vault", 2);
 
       const {
         encryptedData,
         decryptionKey,
-        mergeStrategy = "skip", // 'skip', 'overwrite', 'merge'
-        importSharedItems = false,
+        mergeStrategy = "skip",
       } = data;
 
       if (!encryptedData || !decryptionKey) {
@@ -407,12 +628,12 @@ export const importVault = functions.https.onCall(
         );
       }
 
-      const userId = context.auth!.uid;
+      const userId = context.auth.uid;
 
       // Decrypt import data (placeholder implementation)
-      const decryptedResult = {
+      const decryptedResult: DecryptedDataResult = {
         success: true,
-        data: JSON.parse(Buffer.from(encryptedData, "base64").toString()),
+        data: Buffer.from(encryptedData, "base64").toString(),
       };
 
       if (!decryptedResult.success || !decryptedResult.data) {
@@ -422,9 +643,9 @@ export const importVault = functions.https.onCall(
         );
       }
 
-      let importData;
+      let importData: ExportPackageData;
       try {
-        importData = JSON.parse(decryptedResult.data);
+        importData = JSON.parse(decryptedResult.data) as ExportPackageData;
       } catch (error) {
         throw new functions.https.HttpsError(
           "invalid-argument",
@@ -440,12 +661,12 @@ export const importVault = functions.https.onCall(
         );
       }
 
-      const importStats = {
+      const importStats: ImportStats = {
         itemsProcessed: 0,
         itemsImported: 0,
         itemsSkipped: 0,
         foldersImported: 0,
-        errors: [] as string[],
+        errors: [],
       };
 
       // Import folders first
@@ -457,9 +678,9 @@ export const importVault = functions.https.onCall(
             const newFolderRef = await db.collection("vaultFolders").add({
               name: folder.name,
               encryptedName: folder.encryptedName,
-              parentId: folder.parentId
-                ? folderIdMap.get(folder.parentId)
-                : null,
+              parentId: folder.parentId ?
+                folderIdMap.get(folder.parentId) :
+                undefined,
               userId,
               itemCount: 0,
               metadata: {
@@ -468,7 +689,9 @@ export const importVault = functions.https.onCall(
               },
             });
 
-            folderIdMap.set(folder.id, newFolderRef.id);
+            if (newFolderRef.id) {
+              folderIdMap.set(folder.id, newFolderRef.id);
+            }
             importStats.foldersImported++;
           } catch (error) {
             importStats.errors.push(`Failed to import folder: ${folder.name}`);
@@ -501,7 +724,7 @@ export const importVault = functions.https.onCall(
 
           if (shouldImport) {
             // Remove original ID and create new item
-            const { id, ...itemData } = item;
+            const {id, ...itemData} = item;
 
             await vaultRef.add({
               ...itemData,
@@ -535,7 +758,7 @@ export const importVault = functions.https.onCall(
         importStats,
       };
     } catch (error) {
-      return handleError(error, "importVault");
+      return handleError(error as Error, "importVault");
     }
   },
 );
@@ -545,7 +768,7 @@ export const importVault = functions.https.onCall(
  */
 export const createAutomaticBackup = functions.pubsub
   .schedule("every 24 hours")
-  .onRun(async (context) => {
+  .onRun(async () => {
     try {
       // Get all users who have enabled automatic backups
       const usersSnapshot = await db
@@ -582,25 +805,29 @@ export const createAutomaticBackup = functions.pubsub
             return;
           }
 
-          const items = vaultSnapshot.docs.map((doc) => ({
+          const items: VaultItemData[] = vaultSnapshot.docs.map((doc) => ({
             id: doc.id,
             ...doc.data(),
-          }));
+          } as VaultItemData));
 
           // Create backup data
-          const backupData = {
+          const backupData: ExportPackageData = {
             version: "1.0",
             timestamp: new Date().toISOString(),
             userId,
             items,
+            folders: [],
+            sharedItems: [],
             metadata: {
               itemCount: items.length,
-              type: "automatic",
+              folderCount: 0,
+              sharedItemCount: 0,
+              format: "automatic",
             },
           };
 
           // Encrypt backup (placeholder implementation)
-          const encryptedBackup = {
+          const encryptedBackup: EncryptedDataResult = {
             success: true,
             data: {
               encryptedData: Buffer.from(JSON.stringify(backupData)).toString(
@@ -652,7 +879,7 @@ export const createAutomaticBackup = functions.pubsub
  * Gets vault analytics and insights
  */
 export const getVaultAnalytics = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: GetVaultAnalyticsData, context: functions.https.CallableContext) => {
     try {
       // Validate context
       const validation = validateFunctionContext(context);
@@ -664,11 +891,17 @@ export const getVaultAnalytics = functions.https.onCall(
       }
 
       // Apply rate limiting
-      await checkRateLimit(context.auth!.uid, "vault", 10);
+      if (!context.auth?.uid) {
+        throw new functions.https.HttpsError(
+          "unauthenticated",
+          "User authentication required",
+        );
+      }
+      await checkRateLimit(context.auth.uid, "vault", 10);
 
-      const { period = 30 } = data || {}; // Default to last 30 days
+      const {period = 30} = data || {};
 
-      const userId = context.auth!.uid;
+      const userId = context.auth.uid;
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - period);
 
@@ -691,12 +924,12 @@ export const getVaultAnalytics = functions.https.onCall(
         .get();
 
       // Analyze vault data
-      const analytics = {
+      const analytics: VaultAnalytics = {
         overview: {
           totalItems: vaultSnapshot.size,
-          itemsByType: {} as Record<string, number>,
+          itemsByType: {},
           recentActivity: auditSnapshot.size,
-          lastUpdated: null as string | null,
+          lastUpdated: null,
         },
         security: {
           passwordItems: 0,
@@ -706,8 +939,8 @@ export const getVaultAnalytics = functions.https.onCall(
           securityScore: 0,
         },
         usage: {
-          mostUsedTypes: [] as Array<{ type: string; count: number }>,
-          accessPatterns: {} as Record<string, number>,
+          mostUsedTypes: [],
+          accessPatterns: {},
           sharingActivity: {
             itemsShared: 0,
             itemsReceived: 0,
@@ -723,7 +956,7 @@ export const getVaultAnalytics = functions.https.onCall(
       // Analyze vault items
       let latestUpdate = 0;
       vaultSnapshot.docs.forEach((doc) => {
-        const item = doc.data();
+        const item = doc.data() as VaultItemData;
         const itemType = item.type || "unknown";
 
         analytics.overview.itemsByType[itemType] =
@@ -737,7 +970,7 @@ export const getVaultAnalytics = functions.https.onCall(
         }
 
         // Analyze security for password items
-        if (itemType === "password") {
+        if (itemType === VaultItemType.PASSWORD) {
           analytics.security.passwordItems++;
           // Additional security analysis would be done client-side
           // since passwords are encrypted
@@ -762,7 +995,7 @@ export const getVaultAnalytics = functions.https.onCall(
       // Analyze audit logs for usage patterns
       auditSnapshot.docs.forEach((doc) => {
         const audit = doc.data();
-        const eventType = audit.eventType;
+        const eventType = audit.eventType as string;
 
         analytics.usage.accessPatterns[eventType] =
           (analytics.usage.accessPatterns[eventType] || 0) + 1;
@@ -776,7 +1009,7 @@ export const getVaultAnalytics = functions.https.onCall(
       analytics.usage.mostUsedTypes = Object.entries(
         analytics.overview.itemsByType,
       )
-        .map(([type, count]) => ({ type, count }))
+        .map(([type, count]) => ({type, count}))
         .sort((a, b) => b.count - a.count)
         .slice(0, 5);
 
@@ -786,9 +1019,9 @@ export const getVaultAnalytics = functions.https.onCall(
         (analytics.security.passwordItems > 0 ? 50 : 0) +
           (analytics.overview.totalItems > 5 ? 25 : 0) +
           (analytics.usage.sharingActivity.itemsShared <
-          analytics.overview.totalItems * 0.5
-            ? 25
-            : 0),
+          analytics.overview.totalItems * 0.5 ?
+            25 :
+            0),
       );
 
       return {
@@ -797,7 +1030,7 @@ export const getVaultAnalytics = functions.https.onCall(
         analytics,
       };
     } catch (error) {
-      return handleError(error, "getVaultAnalytics");
+      return handleError(error as Error, "getVaultAnalytics");
     }
   },
 );
@@ -806,7 +1039,7 @@ export const getVaultAnalytics = functions.https.onCall(
  * Optimizes vault performance
  */
 export const optimizeVault = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: OptimizeVaultData, context: functions.https.CallableContext) => {
     try {
       // Validate context
       const validation = validateFunctionContext(context);
@@ -818,12 +1051,18 @@ export const optimizeVault = functions.https.onCall(
       }
 
       // Apply rate limiting
-      await checkRateLimit(context.auth!.uid, "vault", 5);
+      if (!context.auth?.uid) {
+        throw new functions.https.HttpsError(
+          "unauthenticated",
+          "User authentication required",
+        );
+      }
+      await checkRateLimit(context.auth.uid, "vault", 5);
 
-      const { operations = ["all"] } = data;
-      const userId = context.auth!.uid;
+      const {operations = ["all"]} = data;
+      const userId = context.auth.uid;
 
-      const results = {
+      const results: OptimizationResults = {
         duplicatesRemoved: 0,
         emptyFoldersRemoved: 0,
         oldBackupsRemoved: 0,
@@ -876,7 +1115,7 @@ export const optimizeVault = functions.https.onCall(
         results,
       };
     } catch (error) {
-      return handleError(error, "optimizeVault");
+      return handleError(error as Error, "optimizeVault");
     }
   },
 );
@@ -889,13 +1128,13 @@ async function performEncryptedSearch(
   encryptedQuery: string,
   tags: string[],
   limit: number,
-): Promise<any[]> {
+): Promise<SearchResultItem[]> {
   // In a real implementation, this would use searchable encryption
   // For now, we'll return items that match type or have matching tags
-  const results = [];
+  const results: SearchResultItem[] = [];
 
   for (const doc of documents.slice(0, limit)) {
-    const data = doc.data();
+    const data = doc.data() as VaultItemData;
 
     // Simple matching based on metadata (in real implementation,
     // this would use encrypted search indices)
@@ -947,7 +1186,8 @@ async function updateVaultSummary(userId: string): Promise<void> {
 
     const typeCounts: Record<string, number> = {};
     snapshot.docs.forEach((doc) => {
-      const type = doc.data().type || "unknown";
+      const data = doc.data() as VaultItemData;
+      const type = data.type || "unknown";
       typeCounts[type] = (typeCounts[type] || 0) + 1;
     });
 
@@ -957,7 +1197,7 @@ async function updateVaultSummary(userId: string): Promise<void> {
         typeCounts,
         lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
       },
-      { merge: true },
+      {merge: true},
     );
   } catch (error) {
     console.error("Error updating vault summary:", error);
@@ -975,10 +1215,10 @@ async function removeDuplicateItems(userId: string): Promise<number> {
       .collection("items")
       .get();
 
-    const items = snapshot.docs.map((doc) => ({
+    const items: VaultItemData[] = snapshot.docs.map((doc) => ({
       id: doc.id,
-      ...(doc.data() as any),
-    }));
+      ...doc.data(),
+    } as VaultItemData));
     const duplicates = new Map<string, string[]>();
 
     // Group by encrypted content (simplified duplicate detection)
@@ -987,14 +1227,17 @@ async function removeDuplicateItems(userId: string): Promise<number> {
       if (!duplicates.has(key)) {
         duplicates.set(key, []);
       }
-      duplicates.get(key)!.push(item.id);
+      const keyArray = duplicates.get(key);
+      if (keyArray) {
+        keyArray.push(item.id);
+      }
     });
 
     // Remove duplicates (keep the first one)
     let removed = 0;
     const batch = db.batch();
 
-    for (const [key, itemIds] of duplicates.entries()) {
+    for (const [, itemIds] of duplicates.entries()) {
       if (itemIds.length > 1) {
         // Remove all but the first item
         for (let i = 1; i < itemIds.length; i++) {
@@ -1087,6 +1330,7 @@ async function cleanupOldBackups(userId: string): Promise<number> {
 /**
  * Helper function to rebuild search indexes
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function rebuildSearchIndexes(userId: string): Promise<number> {
   try {
     // In a real implementation, this would rebuild searchable encryption indexes
@@ -1104,7 +1348,7 @@ async function rebuildSearchIndexes(userId: string): Promise<number> {
 async function logVaultAuditEvent(
   userId: string,
   eventType: string,
-  eventData: any,
+  eventData: Record<string, unknown>,
 ): Promise<void> {
   try {
     await db.collection("vaultAuditLogs").add({

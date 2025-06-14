@@ -11,6 +11,9 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "baseUrl": "./",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
     "paths": {
       "@zk-vault/shared": ["../packages/shared/src/index"],
       "@zk-vault/shared/*": ["../packages/shared/src/*"],
@@ -20,9 +23,6 @@
     }
   },
   "compileOnSave": true,
-  "include": ["src"],
-  "references": [
-    { "path": "../packages/shared" },
-    { "path": "../packages/crypto" }
-  ]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "lib", "**/*.test.ts", "**/*.spec.ts"]
 }

@@ -9,13 +9,16 @@ import * as functions from "firebase-functions";
 /**
  * Email validation regex pattern
  */
-const EMAIL_REGEX =
-  /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+const EMAIL_REGEX = new RegExp(
+  "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9]" +
+  "(?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?" +
+  "(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
+);
 
 /**
  * Validates email address format
- * @param email Email address to validate
- * @returns True if valid email format
+ * @param {string} email Email address to validate
+ * @return {boolean} True if valid email format
  */
 export function isValidEmail(email: string): boolean {
   if (!email || typeof email !== "string") {
@@ -27,8 +30,8 @@ export function isValidEmail(email: string): boolean {
 
 /**
  * Validates password strength
- * @param password Password to validate
- * @returns Object with validation result and requirements
+ * @param {string} password Password to validate
+ * @return {object} Object with validation result and requirements
  */
 export function validatePasswordStrength(password: string): {
   isValid: boolean;
@@ -75,8 +78,8 @@ export function validatePasswordStrength(password: string): {
 
 /**
  * Validates file name for security
- * @param fileName File name to validate
- * @returns True if file name is safe
+ * @param {string} fileName File name to validate
+ * @return {boolean} True if file name is safe
  */
 export function isValidFileName(fileName: string): boolean {
   if (!fileName || typeof fileName !== "string") {
@@ -94,6 +97,7 @@ export function isValidFileName(fileName: string): boolean {
     /[<>:"|?*]/, // Invalid filename characters
     /^\.+$/, // Only dots
     /\0/, // Null bytes
+    // eslint-disable-next-line no-control-regex
     /[\x00-\x1f\x80-\x9f]/, // Control characters
   ];
 
@@ -102,8 +106,8 @@ export function isValidFileName(fileName: string): boolean {
 
 /**
  * Validates user ID format
- * @param userId User ID to validate
- * @returns True if valid user ID format
+ * @param {string} userId User ID to validate
+ * @return {boolean} True if valid user ID format
  */
 export function isValidUserId(userId: string): boolean {
   if (!userId || typeof userId !== "string") {
@@ -116,8 +120,8 @@ export function isValidUserId(userId: string): boolean {
 
 /**
  * Validates IP address format
- * @param ip IP address to validate
- * @returns True if valid IP address (IPv4 or IPv6)
+ * @param {string} ip IP address to validate
+ * @return {boolean} True if valid IP address (IPv4 or IPv6)
  */
 export function isValidIPAddress(ip: string): boolean {
   if (!ip || typeof ip !== "string") {
@@ -125,8 +129,10 @@ export function isValidIPAddress(ip: string): boolean {
   }
 
   // IPv4 regex
-  const ipv4Regex =
-    /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+  const ipv4Regex = new RegExp(
+    "^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}" +
+    "(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+  );
 
   // IPv6 regex (simplified)
   const ipv6Regex = /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^::1$|^::$/;
@@ -136,19 +142,20 @@ export function isValidIPAddress(ip: string): boolean {
 
 /**
  * Sanitizes string input for database storage
- * @param input String to sanitize
- * @param maxLength Maximum allowed length
- * @returns Sanitized string
+ * @param {string} input String to sanitize
+ * @param {number} maxLength Maximum allowed length
+ * @return {string} Sanitized string
  */
 export function sanitizeStringInput(
   input: string,
-  maxLength: number = 1000,
+  maxLength = 1000,
 ): string {
   if (!input || typeof input !== "string") {
     return "";
   }
 
   // Remove null bytes and control characters
+  // eslint-disable-next-line no-control-regex
   let sanitized = input.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
 
   // Trim whitespace
@@ -164,9 +171,9 @@ export function sanitizeStringInput(
 
 /**
  * Validates content type for file uploads
- * @param contentType Content type to validate
- * @param allowedTypes Array of allowed content types
- * @returns True if content type is allowed
+ * @param {string} contentType Content type to validate
+ * @param {string[]} allowedTypes Array of allowed content types
+ * @return {boolean} True if content type is allowed
  */
 export function isValidContentType(
   contentType: string,
@@ -206,13 +213,13 @@ export function isValidContentType(
 
 /**
  * Validates numeric input within range
- * @param value Value to validate
- * @param min Minimum allowed value
- * @param max Maximum allowed value
- * @returns True if value is valid number within range
+ * @param {unknown} value Value to validate
+ * @param {number} min Minimum allowed value
+ * @param {number} max Maximum allowed value
+ * @return {boolean} True if value is valid number within range
  */
 export function isValidNumberInRange(
-  value: any,
+  value: unknown,
   min: number,
   max: number,
 ): boolean {
@@ -225,9 +232,9 @@ export function isValidNumberInRange(
 
 /**
  * Validates file size
- * @param size File size in bytes
- * @param maxSize Maximum allowed size in bytes
- * @returns True if file size is valid
+ * @param {number} size File size in bytes
+ * @param {number} maxSize Maximum allowed size in bytes
+ * @return {boolean} True if file size is valid
  */
 export function isValidFileSize(
   size: number,
@@ -238,38 +245,38 @@ export function isValidFileSize(
 
 /**
  * Validates Firebase Cloud Function context
- * @param context Function context
- * @param requireAuth Whether authentication is required
- * @returns Validation result
+ * @param {functions.https.CallableContext} context Function context
+ * @param {boolean} requireAuth Whether authentication is required
+ * @return {object} Validation result
  */
 export function validateFunctionContext(
   context: functions.https.CallableContext,
-  requireAuth: boolean = true,
+  requireAuth = true,
 ): { isValid: boolean; error?: string } {
   if (!context) {
-    return { isValid: false, error: "Context is required" };
+    return {isValid: false, error: "Context is required"};
   }
 
   if (requireAuth && !context.auth) {
-    return { isValid: false, error: "Authentication required" };
+    return {isValid: false, error: "Authentication required"};
   }
 
   if (requireAuth && context.auth && !isValidUserId(context.auth.uid)) {
-    return { isValid: false, error: "Invalid user ID format" };
+    return {isValid: false, error: "Invalid user ID format"};
   }
 
-  return { isValid: true };
+  return {isValid: true};
 }
 
 /**
  * Validates pagination parameters
- * @param limit Limit parameter
- * @param offset Offset parameter
- * @returns Validation result with sanitized values
+ * @param {unknown} limit Limit parameter
+ * @param {unknown} offset Offset parameter
+ * @return {object} Validation result with sanitized values
  */
 export function validatePaginationParams(
-  limit?: any,
-  offset?: any,
+  limit?: unknown,
+  offset?: unknown,
 ): {
   isValid: boolean;
   limit: number;
@@ -293,7 +300,7 @@ export function validatePaginationParams(
         error: `Limit must be between 1 and ${maxLimit}`,
       };
     }
-    validatedLimit = limit;
+    validatedLimit = limit as number;
   }
 
   // Validate offset
@@ -306,7 +313,7 @@ export function validatePaginationParams(
         error: "Offset must be a non-negative number",
       };
     }
-    validatedOffset = offset;
+    validatedOffset = offset as number;
   }
 
   return {
@@ -318,9 +325,9 @@ export function validatePaginationParams(
 
 /**
  * Validates hex string (for hashes, IDs, etc.)
- * @param hexString String to validate
- * @param expectedLength Expected length (optional)
- * @returns True if valid hex string
+ * @param {string} hexString String to validate
+ * @param {number} expectedLength Expected length (optional)
+ * @return {boolean} True if valid hex string
  */
 export function isValidHexString(
   hexString: string,

@@ -24,14 +24,50 @@ export interface RateLimitConfig {
 }
 
 /**
+ * Rate limit document data structure
+ */
+interface RateLimitData {
+  requestCount: number;
+  windowStartTime: admin.firestore.Timestamp;
+  lastRequestAt: admin.firestore.Timestamp;
+  blocked: boolean;
+  blockedAt?: admin.firestore.Timestamp;
+  blockDurationMs?: number;
+  endpoint: string;
+  userId: string;
+}
+
+/**
+ * Function-specific rate limit data structure
+ */
+interface FunctionRateLimitData {
+  count: number;
+  windowStart: number;
+}
+
+/**
+ * User rate limit document structure
+ */
+interface UserRateLimitDocument {
+  [functionName: string]: FunctionRateLimitData;
+}
+
+/**
+ * Callable function data interface
+ */
+interface CallableFunctionData {
+  [key: string]: unknown;
+}
+
+/**
  * Default rate limiting configurations
  */
 const RATE_LIMIT_CONFIGS: Record<string, RateLimitConfig> = {
-  auth: { maxRequests: 5, windowMs: 5 * 60 * 1000 }, // 5 requests per 5 minutes
-  upload: { maxRequests: 10, windowMs: 60 * 1000 }, // 10 requests per minute
-  download: { maxRequests: 50, windowMs: 60 * 1000 }, // 50 requests per minute
-  admin: { maxRequests: 2, windowMs: 60 * 1000 }, // 2 admin requests per minute
-  default: { maxRequests: 30, windowMs: 60 * 1000 }, // 30 requests per minute
+  auth: {maxRequests: 5, windowMs: 5 * 60 * 1000}, // 5 requests per 5 minutes
+  upload: {maxRequests: 10, windowMs: 60 * 1000}, // 10 requests per minute
+  download: {maxRequests: 50, windowMs: 60 * 1000}, // 50 requests per minute
+  admin: {maxRequests: 2, windowMs: 60 * 1000}, // 2 admin requests per minute
+  default: {maxRequests: 30, windowMs: 60 * 1000}, // 30 requests per minute
 };
 
 /**
@@ -58,7 +94,7 @@ export async function checkRateLimit(
     const rateLimitRef = db.collection("rateLimits").doc(rateLimitKey);
     const rateLimitDoc = await rateLimitRef.get();
 
-    let data = rateLimitDoc.data();
+    let data = rateLimitDoc.data() as RateLimitData | undefined;
 
     // Check if document exists and is within current window
     if (data && data.windowStartTime) {
@@ -136,8 +172,10 @@ export async function checkRateLimit(
 /**
  * Rate limiting middleware for HTTP functions
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function rateLimit(config: RateLimitConfig) {
-  return async (data: any, context: functions.https.CallableContext) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  return async (data: CallableFunctionData, context: functions.https.CallableContext) => {
     // In this implementation, we'll just return the original function
     // The actual rate limiting is done in checkRateLimit
     return data;
@@ -173,11 +211,11 @@ export async function checkPersistentRateLimit(
               count: 1,
               windowStart: now,
             },
-          });
+          } as UserRateLimitDocument);
           return true;
         }
 
-        const data = doc.data();
+        const data = doc.data() as UserRateLimitDocument | undefined;
         const functionData = data?.[functionName] || {
           count: 0,
           windowStart: now,

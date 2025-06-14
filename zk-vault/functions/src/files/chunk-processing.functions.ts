@@ -6,12 +6,86 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { handleError } from "../utils/error-handler";
-import { checkRateLimit } from "../utils/rate-limiting";
+import {handleError} from "../utils/error-handler";
+import {checkRateLimit} from "../utils/rate-limiting";
 
 const db = admin.firestore();
 const storage = admin.storage();
 const bucket = storage.bucket();
+
+// TypeScript interfaces
+interface ChunkMetadata {
+  size: number;
+  contentType: string;
+  md5Hash: string | null;
+  timeCreated: admin.firestore.Timestamp;
+  verified: boolean;
+  optimized?: boolean;
+  optimizedAt?: admin.firestore.Timestamp;
+  encryptionValidated?: boolean;
+  encryptionValidationResults?: EncryptionValidationResults;
+  validatedAt?: admin.firestore.Timestamp;
+}
+
+interface FileData {
+  userId: string;
+  totalSize: number;
+  totalChunks: number;
+  contentType: string;
+  status: string;
+  expiresAt: admin.firestore.Timestamp;
+  chunkPaths: string[];
+  chunkMetadata: { [key: string]: ChunkMetadata };
+  recoveryAttempts?: number;
+  lastRecoveryAt?: admin.firestore.Timestamp;
+  recoveryHistory?: { [key: string]: RecoveryHistoryEntry };
+}
+
+interface EncryptionHeaders {
+  version: string;
+  algorithm: string;
+  format: string;
+}
+
+interface EncryptionValidationResults {
+  hasValidHeader: boolean;
+  hasValidFormat: boolean;
+  isSupportedAlgorithm: boolean;
+  isQuantumResistant: boolean;
+}
+
+interface RecoveryHistoryEntry {
+  chunks: number[];
+  userId: string;
+}
+
+interface ChunkExistence {
+  index: number;
+  exists: boolean;
+}
+
+interface RecoveryPlanItem {
+  chunkIndex: number;
+  chunkPath: string;
+  uploadUrl: string;
+  status: "missing" | "corrupted";
+}
+
+interface OptimizeChunkData {
+  fileId: string;
+  chunkIndex: number;
+}
+
+interface ValidateChunkEncryptionData {
+  fileId: string;
+  chunkIndex: number;
+  encryptionHeaders: EncryptionHeaders;
+}
+
+interface GenerateChunkRecoveryPlanData {
+  fileId: string;
+  corruptedChunks: number[];
+}
 
 /**
  * Verifies chunk integrity after upload
@@ -53,7 +127,7 @@ export const verifyChunkIntegrity = functions.storage
         return null;
       }
 
-      const fileData = fileDoc.data();
+      const fileData = fileDoc.data() as FileData | undefined;
 
       // Security check: ensure path matches expected pattern
       if (fileData?.userId !== userId) {
@@ -87,7 +161,7 @@ export const verifyChunkIntegrity = functions.storage
             new Date(object.timeCreated || Date.now()),
           ),
           verified: true,
-        },
+        } as ChunkMetadata,
       });
 
       return null;
@@ -124,7 +198,7 @@ export const cleanupExpiredChunks = functions.pubsub
 
       // Process each expired file
       const deletePromises = expiredFilesSnapshot.docs.map(async (doc) => {
-        const fileData = doc.data();
+        const fileData = doc.data() as FileData;
         const fileId = doc.id;
 
         // Delete all chunks from storage
@@ -134,7 +208,7 @@ export const cleanupExpiredChunks = functions.pubsub
               return bucket
                 .file(chunkPath)
                 .delete()
-                .catch((err: any) => {
+                .catch((err: Error) => {
                   console.warn(`Failed to delete chunk at ${chunkPath}:`, err);
                   // Continue with deletion even if some chunks fail
                   return null;
@@ -167,7 +241,7 @@ export const cleanupExpiredChunks = functions.pubsub
  * Processes uploaded chunks for optimization
  * Can be used for server-side processing like compression or validation
  */
-export const optimizeChunk = functions.https.onCall(async (data, context) => {
+export const optimizeChunk = functions.https.onCall(async (data: OptimizeChunkData, context) => {
   try {
     // Ensure user is authenticated
     if (!context.auth) {
@@ -180,7 +254,7 @@ export const optimizeChunk = functions.https.onCall(async (data, context) => {
     // Apply rate limiting
     await checkRateLimit(context.auth.uid, "optimizeChunk", 20);
 
-    const { fileId, chunkIndex } = data;
+    const {fileId, chunkIndex} = data;
 
     // Validate input
     if (!fileId || chunkIndex === undefined) {
@@ -201,7 +275,7 @@ export const optimizeChunk = functions.https.onCall(async (data, context) => {
       );
     }
 
-    const fileData = fileDoc.data();
+    const fileData = fileDoc.data() as FileData | undefined;
 
     // Security check: ensure user owns this file
     if (fileData?.userId !== context.auth.uid) {
@@ -248,7 +322,7 @@ export const optimizeChunk = functions.https.onCall(async (data, context) => {
       message: "Chunk marked as optimized",
     };
   } catch (error) {
-    return handleError(error, "optimizeChunk");
+    return handleError(error as Error, "optimizeChunk");
   }
 });
 
@@ -257,7 +331,7 @@ export const optimizeChunk = functions.https.onCall(async (data, context) => {
  * Ensures chunks have proper encryption headers without accessing content
  */
 export const validateChunkEncryption = functions.https.onCall(
-  async (data, context) => {
+  async (data: ValidateChunkEncryptionData, context) => {
     try {
       // Ensure user is authenticated
       if (!context.auth) {
@@ -270,7 +344,7 @@ export const validateChunkEncryption = functions.https.onCall(
       // Apply rate limiting
       await checkRateLimit(context.auth.uid, "validateChunkEncryption", 20);
 
-      const { fileId, chunkIndex, encryptionHeaders } = data;
+      const {fileId, chunkIndex, encryptionHeaders} = data;
 
       // Validate input
       if (!fileId || chunkIndex === undefined || !encryptionHeaders) {
@@ -291,7 +365,7 @@ export const validateChunkEncryption = functions.https.onCall(
         );
       }
 
-      const fileData = fileDoc.data();
+      const fileData = fileDoc.data() as FileData | undefined;
 
       // Security check: ensure user owns this file
       if (fileData?.userId !== context.auth.uid) {
@@ -304,9 +378,9 @@ export const validateChunkEncryption = functions.https.onCall(
       // Validate encryption headers
       // Note: In a real implementation, we would check that the headers match
       // expected format for the encryption algorithm without decrypting
-      const validationResults = {
+      const validationResults: EncryptionValidationResults = {
         hasValidHeader:
-          encryptionHeaders.version && encryptionHeaders.algorithm,
+          !!(encryptionHeaders.version && encryptionHeaders.algorithm),
         hasValidFormat: !!encryptionHeaders.format,
         isSupportedAlgorithm: [
           "AES-GCM",
@@ -336,7 +410,7 @@ export const validateChunkEncryption = functions.https.onCall(
         validationResults,
       };
     } catch (error) {
-      return handleError(error, "validateChunkEncryption");
+      return handleError(error as Error, "validateChunkEncryption");
     }
   },
 );
@@ -346,7 +420,7 @@ export const validateChunkEncryption = functions.https.onCall(
  * Helps client rebuild missing or corrupted chunks if possible
  */
 export const generateChunkRecoveryPlan = functions.https.onCall(
-  async (data, context) => {
+  async (data: GenerateChunkRecoveryPlanData, context) => {
     try {
       // Ensure user is authenticated
       if (!context.auth) {
@@ -359,7 +433,7 @@ export const generateChunkRecoveryPlan = functions.https.onCall(
       // Apply rate limiting
       await checkRateLimit(context.auth.uid, "generateChunkRecoveryPlan", 5);
 
-      const { fileId, corruptedChunks } = data;
+      const {fileId, corruptedChunks} = data;
 
       // Validate input
       if (!fileId || !Array.isArray(corruptedChunks)) {
@@ -380,7 +454,7 @@ export const generateChunkRecoveryPlan = functions.https.onCall(
         );
       }
 
-      const fileData = fileDoc.data();
+      const fileData = fileDoc.data() as FileData | undefined;
 
       // Security check: ensure user owns this file or it's shared with them
       const isOwner = fileData?.userId === context.auth.uid;
@@ -409,9 +483,9 @@ export const generateChunkRecoveryPlan = functions.https.onCall(
 
       // Check which chunks actually exist in storage
       const chunkExistencePromises = fileData.chunkPaths.map(
-        async (path: string, index: number) => {
+        async (path: string, index: number): Promise<ChunkExistence> => {
           const [exists] = await bucket.file(path).exists();
-          return { index, exists };
+          return {index, exists};
         },
       );
 
@@ -426,8 +500,8 @@ export const generateChunkRecoveryPlan = functions.https.onCall(
       ];
 
       // Generate new signed URLs for the problematic chunks
-      const recoveryPlan = await Promise.all(
-        allProblematicChunks.map(async (chunkIndex: number) => {
+      const recoveryPlan: RecoveryPlanItem[] = await Promise.all(
+        allProblematicChunks.map(async (chunkIndex: number): Promise<RecoveryPlanItem> => {
           const chunkPath = fileData.chunkPaths[chunkIndex];
 
           // Generate a new signed URL for upload
@@ -443,9 +517,9 @@ export const generateChunkRecoveryPlan = functions.https.onCall(
             chunkIndex,
             chunkPath,
             uploadUrl,
-            status: missingChunks.includes(chunkIndex)
-              ? "missing"
-              : "corrupted",
+            status: missingChunks.includes(chunkIndex) ?
+              "missing" :
+              "corrupted",
           };
         }),
       );
@@ -457,7 +531,7 @@ export const generateChunkRecoveryPlan = functions.https.onCall(
         [`recoveryHistory.${Date.now()}`]: {
           chunks: allProblematicChunks,
           userId: context.auth.uid,
-        },
+        } as RecoveryHistoryEntry,
       });
 
       return {
@@ -468,7 +542,7 @@ export const generateChunkRecoveryPlan = functions.https.onCall(
         missingChunksCount: missingChunks.length,
       };
     } catch (error) {
-      return handleError(error, "generateChunkRecoveryPlan");
+      return handleError(error as Error, "generateChunkRecoveryPlan");
     }
   },
 );

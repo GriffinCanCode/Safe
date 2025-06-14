@@ -6,7 +6,7 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { checkRateLimit } from "../utils/rate-limiting";
+// Rate limiting utilities available if needed
 
 const db = admin.firestore();
 

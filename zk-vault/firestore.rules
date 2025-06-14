@@ -19,8 +19,8 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid != null;
     }
     
-    function isValidTimestamp(timestamp) {
-      return timestamp is timestamp && timestamp <= request.time;
+    function isValidTimestamp(ts) {
+      return ts is timestamp && ts <= request.time;
     }
     
     function hasValidSchema(data, requiredFields) {

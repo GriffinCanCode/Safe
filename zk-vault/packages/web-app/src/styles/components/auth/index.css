@@ -10,6 +10,7 @@
 /* === AUTHENTICATION FORMS === */
 @import './login-form.css';
 @import './register-form.css';
+@import './secure-registration-flow.css';
 @import './master-password-prompt.css';
 
 /* === AUTHENTICATION SUCCESS === */

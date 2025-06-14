@@ -35,9 +35,4 @@ export * from "./admin/maintenance.functions";
 export * from "./admin/system-health.functions";
 export * from "./admin/user-analytics.functions";
 
-// Scheduled cleanup functions
-export { cleanupExpiredFiles } from "./admin/maintenance.functions";
-export { cleanupExpiredChunks } from "./files/chunk-processing.functions";
-export { collectSystemMetrics } from "./admin/system-health.functions";
-export { cleanupExpiredSessions } from "./auth/session-management.functions";
-export { scheduleCredentialBreachChecks } from "./security/breach-monitor.functions";
+// Note: All functions are exported via wildcard exports above

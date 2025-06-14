@@ -6,7 +6,7 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { logger, LogCategory } from "./logging.utils";
+import {logger, LogCategory} from "./logging.utils";
 
 /**
  * Custom error classes for better error categorization
@@ -25,7 +25,7 @@ export class ValidationError extends Error {
 
 export class AuthenticationError extends Error {
   constructor(
-    message: string = "Authentication failed",
+    message = "Authentication failed",
     public code: string = "AUTH_ERROR",
   ) {
     super(message);
@@ -35,7 +35,7 @@ export class AuthenticationError extends Error {
 
 export class AuthorizationError extends Error {
   constructor(
-    message: string = "Access denied",
+    message = "Access denied",
     public code: string = "AUTHZ_ERROR",
   ) {
     super(message);
@@ -45,7 +45,7 @@ export class AuthorizationError extends Error {
 
 export class RateLimitError extends Error {
   constructor(
-    message: string = "Rate limit exceeded",
+    message = "Rate limit exceeded",
     public retryAfter?: number,
     public code: string = "RATE_LIMIT_ERROR",
   ) {
@@ -116,7 +116,7 @@ export interface ErrorContext {
   requestId?: string;
   ip?: string;
   userAgent?: string;
-  additionalData?: Record<string, any>;
+  additionalData?: Record<string, unknown>;
 }
 
 /**
@@ -127,7 +127,7 @@ export interface ErrorResponse {
   error: {
     code: string;
     message: string;
-    details?: Record<string, any>;
+    details?: Record<string, unknown>;
     requestId?: string;
     timestamp: string;
   };
@@ -144,49 +144,49 @@ export function mapToFirebaseError(
   let message: string;
 
   switch (error.constructor) {
-    case ValidationError:
-      code = "invalid-argument";
-      message = error.message;
-      break;
+  case ValidationError:
+    code = "invalid-argument";
+    message = error.message;
+    break;
 
-    case AuthenticationError:
-      code = "unauthenticated";
-      message = "Authentication required";
-      break;
+  case AuthenticationError:
+    code = "unauthenticated";
+    message = "Authentication required";
+    break;
 
-    case AuthorizationError:
-      code = "permission-denied";
-      message = "Access denied";
-      break;
+  case AuthorizationError:
+    code = "permission-denied";
+    message = "Access denied";
+    break;
 
-    case RateLimitError:
-      code = "resource-exhausted";
-      message = "Rate limit exceeded";
-      break;
+  case RateLimitError:
+    code = "resource-exhausted";
+    message = "Rate limit exceeded";
+    break;
 
-    case ResourceNotFoundError:
-      code = "not-found";
-      message = "Resource not found";
-      break;
+  case ResourceNotFoundError:
+    code = "not-found";
+    message = "Resource not found";
+    break;
 
-    case BusinessLogicError:
-      code = "failed-precondition";
-      message = error.message;
-      break;
+  case BusinessLogicError:
+    code = "failed-precondition";
+    message = error.message;
+    break;
 
-    case ExternalServiceError:
-      code = "unavailable";
-      message = "External service unavailable";
-      break;
+  case ExternalServiceError:
+    code = "unavailable";
+    message = "External service unavailable";
+    break;
 
-    case DataIntegrityError:
-      code = "data-loss";
-      message = "Data integrity violation";
-      break;
+  case DataIntegrityError:
+    code = "data-loss";
+    message = "Data integrity violation";
+    break;
 
-    default:
-      code = "internal";
-      message = "An unexpected error occurred";
+  default:
+    code = "internal";
+    message = "An unexpected error occurred";
   }
 
   // Log the error
@@ -216,9 +216,9 @@ export function mapToFirebaseError(
 export function createErrorResponse(
   error: Error,
   context?: ErrorContext,
-  includeStack: boolean = false,
+  includeStack = false,
 ): ErrorResponse {
-  const errorCode = (error as any).code || error.name || "UNKNOWN_ERROR";
+  const errorCode = (error as Error & { code?: string }).code || error.name || "UNKNOWN_ERROR";
 
   // Don't expose sensitive error details in production
   const isDevelopment = process.env.NODE_ENV === "development";
@@ -268,7 +268,6 @@ function getSafeErrorMessage(error: Error): string {
  */
 export function getErrorSeverity(
   error: Error,
-  context?: ErrorContext,
 ): ErrorSeverity {
   // Critical errors
   if (error instanceof DataIntegrityError) {
@@ -302,16 +301,21 @@ export function getErrorSeverity(
 }
 
 /**
+ * Interface for error handling options
+ */
+interface ErrorHandlingOptions {
+  logErrors?: boolean;
+  includeContext?: boolean;
+  customErrorHandler?: (error: Error, context?: ErrorContext) => unknown;
+}
+
+/**
  * Wraps a function with comprehensive error handling
  */
-export function withAdvancedErrorHandling<T extends any[], R>(
+export function withAdvancedErrorHandling<T extends unknown[], R>(
   fn: (...args: T) => Promise<R>,
   functionName: string,
-  options: {
-    logErrors?: boolean;
-    includeContext?: boolean;
-    customErrorHandler?: (error: Error, context?: ErrorContext) => any;
-  } = {},
+  options: ErrorHandlingOptions = {},
 ) {
   return async (...args: T): Promise<R> => {
     const requestId = generateRequestId();
@@ -328,12 +332,12 @@ export function withAdvancedErrorHandling<T extends any[], R>(
 
       // Use custom error handler if provided
       if (options.customErrorHandler) {
-        return options.customErrorHandler(err, context);
+        return options.customErrorHandler(err, context) as R;
       }
 
       // Log error if enabled
       if (options.logErrors !== false) {
-        const severity = getErrorSeverity(err, context);
+        const severity = getErrorSeverity(err);
 
         await logger.logError(
           LogCategory.SYSTEM,
@@ -363,8 +367,8 @@ export function withAdvancedErrorHandling<T extends any[], R>(
  * Validates input and throws ValidationError if invalid
  */
 export function validateInput(
-  value: any,
-  validator: (value: any) => boolean,
+  value: unknown,
+  validator: (value: unknown) => boolean,
   message: string,
   field?: string,
 ): void {
@@ -377,7 +381,7 @@ export function validateInput(
  * Validates required fields
  */
 export function validateRequired(
-  obj: Record<string, any>,
+  obj: Record<string, unknown>,
   requiredFields: string[],
 ): void {
   for (const field of requiredFields) {
@@ -451,17 +455,32 @@ function generateRequestId(): string {
 }
 
 /**
+ * Interface for function arguments with context
+ */
+interface FunctionArgsWithContext {
+  0?: { sessionId?: string };
+  1?: {
+    auth?: { uid: string };
+    rawRequest?: {
+      ip?: string;
+      headers?: { "user-agent"?: string };
+    };
+  };
+}
+
+/**
  * Extracts context information from function arguments
  */
-function extractContextFromArgs(args: any[]): Partial<ErrorContext> {
+function extractContextFromArgs(args: unknown[]): Partial<ErrorContext> {
   // Look for context in the second argument (Firebase callable functions pattern)
   if (args.length >= 2 && args[1] && typeof args[1] === "object") {
-    const context = args[1];
+    const typedArgs = args as FunctionArgsWithContext;
+    const context = typedArgs[1];
     return {
-      userId: context.auth?.uid,
-      sessionId: args[0]?.sessionId,
-      ip: context.rawRequest?.ip,
-      userAgent: context.rawRequest?.headers?.["user-agent"],
+      userId: context?.auth?.uid,
+      sessionId: typedArgs[0]?.sessionId,
+      ip: context?.rawRequest?.ip,
+      userAgent: context?.rawRequest?.headers?.["user-agent"],
     };
   }
 
@@ -471,12 +490,12 @@ function extractContextFromArgs(args: any[]): Partial<ErrorContext> {
 /**
  * Utility to safely parse JSON with error handling
  */
-export function safeJSONParse<T = any>(
+export function safeJSONParse<T = unknown>(
   jsonString: string,
   defaultValue?: T,
 ): T | undefined {
   try {
-    return JSON.parse(jsonString);
+    return JSON.parse(jsonString) as T;
   } catch (error) {
     if (defaultValue !== undefined) {
       return defaultValue;
@@ -491,7 +510,7 @@ export function safeJSONParse<T = any>(
 export async function withTimeout<T>(
   operation: Promise<T>,
   timeoutMs: number,
-  timeoutMessage: string = "Operation timed out",
+  timeoutMessage = "Operation timed out",
 ): Promise<T> {
   return Promise.race([
     operation,
@@ -508,11 +527,11 @@ export async function withTimeout<T>(
  */
 export async function withRetry<T>(
   operation: () => Promise<T>,
-  maxRetries: number = 3,
-  baseDelay: number = 1000,
-  maxDelay: number = 10000,
+  maxRetries = 3,
+  baseDelay = 1000,
+  maxDelay = 10000,
 ): Promise<T> {
-  let lastError: Error;
+  let lastError: Error = new Error("Unknown error");
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
@@ -539,5 +558,5 @@ export async function withRetry<T>(
     }
   }
 
-  throw lastError!;
+  throw lastError || new Error("Operation failed after retries");
 }

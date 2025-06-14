@@ -6,8 +6,8 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { handleError } from "../utils/error-handler";
-import { checkRateLimit } from "../utils/rate-limiting";
+import {handleError} from "../utils/error-handler";
+import {checkRateLimit} from "../utils/rate-limiting";
 
 type CallableContext = functions.https.CallableContext;
 
@@ -38,11 +38,43 @@ interface UserAnalytics {
 }
 
 /**
+ * Interface for generate user analytics request data
+ */
+interface GenerateUserAnalyticsData {
+  dateRange?: number;
+}
+
+/**
+ * Interface for user activity trends request data
+ */
+interface UserActivityTrendsData {
+  period?: "24h" | "7d" | "30d" | "90d";
+  granularity?: "hour" | "day" | "week";
+}
+
+/**
+ * Interface for user segmentation request data
+ */
+interface UserSegmentationData {
+  // Currently no specific parameters needed, but interface must have at least one property
+  [key: string]: unknown;
+}
+
+/**
+ * Interface for time bucket
+ */
+interface TimeBucket {
+  start: Date;
+  end: Date;
+  label: string;
+}
+
+/**
  * Generates comprehensive user analytics report
  * Provides insights into user behavior and system usage
  */
 export const generateUserAnalytics = functions.https.onCall(
-  async (data: any, context: CallableContext) => {
+  async (data: GenerateUserAnalyticsData, context: CallableContext) => {
     try {
       // Ensure user is authenticated and an admin
       if (!context.auth) {
@@ -66,7 +98,7 @@ export const generateUserAnalytics = functions.https.onCall(
       // Apply rate limiting for admin operations
       await checkRateLimit(context.auth.uid, "admin", 5);
 
-      const { dateRange = 30 } = data; // Default to last 30 days
+      const {dateRange = 30} = data; // Default to last 30 days
 
       // Calculate date boundaries
       const now = new Date();
@@ -74,8 +106,6 @@ export const generateUserAnalytics = functions.https.onCall(
         now.getTime() - dateRange * 24 * 60 * 60 * 1000,
       );
       const startTimestamp = admin.firestore.Timestamp.fromDate(startDate);
-      const nowTimestamp = admin.firestore.Timestamp.fromDate(now);
-
       // Run analytics queries in parallel
       const [
         totalUsersResult,
@@ -84,7 +114,6 @@ export const generateUserAnalytics = functions.https.onCall(
         userSessionsResult,
         userCountriesResult,
         filesResult,
-        vaultItemsResult,
       ] = await Promise.all([
         getTotalUsers(),
         getActiveUsers(startTimestamp),
@@ -92,7 +121,6 @@ export const generateUserAnalytics = functions.https.onCall(
         getUserSessions(startTimestamp),
         getUserCountries(startTimestamp),
         getFileAnalytics(),
-        getVaultItemAnalytics(),
       ]);
 
       // Calculate user growth rate
@@ -105,11 +133,11 @@ export const generateUserAnalytics = functions.https.onCall(
       );
 
       const userGrowthRate =
-        previousPeriodUsers.count > 0
-          ? ((newUsersResult.count - previousPeriodUsers.count) /
+        previousPeriodUsers.count > 0 ?
+          ((newUsersResult.count - previousPeriodUsers.count) /
               previousPeriodUsers.count) *
-            100
-          : 0;
+            100 :
+          0;
 
       // Calculate retention rates
       const retentionRates = await calculateRetentionRates();
@@ -150,7 +178,7 @@ export const generateUserAnalytics = functions.https.onCall(
         generatedAt: now.toISOString(),
       };
     } catch (error) {
-      return handleError(error, "generateUserAnalytics");
+      return handleError(error as Error, "generateUserAnalytics");
     }
   },
 );
@@ -160,7 +188,7 @@ export const generateUserAnalytics = functions.https.onCall(
  * Provides data for charting user activity patterns
  */
 export const getUserActivityTrends = functions.https.onCall(
-  async (data: any, context: CallableContext) => {
+  async (data: UserActivityTrendsData, context: CallableContext) => {
     try {
       // Ensure user is authenticated and an admin
       if (!context.auth) {
@@ -184,27 +212,27 @@ export const getUserActivityTrends = functions.https.onCall(
       // Apply rate limiting
       await checkRateLimit(context.auth.uid, "admin", 10);
 
-      const { period = "7d", granularity = "day" } = data;
+      const {period = "7d", granularity = "day"} = data;
 
       // Calculate time boundaries
       const now = new Date();
       let periodDays = 7;
 
       switch (period) {
-        case "24h":
-          periodDays = 1;
-          break;
-        case "7d":
-          periodDays = 7;
-          break;
-        case "30d":
-          periodDays = 30;
-          break;
-        case "90d":
-          periodDays = 90;
-          break;
-        default:
-          periodDays = 7;
+      case "24h":
+        periodDays = 1;
+        break;
+      case "7d":
+        periodDays = 7;
+        break;
+      case "30d":
+        periodDays = 30;
+        break;
+      case "90d":
+        periodDays = 90;
+        break;
+      default:
+        periodDays = 7;
       }
 
       const startDate = new Date(
@@ -226,7 +254,7 @@ export const getUserActivityTrends = functions.https.onCall(
         granularity,
       };
     } catch (error) {
-      return handleError(error, "getUserActivityTrends");
+      return handleError(error as Error, "getUserActivityTrends");
     }
   },
 );
@@ -236,7 +264,7 @@ export const getUserActivityTrends = functions.https.onCall(
  * Segments users by behavior patterns and usage
  */
 export const getUserSegmentation = functions.https.onCall(
-  async (data: any, context: CallableContext) => {
+  async (data: UserSegmentationData, context: CallableContext) => {
     try {
       // Ensure user is authenticated and an admin
       if (!context.auth) {
@@ -310,7 +338,7 @@ export const getUserSegmentation = functions.https.onCall(
         totalUsers,
       };
     } catch (error) {
-      return handleError(error, "getUserSegmentation");
+      return handleError(error as Error, "getUserSegmentation");
     }
   },
 );
@@ -319,7 +347,7 @@ export const getUserSegmentation = functions.https.onCall(
 
 async function getTotalUsers() {
   const snapshot = await db.collection("users").get();
-  return { count: snapshot.size };
+  return {count: snapshot.size};
 }
 
 async function getActiveUsers(since: admin.firestore.Timestamp) {
@@ -327,7 +355,7 @@ async function getActiveUsers(since: admin.firestore.Timestamp) {
     .collection("users")
     .where("lastLoginAt", ">=", since)
     .get();
-  return { count: snapshot.size };
+  return {count: snapshot.size};
 }
 
 async function getNewUsers(
@@ -341,7 +369,7 @@ async function getNewUsers(
   }
 
   const snapshot = await query.get();
-  return { count: snapshot.size };
+  return {count: snapshot.size};
 }
 
 async function getUserSessions(since: admin.firestore.Timestamp) {
@@ -351,7 +379,7 @@ async function getUserSessions(since: admin.firestore.Timestamp) {
     .get();
 
   if (snapshot.empty) {
-    return { averageDuration: 0 };
+    return {averageDuration: 0};
   }
 
   let totalDuration = 0;
@@ -399,7 +427,7 @@ async function getUserCountries(since: admin.firestore.Timestamp) {
       {} as Record<string, number>,
     );
 
-  return { countries: sortedCountries };
+  return {countries: sortedCountries};
 }
 
 async function getFileAnalytics() {
@@ -439,14 +467,7 @@ async function getFileAnalytics() {
   };
 }
 
-async function getVaultItemAnalytics() {
-  const snapshot = await db.collectionGroup("items").get();
-  return { count: snapshot.size };
-}
-
 async function calculateRetentionRates() {
-  const now = new Date();
-
   // Calculate retention for users who joined in different time periods
   const day1Retention = await calculateRetentionForPeriod(1);
   const day7Retention = await calculateRetentionForPeriod(7);
@@ -521,17 +542,17 @@ function generateTimeBuckets(start: Date, end: Date, granularity: string) {
 
   let incrementMs = 0;
   switch (granularity) {
-    case "hour":
-      incrementMs = 60 * 60 * 1000;
-      break;
-    case "day":
-      incrementMs = 24 * 60 * 60 * 1000;
-      break;
-    case "week":
-      incrementMs = 7 * 24 * 60 * 60 * 1000;
-      break;
-    default:
-      incrementMs = 24 * 60 * 60 * 1000; // Default to day
+  case "hour":
+    incrementMs = 60 * 60 * 1000;
+    break;
+  case "day":
+    incrementMs = 24 * 60 * 60 * 1000;
+    break;
+  case "week":
+    incrementMs = 7 * 24 * 60 * 60 * 1000;
+    break;
+  default:
+    incrementMs = 24 * 60 * 60 * 1000; // Default to day
   }
 
   while (current < end) {
@@ -549,18 +570,18 @@ function generateTimeBuckets(start: Date, end: Date, granularity: string) {
 
 function formatBucketLabel(date: Date, granularity: string): string {
   switch (granularity) {
-    case "hour":
-      return date.toISOString().substring(0, 13) + ":00";
-    case "day":
-      return date.toISOString().substring(0, 10);
-    case "week":
-      return `Week of ${date.toISOString().substring(0, 10)}`;
-    default:
-      return date.toISOString().substring(0, 10);
+  case "hour":
+    return date.toISOString().substring(0, 13) + ":00";
+  case "day":
+    return date.toISOString().substring(0, 10);
+  case "week":
+    return `Week of ${date.toISOString().substring(0, 10)}`;
+  default:
+    return date.toISOString().substring(0, 10);
   }
 }
 
-async function getActivityForBucket(bucket: any) {
+async function getActivityForBucket(bucket: TimeBucket) {
   const startTimestamp = admin.firestore.Timestamp.fromDate(bucket.start);
   const endTimestamp = admin.firestore.Timestamp.fromDate(bucket.end);
 
@@ -598,7 +619,7 @@ async function getPowerUsers() {
     .collection("users")
     .where("totalStorageUsed", ">", 1024 * 1024 * 100) // > 100MB
     .get();
-  return { count: snapshot.size };
+  return {count: snapshot.size};
 }
 
 async function getRegularUsers() {
@@ -612,7 +633,7 @@ async function getRegularUsers() {
     .where("totalStorageUsed", "<=", 1024 * 1024 * 100)
     .where("totalStorageUsed", ">", 1024 * 1024 * 10) // 10MB - 100MB
     .get();
-  return { count: snapshot.size };
+  return {count: snapshot.size};
 }
 
 async function getLightUsers() {
@@ -625,7 +646,7 @@ async function getLightUsers() {
     .where("lastLoginAt", ">=", thirtyDaysAgo)
     .where("totalStorageUsed", "<=", 1024 * 1024 * 10) // <= 10MB
     .get();
-  return { count: snapshot.size };
+  return {count: snapshot.size};
 }
 
 async function getInactiveUsers() {
@@ -637,7 +658,7 @@ async function getInactiveUsers() {
     .collection("users")
     .where("lastLoginAt", "<", thirtyDaysAgo)
     .get();
-  return { count: snapshot.size };
+  return {count: snapshot.size};
 }
 
 async function getNewUsersLastWeek() {
@@ -649,5 +670,5 @@ async function getNewUsersLastWeek() {
     .collection("users")
     .where("createdAt", ">=", sevenDaysAgo)
     .get();
-  return { count: snapshot.size };
+  return {count: snapshot.size};
 }

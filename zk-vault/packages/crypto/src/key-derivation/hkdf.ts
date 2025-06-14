@@ -31,7 +31,8 @@ async function initializeCrypto() {
     const sha256Lib = await import('@stablelib/sha256');
     const hmacLib = await import('@stablelib/hmac');
 
-    stableLibHKDF = hkdfLib.hkdf;
+    // Use the default export (HKDF class)
+    stableLibHKDF = hkdfLib.default;
     stableLibSHA256 = sha256Lib.SHA256;
     stableLibHMAC = hmacLib.HMAC;
   } catch (error) {
@@ -234,7 +235,11 @@ export class HKDF {
     outputLength: number = HKDF_PARAMS.OUTPUT_LENGTH
   ): Promise<Uint8Array> {
     try {
-      return stableLibHKDF(stableLibSHA256, inputKeyMaterial, outputLength, salt, info);
+      // Use StableLib HKDF class
+      const hkdf = new stableLibHKDF(stableLibSHA256, inputKeyMaterial, salt, info);
+      const result = hkdf.expand(outputLength);
+      hkdf.clean();
+      return result;
     } catch (error) {
       throw new Error(
         `StableLib HKDF failed: ${error instanceof Error ? error.message : 'Unknown error'}`

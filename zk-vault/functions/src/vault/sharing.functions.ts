@@ -6,13 +6,13 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { handleError } from "../utils/error-handler";
-import { checkRateLimit } from "../utils/rate-limiting";
+import {handleError} from "../utils/error-handler";
+import {checkRateLimit} from "../utils/rate-limiting";
 import {
   validateFunctionContext,
   isValidEmail,
 } from "../utils/validation.utils";
-import { ZeroKnowledgeVault } from "@zk-vault/crypto";
+// Crypto utilities available if needed
 
 const db = admin.firestore();
 
@@ -37,6 +37,19 @@ export enum ShareStatus {
 }
 
 /**
+ * Interface for access restrictions
+ */
+interface AccessRestrictions {
+  ipWhitelist?: string[];
+  deviceWhitelist?: string[];
+  timeRestrictions?: {
+    startTime: string;
+    endTime: string;
+    timezone: string;
+  };
+}
+
+/**
  * Interface for advanced sharing configuration
  */
 interface SharingConfig {
@@ -46,15 +59,27 @@ interface SharingConfig {
   requiresAcceptance?: boolean;
   allowResharing?: boolean;
   notifyOnAccess?: boolean;
-  accessRestrictions?: {
-    ipWhitelist?: string[];
-    deviceWhitelist?: string[];
-    timeRestrictions?: {
-      startTime: string;
-      endTime: string;
-      timezone: string;
-    };
-  };
+  accessRestrictions?: AccessRestrictions;
+}
+
+/**
+ * Interface for encrypted keys
+ */
+interface EncryptedKeys {
+  itemKey: string;
+  metadataKey?: string;
+  signatureKey?: string;
+}
+
+/**
+ * Interface for share metadata
+ */
+interface ShareMetadata {
+  createdAt: admin.firestore.Timestamp;
+  updatedAt: admin.firestore.Timestamp;
+  acceptedAt?: admin.firestore.Timestamp;
+  lastAccessedAt?: admin.firestore.Timestamp;
+  accessCount: number;
 }
 
 /**
@@ -66,21 +91,90 @@ interface VaultItemShare {
   ownerId: string;
   sharedWithUserId: string;
   sharedWithEmail: string;
-  encryptedKeys: {
-    itemKey: string;
-    metadataKey?: string;
-    signatureKey?: string;
-  };
+  encryptedKeys: EncryptedKeys;
   permissions: SharingPermission[];
   config: SharingConfig;
   status: ShareStatus;
-  metadata: {
-    createdAt: admin.firestore.Timestamp;
-    updatedAt: admin.firestore.Timestamp;
-    acceptedAt?: admin.firestore.Timestamp;
-    lastAccessedAt?: admin.firestore.Timestamp;
-    accessCount: number;
-  };
+  metadata: ShareMetadata;
+}
+
+/**
+ * Interface for create share request data
+ */
+interface CreateShareRequestData {
+  itemId: string;
+  recipientEmail: string;
+  encryptedKeys: EncryptedKeys;
+  permissions?: SharingPermission[];
+  config?: Partial<SharingConfig>;
+}
+
+/**
+ * Interface for share response request data
+ */
+interface ShareResponseRequestData {
+  shareId: string;
+  response: "accept" | "decline";
+}
+
+/**
+ * Interface for get shares request data
+ */
+interface GetSharesRequestData {
+  type?: "sent" | "received" | "all";
+  status?: ShareStatus | "all";
+  limit?: number;
+  offset?: number;
+}
+
+/**
+ * Interface for update permissions request data
+ */
+interface UpdatePermissionsRequestData {
+  shareId: string;
+  permissions: SharingPermission[];
+  config?: Partial<SharingConfig>;
+}
+
+/**
+ * Interface for revoke share request data
+ */
+interface RevokeShareRequestData {
+  shareId: string;
+}
+
+/**
+ * Interface for track access request data
+ */
+interface TrackAccessRequestData {
+  shareId: string;
+  accessType?: string;
+}
+
+/**
+ * Interface for notification data
+ */
+interface NotificationData {
+  type: string;
+  shareId: string;
+  fromUserId: string;
+  itemId: string;
+  permissions?: SharingPermission[];
+  requiresAcceptance?: boolean;
+  accessType?: string;
+}
+
+/**
+ * Interface for audit event data
+ */
+interface AuditEventData {
+  shareId: string;
+  itemId: string;
+  recipientId?: string;
+  ownerId?: string;
+  permissions?: SharingPermission[];
+  oldPermissions?: SharingPermission[];
+  newPermissions?: SharingPermission[];
 }
 
 /**
@@ -88,7 +182,7 @@ interface VaultItemShare {
  * Supports granular permissions and access controls
  */
 export const createAdvancedShare = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: CreateShareRequestData, context: functions.https.CallableContext) => {
     try {
       // Validate context
       const validation = validateFunctionContext(context);
@@ -100,7 +194,9 @@ export const createAdvancedShare = functions.https.onCall(
       }
 
       // Apply rate limiting
-      await checkRateLimit(context.auth!.uid, "sharing", 15);
+      if (context.auth?.uid) {
+        await checkRateLimit(context.auth.uid, "sharing", 15);
+      }
 
       const {
         itemId,
@@ -137,9 +233,17 @@ export const createAdvancedShare = functions.https.onCall(
       }
 
       // Get vault item to verify ownership
+      const currentUserId = context.auth?.uid;
+      if (!currentUserId) {
+        throw new functions.https.HttpsError(
+          "unauthenticated",
+          "User authentication required",
+        );
+      }
+
       const itemDoc = await db
         .collection("vaults")
-        .doc(context.auth!.uid)
+        .doc(currentUserId)
         .collection("items")
         .doc(itemId)
         .get();
@@ -169,7 +273,7 @@ export const createAdvancedShare = functions.https.onCall(
       const recipientId = recipientDoc.id;
 
       // Prevent self-sharing
-      if (recipientId === context.auth!.uid) {
+      if (recipientId === currentUserId) {
         throw new functions.https.HttpsError(
           "invalid-argument",
           "Cannot share with yourself",
@@ -180,7 +284,7 @@ export const createAdvancedShare = functions.https.onCall(
       const existingShareQuery = await db
         .collection("vaultShares")
         .where("itemId", "==", itemId)
-        .where("ownerId", "==", context.auth!.uid)
+        .where("ownerId", "==", currentUserId)
         .where("sharedWithUserId", "==", recipientId)
         .where("status", "in", [ShareStatus.PENDING, ShareStatus.ACCEPTED])
         .limit(1)
@@ -207,15 +311,15 @@ export const createAdvancedShare = functions.https.onCall(
       // Create share record
       const shareData: Partial<VaultItemShare> = {
         itemId,
-        ownerId: context.auth!.uid,
+        ownerId: currentUserId,
         sharedWithUserId: recipientId,
         sharedWithEmail: recipientEmail.toLowerCase(),
         encryptedKeys,
         permissions,
         config: processedConfig,
-        status: processedConfig.requiresAcceptance
-          ? ShareStatus.PENDING
-          : ShareStatus.ACCEPTED,
+        status: processedConfig.requiresAcceptance ?
+          ShareStatus.PENDING :
+          ShareStatus.ACCEPTED,
         metadata: {
           createdAt:
             admin.firestore.FieldValue.serverTimestamp() as admin.firestore.Timestamp,
@@ -231,14 +335,14 @@ export const createAdvancedShare = functions.https.onCall(
       await createSharingNotification(recipientId, {
         type: "share_received",
         shareId: shareRef.id,
-        fromUserId: context.auth!.uid,
+        fromUserId: currentUserId,
         itemId,
         permissions,
         requiresAcceptance: processedConfig.requiresAcceptance,
       });
 
       // Log audit event
-      await logSharingAuditEvent(context.auth!.uid, "share_created", {
+      await logSharingAuditEvent(currentUserId, "share_created", {
         shareId: shareRef.id,
         itemId,
         recipientId,
@@ -252,7 +356,7 @@ export const createAdvancedShare = functions.https.onCall(
         requiresAcceptance: processedConfig.requiresAcceptance,
       };
     } catch (error) {
-      return handleError(error, "createAdvancedShare");
+      return handleError(error as import("../utils/error-handler").GenericError, "createAdvancedShare");
     }
   },
 );
@@ -261,7 +365,7 @@ export const createAdvancedShare = functions.https.onCall(
  * Responds to a share invitation (accept/decline)
  */
 export const respondToShareInvitation = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: ShareResponseRequestData, context: functions.https.CallableContext) => {
     try {
       // Validate context
       const validation = validateFunctionContext(context);
@@ -273,9 +377,11 @@ export const respondToShareInvitation = functions.https.onCall(
       }
 
       // Apply rate limiting
-      await checkRateLimit(context.auth!.uid, "sharing", 10);
+      if (context.auth?.uid) {
+        await checkRateLimit(context.auth.uid, "sharing", 10);
+      }
 
-      const { shareId, response } = data; // response: 'accept' | 'decline'
+      const {shareId, response} = data; // response: 'accept' | 'decline'
 
       if (!shareId || !["accept", "decline"].includes(response)) {
         throw new functions.https.HttpsError(
@@ -295,9 +401,10 @@ export const respondToShareInvitation = functions.https.onCall(
       }
 
       const shareData = shareDoc.data() as VaultItemShare;
+      const currentUserId = context.auth?.uid;
 
       // Verify user is the intended recipient
-      if (shareData.sharedWithUserId !== context.auth!.uid) {
+      if (shareData.sharedWithUserId !== currentUserId) {
         throw new functions.https.HttpsError(
           "permission-denied",
           "You are not authorized to respond to this invitation",
@@ -318,7 +425,7 @@ export const respondToShareInvitation = functions.https.onCall(
         new Date() > shareData.config.expiresAt
       ) {
         await shareDoc.ref.update({
-          status: ShareStatus.EXPIRED,
+          "status": ShareStatus.EXPIRED,
           "metadata.updatedAt": admin.firestore.FieldValue.serverTimestamp(),
         });
         throw new functions.https.HttpsError(
@@ -330,8 +437,8 @@ export const respondToShareInvitation = functions.https.onCall(
       // Update share status
       const newStatus =
         response === "accept" ? ShareStatus.ACCEPTED : ShareStatus.DECLINED;
-      const updateData: any = {
-        status: newStatus,
+      const updateData: Record<string, unknown> = {
+        "status": newStatus,
         "metadata.updatedAt": admin.firestore.FieldValue.serverTimestamp(),
       };
 
@@ -343,19 +450,21 @@ export const respondToShareInvitation = functions.https.onCall(
       await shareDoc.ref.update(updateData);
 
       // Create notification for owner
-      await createSharingNotification(shareData.ownerId, {
-        type: `share_${response}ed`,
-        shareId,
-        fromUserId: context.auth!.uid,
-        itemId: shareData.itemId,
-      });
+      if (currentUserId) {
+        await createSharingNotification(shareData.ownerId, {
+          type: `share_${response}ed`,
+          shareId,
+          fromUserId: currentUserId,
+          itemId: shareData.itemId,
+        });
 
-      // Log audit event
-      await logSharingAuditEvent(context.auth!.uid, `share_${response}ed`, {
-        shareId,
-        itemId: shareData.itemId,
-        ownerId: shareData.ownerId,
-      });
+        // Log audit event
+        await logSharingAuditEvent(currentUserId, `share_${response}ed`, {
+          shareId,
+          itemId: shareData.itemId,
+          ownerId: shareData.ownerId,
+        });
+      }
 
       return {
         success: true,
@@ -363,7 +472,7 @@ export const respondToShareInvitation = functions.https.onCall(
         status: newStatus,
       };
     } catch (error) {
-      return handleError(error, "respondToShareInvitation");
+      return handleError(error as import("../utils/error-handler").GenericError, "respondToShareInvitation");
     }
   },
 );
@@ -372,7 +481,7 @@ export const respondToShareInvitation = functions.https.onCall(
  * Gets all shares for a user (sent and received)
  */
 export const getUserShares = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: GetSharesRequestData, context: functions.https.CallableContext) => {
     try {
       // Validate context
       const validation = validateFunctionContext(context);
@@ -384,7 +493,9 @@ export const getUserShares = functions.https.onCall(
       }
 
       // Apply rate limiting
-      await checkRateLimit(context.auth!.uid, "sharing", 20);
+      if (context.auth?.uid) {
+        await checkRateLimit(context.auth.uid, "sharing", 20);
+      }
 
       const {
         type = "all", // 'sent' | 'received' | 'all'
@@ -393,8 +504,15 @@ export const getUserShares = functions.https.onCall(
         offset = 0,
       } = data || {};
 
-      const userId = context.auth!.uid;
-      const shares: any[] = [];
+      const userId = context.auth?.uid;
+      if (!userId) {
+        throw new functions.https.HttpsError(
+          "unauthenticated",
+          "User authentication required",
+        );
+      }
+
+      const shares: Record<string, unknown>[] = [];
 
       // Get sent shares
       if (type === "sent" || type === "all") {
@@ -516,7 +634,7 @@ export const getUserShares = functions.https.onCall(
       // Sort by creation date
       shares.sort(
         (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+          new Date(b.createdAt as string).getTime() - new Date(a.createdAt as string).getTime(),
       );
 
       return {
@@ -526,7 +644,7 @@ export const getUserShares = functions.https.onCall(
         hasMore: shares.length === limit,
       };
     } catch (error) {
-      return handleError(error, "getUserShares");
+      return handleError(error as import("../utils/error-handler").GenericError, "getUserShares");
     }
   },
 );
@@ -535,7 +653,7 @@ export const getUserShares = functions.https.onCall(
  * Updates permissions for an existing share
  */
 export const updateSharePermissions = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: UpdatePermissionsRequestData, context: functions.https.CallableContext) => {
     try {
       // Validate context
       const validation = validateFunctionContext(context);
@@ -547,9 +665,11 @@ export const updateSharePermissions = functions.https.onCall(
       }
 
       // Apply rate limiting
-      await checkRateLimit(context.auth!.uid, "sharing", 10);
+      if (context.auth?.uid) {
+        await checkRateLimit(context.auth.uid, "sharing", 10);
+      }
 
-      const { shareId, permissions, config } = data;
+      const {shareId, permissions, config} = data;
 
       if (!shareId || !permissions || !Array.isArray(permissions)) {
         throw new functions.https.HttpsError(
@@ -577,9 +697,10 @@ export const updateSharePermissions = functions.https.onCall(
       }
 
       const shareData = shareDoc.data() as VaultItemShare;
+      const currentUserId = context.auth?.uid;
 
       // Verify user is the owner
-      if (shareData.ownerId !== context.auth!.uid) {
+      if (shareData.ownerId !== currentUserId) {
         throw new functions.https.HttpsError(
           "permission-denied",
           "You are not authorized to modify this share",
@@ -597,34 +718,36 @@ export const updateSharePermissions = functions.https.onCall(
       }
 
       // Update share
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         permissions,
         "metadata.updatedAt": admin.firestore.FieldValue.serverTimestamp(),
       };
 
       if (config) {
-        updateData.config = { ...shareData.config, ...config };
+        updateData.config = {...shareData.config, ...config};
       }
 
       await shareDoc.ref.update(updateData);
 
       // Create notification for recipient
-      await createSharingNotification(shareData.sharedWithUserId, {
-        type: "share_updated",
-        shareId,
-        fromUserId: context.auth!.uid,
-        itemId: shareData.itemId,
-        permissions,
-      });
+      if (currentUserId) {
+        await createSharingNotification(shareData.sharedWithUserId, {
+          type: "share_updated",
+          shareId,
+          fromUserId: currentUserId,
+          itemId: shareData.itemId,
+          permissions,
+        });
 
-      // Log audit event
-      await logSharingAuditEvent(context.auth!.uid, "share_updated", {
-        shareId,
-        itemId: shareData.itemId,
-        recipientId: shareData.sharedWithUserId,
-        oldPermissions: shareData.permissions,
-        newPermissions: permissions,
-      });
+        // Log audit event
+        await logSharingAuditEvent(currentUserId, "share_updated", {
+          shareId,
+          itemId: shareData.itemId,
+          recipientId: shareData.sharedWithUserId,
+          oldPermissions: shareData.permissions,
+          newPermissions: permissions,
+        });
+      }
 
       return {
         success: true,
@@ -632,7 +755,7 @@ export const updateSharePermissions = functions.https.onCall(
         permissions,
       };
     } catch (error) {
-      return handleError(error, "updateSharePermissions");
+      return handleError(error as import("../utils/error-handler").GenericError, "updateSharePermissions");
     }
   },
 );
@@ -641,7 +764,7 @@ export const updateSharePermissions = functions.https.onCall(
  * Revokes a vault item share
  */
 export const revokeShare = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: RevokeShareRequestData, context: functions.https.CallableContext) => {
     try {
       // Validate context
       const validation = validateFunctionContext(context);
@@ -653,9 +776,11 @@ export const revokeShare = functions.https.onCall(
       }
 
       // Apply rate limiting
-      await checkRateLimit(context.auth!.uid, "sharing", 10);
+      if (context.auth?.uid) {
+        await checkRateLimit(context.auth.uid, "sharing", 10);
+      }
 
-      const { shareId } = data;
+      const {shareId} = data;
 
       if (!shareId) {
         throw new functions.https.HttpsError(
@@ -672,9 +797,10 @@ export const revokeShare = functions.https.onCall(
       }
 
       const shareData = shareDoc.data() as VaultItemShare;
+      const currentUserId = context.auth?.uid;
 
       // Verify user is the owner
-      if (shareData.ownerId !== context.auth!.uid) {
+      if (shareData.ownerId !== currentUserId) {
         throw new functions.https.HttpsError(
           "permission-denied",
           "You are not authorized to revoke this share",
@@ -691,31 +817,33 @@ export const revokeShare = functions.https.onCall(
 
       // Revoke share
       await shareDoc.ref.update({
-        status: ShareStatus.REVOKED,
+        "status": ShareStatus.REVOKED,
         "metadata.updatedAt": admin.firestore.FieldValue.serverTimestamp(),
       });
 
       // Create notification for recipient
-      await createSharingNotification(shareData.sharedWithUserId, {
-        type: "share_revoked",
-        shareId,
-        fromUserId: context.auth!.uid,
-        itemId: shareData.itemId,
-      });
+      if (currentUserId) {
+        await createSharingNotification(shareData.sharedWithUserId, {
+          type: "share_revoked",
+          shareId,
+          fromUserId: currentUserId,
+          itemId: shareData.itemId,
+        });
 
-      // Log audit event
-      await logSharingAuditEvent(context.auth!.uid, "share_revoked", {
-        shareId,
-        itemId: shareData.itemId,
-        recipientId: shareData.sharedWithUserId,
-      });
+        // Log audit event
+        await logSharingAuditEvent(currentUserId, "share_revoked", {
+          shareId,
+          itemId: shareData.itemId,
+          recipientId: shareData.sharedWithUserId,
+        });
+      }
 
       return {
         success: true,
         shareId,
       };
     } catch (error) {
-      return handleError(error, "revokeShare");
+      return handleError(error as import("../utils/error-handler").GenericError, "revokeShare");
     }
   },
 );
@@ -724,7 +852,7 @@ export const revokeShare = functions.https.onCall(
  * Tracks access to a shared vault item
  */
 export const trackShareAccess = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: TrackAccessRequestData, context: functions.https.CallableContext) => {
     try {
       // Validate context
       const validation = validateFunctionContext(context);
@@ -735,7 +863,7 @@ export const trackShareAccess = functions.https.onCall(
         );
       }
 
-      const { shareId, accessType = "view" } = data;
+      const {shareId, accessType = "view"} = data;
 
       if (!shareId) {
         throw new functions.https.HttpsError(
@@ -752,9 +880,10 @@ export const trackShareAccess = functions.https.onCall(
       }
 
       const shareData = shareDoc.data() as VaultItemShare;
+      const currentUserId = context.auth?.uid;
 
       // Verify user has access
-      if (shareData.sharedWithUserId !== context.auth!.uid) {
+      if (shareData.sharedWithUserId !== currentUserId) {
         throw new functions.https.HttpsError(
           "permission-denied",
           "You do not have access to this share",
@@ -785,7 +914,7 @@ export const trackShareAccess = functions.https.onCall(
         shareData.config.expiresAt &&
         new Date() > shareData.config.expiresAt
       ) {
-        await shareDoc.ref.update({ status: ShareStatus.EXPIRED });
+        await shareDoc.ref.update({status: ShareStatus.EXPIRED});
         throw new functions.https.HttpsError(
           "deadline-exceeded",
           "Share has expired",
@@ -800,28 +929,30 @@ export const trackShareAccess = functions.https.onCall(
       });
 
       // Create access log
-      await db.collection("shareAccessLogs").add({
-        shareId,
-        userId: context.auth!.uid,
-        itemId: shareData.itemId,
-        ownerId: shareData.ownerId,
-        accessType,
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
-        metadata: {
-          userAgent: context.rawRequest?.get("user-agent"),
-          ip: context.rawRequest?.ip,
-        },
-      });
-
-      // Notify owner if configured
-      if (shareData.config.notifyOnAccess) {
-        await createSharingNotification(shareData.ownerId, {
-          type: "share_accessed",
+      if (currentUserId) {
+        await db.collection("shareAccessLogs").add({
           shareId,
-          fromUserId: context.auth!.uid,
+          userId: currentUserId,
           itemId: shareData.itemId,
+          ownerId: shareData.ownerId,
           accessType,
+          timestamp: admin.firestore.FieldValue.serverTimestamp(),
+          metadata: {
+            userAgent: context.rawRequest?.get("user-agent"),
+            ip: context.rawRequest?.ip,
+          },
         });
+
+        // Notify owner if configured
+        if (shareData.config.notifyOnAccess) {
+          await createSharingNotification(shareData.ownerId, {
+            type: "share_accessed",
+            shareId,
+            fromUserId: currentUserId,
+            itemId: shareData.itemId,
+            accessType,
+          });
+        }
       }
 
       return {
@@ -830,7 +961,7 @@ export const trackShareAccess = functions.https.onCall(
         accessCount: shareData.metadata.accessCount + 1,
       };
     } catch (error) {
-      return handleError(error, "trackShareAccess");
+      return handleError(error as import("../utils/error-handler").GenericError, "trackShareAccess");
     }
   },
 );
@@ -840,7 +971,7 @@ export const trackShareAccess = functions.https.onCall(
  */
 async function createSharingNotification(
   userId: string,
-  notificationData: any,
+  notificationData: NotificationData,
 ): Promise<void> {
   try {
     await db.collection("notifications").add({
@@ -862,7 +993,7 @@ async function createSharingNotification(
 async function logSharingAuditEvent(
   userId: string,
   eventType: string,
-  eventData: any,
+  eventData: AuditEventData,
 ): Promise<void> {
   try {
     await db.collection("vaultAuditLogs").add({
@@ -888,7 +1019,7 @@ async function logSharingAuditEvent(
  */
 export const cleanupExpiredShares = functions.pubsub
   .schedule("every 24 hours")
-  .onRun(async (context) => {
+  .onRun(async () => {
     try {
       const now = admin.firestore.Timestamp.now();
 
@@ -909,7 +1040,7 @@ export const cleanupExpiredShares = functions.pubsub
       const batch = db.batch();
       expiredSharesSnapshot.docs.forEach((doc) => {
         batch.update(doc.ref, {
-          status: ShareStatus.EXPIRED,
+          "status": ShareStatus.EXPIRED,
           "metadata.updatedAt": admin.firestore.FieldValue.serverTimestamp(),
         });
       });

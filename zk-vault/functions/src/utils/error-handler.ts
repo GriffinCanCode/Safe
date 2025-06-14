@@ -16,10 +16,48 @@ export type ErrorSeverity = "info" | "warning" | "error" | "critical";
 export interface StructuredError {
   message: string;
   code: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   severity: ErrorSeverity;
   timestamp: number;
   userId?: string;
+}
+
+/**
+ * Firebase Auth error interface
+ */
+export interface FirebaseAuthError {
+  code: string;
+  message: string;
+  toString(): string;
+}
+
+/**
+ * Generic error interface
+ */
+export interface GenericError {
+  message?: string;
+  code?: string;
+  toString(): string;
+}
+
+/**
+ * Function context interface for Cloud Functions
+ */
+export interface FunctionContext {
+  auth?: {
+    uid: string;
+    token?: unknown;
+  };
+  rawRequest?: unknown;
+}
+
+/**
+ * Error response interface
+ */
+export interface ErrorResponse {
+  success: false;
+  error: string;
+  code: string;
 }
 
 /**
@@ -44,7 +82,7 @@ export async function logError(error: StructuredError): Promise<void> {
 /**
  * Creates a Firebase HTTPS error from a structured error
  * @param error Structured error
- * @returns Firebase HTTPS error
+ * @return Firebase HTTPS error
  */
 export function createHttpsError(
   error: StructuredError,
@@ -53,38 +91,38 @@ export function createHttpsError(
   let code: functions.https.FunctionsErrorCode = "unknown";
 
   switch (error.code) {
-    case "INVALID_ARGUMENT":
-      code = "invalid-argument";
-      break;
-    case "UNAUTHENTICATED":
-      code = "unauthenticated";
-      break;
-    case "PERMISSION_DENIED":
-      code = "permission-denied";
-      break;
-    case "NOT_FOUND":
-      code = "not-found";
-      break;
-    case "ALREADY_EXISTS":
-      code = "already-exists";
-      break;
-    case "RESOURCE_EXHAUSTED":
-      code = "resource-exhausted";
-      break;
-    case "FAILED_PRECONDITION":
-      code = "failed-precondition";
-      break;
-    case "ABORTED":
-      code = "aborted";
-      break;
-    case "INTERNAL":
-      code = "internal";
-      break;
-    case "UNAVAILABLE":
-      code = "unavailable";
-      break;
-    default:
-      code = "unknown";
+  case "INVALID_ARGUMENT":
+    code = "invalid-argument";
+    break;
+  case "UNAUTHENTICATED":
+    code = "unauthenticated";
+    break;
+  case "PERMISSION_DENIED":
+    code = "permission-denied";
+    break;
+  case "NOT_FOUND":
+    code = "not-found";
+    break;
+  case "ALREADY_EXISTS":
+    code = "already-exists";
+    break;
+  case "RESOURCE_EXHAUSTED":
+    code = "resource-exhausted";
+    break;
+  case "FAILED_PRECONDITION":
+    code = "failed-precondition";
+    break;
+  case "ABORTED":
+    code = "aborted";
+    break;
+  case "INTERNAL":
+    code = "internal";
+    break;
+  case "UNAVAILABLE":
+    code = "unavailable";
+    break;
+  default:
+    code = "unknown";
   }
 
   return new functions.https.HttpsError(code, error.message, error.details);
@@ -93,16 +131,16 @@ export function createHttpsError(
 /**
  * Handles authentication errors consistently
  * @param error Error to handle
- * @returns Firebase HTTPS error
+ * @return Firebase HTTPS error
  */
-export function handleAuthError(error: any): functions.https.HttpsError {
+export function handleAuthError(error: FirebaseAuthError): functions.https.HttpsError {
   console.error("Auth error:", error);
 
   // Log the error to Firestore audit log
   const structuredError: StructuredError = {
     message: error.message || "Authentication failed",
     code: "UNAUTHENTICATED",
-    details: { originalError: error.toString() },
+    details: {originalError: error.toString()},
     severity: "warning",
     timestamp: Date.now(),
   };
@@ -147,13 +185,13 @@ export function handleAuthError(error: any): functions.https.HttpsError {
  * @param error Error object
  * @param functionName Function name for context
  * @param userId Optional user ID
- * @returns Firebase HTTPS error response
+ * @return Firebase HTTPS error response
  */
 export function handleError(
-  error: any,
+  error: GenericError | functions.https.HttpsError,
   functionName: string,
   userId?: string,
-): any {
+): ErrorResponse {
   console.error(`Error in ${functionName}:`, error);
 
   if (error instanceof functions.https.HttpsError) {
@@ -187,28 +225,29 @@ export function handleError(
   };
 }
 
-export function withErrorHandling<T>(
-  fn: (...args: any[]) => Promise<T>,
-): (...args: any[]) => Promise<T> {
-  return async (...args: any[]) => {
+export function withErrorHandling<T extends(...args: unknown[]) => Promise<unknown>>(
+  fn: T,
+): T {
+  return (async (...args: Parameters<T>) => {
     try {
       return await fn(...args);
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof functions.https.HttpsError) {
         throw error; // Already a Firebase error, just rethrow
       }
 
-      console.error("Function error:", error);
+      const genericError = error as GenericError;
+      console.error("Function error:", genericError);
 
       // Get user ID from context if available
-      const context = args[1];
+      const context = args[1] as FunctionContext | undefined;
       const userId = context?.auth?.uid;
 
       // Create structured error
       const structuredError: StructuredError = {
-        message: error.message || "An unexpected error occurred",
+        message: genericError.message || "An unexpected error occurred",
         code: "INTERNAL",
-        details: { originalError: error.toString() },
+        details: {originalError: genericError.toString()},
         severity: "error",
         timestamp: Date.now(),
         userId,
@@ -220,5 +259,5 @@ export function withErrorHandling<T>(
       // Convert to Firebase error
       throw createHttpsError(structuredError);
     }
-  };
+  }) as T;
 }

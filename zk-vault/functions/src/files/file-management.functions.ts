@@ -6,28 +6,153 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { handleError } from "../utils/error-handler";
-import { checkRateLimit } from "../utils/rate-limiting";
+import {checkRateLimit} from "../utils/rate-limiting";
 import {
-  FileEncryption,
-  ChunkedEncryption,
   AlgorithmSelector,
-  ZeroKnowledgeVault,
-  CryptoOperationResult,
-  EncryptionResult,
   FILE_ENCRYPTION,
 } from "@zk-vault/crypto";
+import type {AlgorithmSelection} from "@zk-vault/shared";
 
 const db = admin.firestore();
 const storage = admin.storage();
 const bucket = storage.bucket();
+
+// TypeScript interfaces
+interface InitiateFileUploadData {
+  fileName: string;
+  fileSize: number;
+  contentType: string;
+  chunkSize?: number;
+  encryptionPreferences?: Record<string, unknown>;
+}
+
+interface InitiateFileUploadResponse {
+  success: boolean;
+  fileId: string;
+  uploadUrls: string[];
+  chunkPaths: string[];
+  totalChunks: number;
+  algorithmSelection: AlgorithmSelection;
+  expiresAt: string;
+}
+
+interface FinalizeFileUploadData {
+  fileId: string;
+  encryptedMetadata: string;
+  fileHash: string;
+}
+
+interface FinalizeFileUploadResponse {
+  success: boolean;
+  fileId: string;
+  status: string;
+}
+
+interface GenerateDownloadUrlsData {
+  fileId: string;
+}
+
+interface GenerateDownloadUrlsResponse {
+  success: boolean;
+  fileId: string;
+  downloadUrls: string[];
+  totalChunks: number;
+  encryptedMetadata: string;
+  expiresAt: string;
+}
+
+interface ShareFileData {
+  fileId: string;
+  recipientEmail: string;
+  encryptedFileKey: string;
+  permissions?: string;
+}
+
+interface ShareFileResponse {
+  success: boolean;
+  shareId: string;
+  fileId: string;
+  recipientEmail: string;
+}
+
+interface ListFilesData {
+  includeShared?: boolean;
+  status?: string;
+  limit?: number;
+  offset?: number;
+}
+
+interface FileItem {
+  id: string;
+  shareId?: string;
+  fileName: string;
+  originalSize: number;
+  contentType: string;
+  encryptedMetadata?: string;
+  encryptedFileKey?: string;
+  createdAt?: string;
+  sharedAt?: string;
+  permissions?: string;
+  status: string;
+  isOwned: boolean;
+  isShared: boolean;
+  sharedBy?: string;
+}
+
+interface ListFilesResponse {
+  success: boolean;
+  files: FileItem[];
+  count: number;
+  hasMore: boolean;
+}
+
+interface DeleteFileData {
+  fileId: string;
+}
+
+interface DeleteFileResponse {
+  success: boolean;
+  fileId: string;
+}
+
+interface FileDocument {
+  userId: string;
+  fileName: string;
+  originalSize: number;
+  contentType: string;
+  totalChunks: number;
+  chunkSize: number;
+  chunkPaths: string[];
+  algorithmSelection: string;
+  encryptionPreferences: Record<string, unknown>;
+  status: string;
+  uploadedChunks: number;
+  encryptedMetadata?: string;
+  fileHash?: string;
+  isDeduplicated?: boolean;
+  createdAt: admin.firestore.Timestamp;
+  completedAt?: admin.firestore.Timestamp;
+  expiresAt: admin.firestore.Timestamp;
+}
+
+interface ShareDocument {
+  fileId: string;
+  ownerId: string;
+  sharedWithUserId: string;
+  sharedWithEmail: string;
+  encryptedFileKey: string;
+  permissions: string;
+  status: string;
+  createdAt: admin.firestore.Timestamp;
+  expiresAt: admin.firestore.Timestamp;
+}
 
 /**
  * Initiates a new file upload session
  * Creates upload URLs and session tracking for encrypted file chunks
  */
 export const initiateFileUpload = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: InitiateFileUploadData, context: functions.https.CallableContext): Promise<InitiateFileUploadResponse> => {
     try {
       // Ensure user is authenticated
       if (!context.auth) {
@@ -85,7 +210,7 @@ export const initiateFileUpload = functions.https.onCall(
 
       // Generate chunk paths
       const chunkPaths = Array.from(
-        { length: totalChunks },
+        {length: totalChunks},
         (_, i) =>
           `files/${userId}/${fileId}/chunks/${i.toString().padStart(6, "0")}`,
       );
@@ -105,7 +230,7 @@ export const initiateFileUpload = functions.https.onCall(
       );
 
       // Store file metadata
-      await fileRef.set({
+      const fileDocument: Partial<FileDocument> = {
         userId,
         fileName, // This will be encrypted on the client side
         originalSize: fileSize,
@@ -113,15 +238,16 @@ export const initiateFileUpload = functions.https.onCall(
         totalChunks,
         chunkSize,
         chunkPaths,
-        algorithmSelection,
         encryptionPreferences: encryptionPreferences || {},
         status: "pending",
         uploadedChunks: 0,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: admin.firestore.FieldValue.serverTimestamp() as admin.firestore.Timestamp,
         expiresAt: admin.firestore.Timestamp.fromDate(
           new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
         ),
-      });
+      };
+
+      await fileRef.set(fileDocument);
 
       return {
         success: true,
@@ -133,7 +259,9 @@ export const initiateFileUpload = functions.https.onCall(
         expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
       };
     } catch (error) {
-      return handleError(error, "initiateFileUpload");
+      console.error("Error in initiateFileUpload:", error);
+      throw error instanceof functions.https.HttpsError ? error :
+        new functions.https.HttpsError("internal", "An unexpected error occurred");
     }
   },
 );
@@ -143,7 +271,7 @@ export const initiateFileUpload = functions.https.onCall(
  * Validates chunk integrity and marks file as complete
  */
 export const finalizeFileUpload = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: FinalizeFileUploadData, context: functions.https.CallableContext): Promise<FinalizeFileUploadResponse> => {
     try {
       // Ensure user is authenticated
       if (!context.auth) {
@@ -156,7 +284,7 @@ export const finalizeFileUpload = functions.https.onCall(
       // Apply rate limiting
       await checkRateLimit(context.auth.uid, "finalizeFileUpload", 10);
 
-      const { fileId, encryptedMetadata, fileHash } = data;
+      const {fileId, encryptedMetadata, fileHash} = data;
 
       // Validate input
       if (!fileId || !encryptedMetadata || !fileHash) {
@@ -177,7 +305,7 @@ export const finalizeFileUpload = functions.https.onCall(
         );
       }
 
-      const fileData = fileDoc.data();
+      const fileData = fileDoc.data() as FileDocument;
 
       // Security check: ensure user owns this file
       if (fileData?.userId !== context.auth.uid) {
@@ -229,7 +357,9 @@ export const finalizeFileUpload = functions.https.onCall(
         status: "complete",
       };
     } catch (error) {
-      return handleError(error, "finalizeFileUpload");
+      console.error("Error in finalizeFileUpload:", error);
+      throw error instanceof functions.https.HttpsError ? error :
+        new functions.https.HttpsError("internal", "An unexpected error occurred");
     }
   },
 );
@@ -239,7 +369,7 @@ export const finalizeFileUpload = functions.https.onCall(
  * Provides secure access to encrypted file data
  */
 export const generateDownloadUrls = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: GenerateDownloadUrlsData, context: functions.https.CallableContext): Promise<GenerateDownloadUrlsResponse> => {
     try {
       // Ensure user is authenticated
       if (!context.auth) {
@@ -252,7 +382,7 @@ export const generateDownloadUrls = functions.https.onCall(
       // Apply rate limiting
       await checkRateLimit(context.auth.uid, "generateDownloadUrls", 20);
 
-      const { fileId } = data;
+      const {fileId} = data;
 
       // Validate input
       if (!fileId) {
@@ -270,7 +400,7 @@ export const generateDownloadUrls = functions.https.onCall(
         throw new functions.https.HttpsError("not-found", "File not found");
       }
 
-      const fileData = fileDoc.data();
+      const fileData = fileDoc.data() as FileDocument;
 
       // Check access permissions
       const isOwner = fileData?.userId === context.auth.uid;
@@ -332,11 +462,13 @@ export const generateDownloadUrls = functions.https.onCall(
         fileId,
         downloadUrls,
         totalChunks: fileData.totalChunks,
-        encryptedMetadata: fileData.encryptedMetadata,
+        encryptedMetadata: fileData.encryptedMetadata || "",
         expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
       };
     } catch (error) {
-      return handleError(error, "generateDownloadUrls");
+      console.error("Error in generateDownloadUrls:", error);
+      throw error instanceof functions.https.HttpsError ? error :
+        new functions.https.HttpsError("internal", "An unexpected error occurred");
     }
   },
 );
@@ -346,7 +478,7 @@ export const generateDownloadUrls = functions.https.onCall(
  * Creates secure sharing mechanism with encrypted keys
  */
 export const shareFile = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: ShareFileData, context: functions.https.CallableContext): Promise<ShareFileResponse> => {
     try {
       // Ensure user is authenticated
       if (!context.auth) {
@@ -382,7 +514,7 @@ export const shareFile = functions.https.onCall(
         throw new functions.https.HttpsError("not-found", "File not found");
       }
 
-      const fileData = fileDoc.data();
+      const fileData = fileDoc.data() as FileDocument;
 
       // Security check: ensure user owns this file
       if (fileData?.userId !== context.auth.uid) {
@@ -435,7 +567,7 @@ export const shareFile = functions.https.onCall(
       // Create share record
       const shareRef = db.collection("fileShares").doc();
 
-      await shareRef.set({
+      const shareDocument: Partial<ShareDocument> = {
         fileId,
         ownerId: context.auth.uid,
         sharedWithUserId: recipientId,
@@ -443,11 +575,13 @@ export const shareFile = functions.https.onCall(
         encryptedFileKey,
         permissions,
         status: "active",
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: admin.firestore.FieldValue.serverTimestamp() as admin.firestore.Timestamp,
         expiresAt: admin.firestore.Timestamp.fromDate(
           new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
         ),
-      });
+      };
+
+      await shareRef.set(shareDocument);
 
       return {
         success: true,
@@ -456,7 +590,9 @@ export const shareFile = functions.https.onCall(
         recipientEmail,
       };
     } catch (error) {
-      return handleError(error, "shareFile");
+      console.error("Error in shareFile:", error);
+      throw error instanceof functions.https.HttpsError ? error :
+        new functions.https.HttpsError("internal", "An unexpected error occurred");
     }
   },
 );
@@ -465,7 +601,7 @@ export const shareFile = functions.https.onCall(
  * Lists files owned by or shared with the user
  */
 export const listFiles = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: ListFilesData, context: functions.https.CallableContext): Promise<ListFilesResponse> => {
     try {
       // Ensure user is authenticated
       if (!context.auth) {
@@ -486,7 +622,7 @@ export const listFiles = functions.https.onCall(
       } = data || {};
 
       const userId = context.auth.uid;
-      const files: any[] = [];
+      const files: FileItem[] = [];
 
       // Get owned files
       const ownedFilesQuery = db
@@ -501,7 +637,7 @@ export const listFiles = functions.https.onCall(
 
       ownedFilesSnapshot.docs.forEach(
         (doc: admin.firestore.QueryDocumentSnapshot) => {
-          const data = doc.data();
+          const data = doc.data() as FileDocument;
           files.push({
             id: doc.id,
             fileName: data.fileName, // Already encrypted
@@ -526,7 +662,7 @@ export const listFiles = functions.https.onCall(
           .get();
 
         for (const shareDoc of sharedFilesQuery.docs) {
-          const shareData = shareDoc.data();
+          const shareData = shareDoc.data() as ShareDocument;
 
           // Get the actual file data
           const fileDoc = await db
@@ -534,8 +670,8 @@ export const listFiles = functions.https.onCall(
             .doc(shareData.fileId)
             .get();
 
-          if (fileDoc.exists && fileDoc.data()?.status === status) {
-            const fileData = fileDoc.data()!;
+          if (fileDoc.exists && (fileDoc.data() as FileDocument)?.status === status) {
+            const fileData = fileDoc.data() as FileDocument;
             files.push({
               id: fileDoc.id,
               shareId: shareDoc.id,
@@ -570,7 +706,9 @@ export const listFiles = functions.https.onCall(
         hasMore: files.length === limit,
       };
     } catch (error) {
-      return handleError(error, "listFiles");
+      console.error("Error in listFiles:", error);
+      throw error instanceof functions.https.HttpsError ? error :
+        new functions.https.HttpsError("internal", "An unexpected error occurred");
     }
   },
 );
@@ -579,7 +717,7 @@ export const listFiles = functions.https.onCall(
  * Deletes a file and all its chunks
  */
 export const deleteFile = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: DeleteFileData, context: functions.https.CallableContext): Promise<DeleteFileResponse> => {
     try {
       // Ensure user is authenticated
       if (!context.auth) {
@@ -592,7 +730,7 @@ export const deleteFile = functions.https.onCall(
       // Apply rate limiting
       await checkRateLimit(context.auth.uid, "deleteFile", 10);
 
-      const { fileId } = data;
+      const {fileId} = data;
 
       // Validate input
       if (!fileId) {
@@ -610,7 +748,7 @@ export const deleteFile = functions.https.onCall(
         throw new functions.https.HttpsError("not-found", "File not found");
       }
 
-      const fileData = fileDoc.data();
+      const fileData = fileDoc.data() as FileDocument;
 
       // Security check: ensure user owns this file
       if (fileData?.userId !== context.auth.uid) {
@@ -626,7 +764,7 @@ export const deleteFile = functions.https.onCall(
           return bucket
             .file(path)
             .delete()
-            .catch((err: any) => {
+            .catch((err: unknown) => {
               console.warn(`Failed to delete chunk at ${path}:`, err);
               // Continue deletion even if some chunks fail
               return null;
@@ -664,7 +802,9 @@ export const deleteFile = functions.https.onCall(
         fileId,
       };
     } catch (error) {
-      return handleError(error, "deleteFile");
+      console.error("Error in deleteFile:", error);
+      throw error instanceof functions.https.HttpsError ? error :
+        new functions.https.HttpsError("internal", "An unexpected error occurred");
     }
   },
 );
@@ -685,7 +825,7 @@ async function updateUserStorageStats(userId: string): Promise<void> {
     let totalStorageUsed = 0;
 
     filesSnapshot.docs.forEach((doc: admin.firestore.QueryDocumentSnapshot) => {
-      const fileData = doc.data();
+      const fileData = doc.data() as FileDocument;
       totalFiles++;
       totalStorageUsed += fileData.originalSize || 0;
     });

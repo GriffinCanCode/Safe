@@ -6,8 +6,8 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { handleError } from "../utils/error-handler";
-import { checkRateLimit } from "../utils/rate-limiting";
+import {handleError} from "../utils/error-handler";
+import {checkRateLimit} from "../utils/rate-limiting";
 
 const db = admin.firestore();
 const storage = admin.storage();
@@ -25,9 +25,36 @@ interface SystemMetrics {
   averageFileSize: number;
   averageChunksPerFile: number;
   deduplicationSavings: number;
+  deduplicationRate: number;
+  deduplicatedFileCount: number;
   errorRate: number;
   apiUsage: Record<string, number>;
   timestamp: admin.firestore.Timestamp;
+}
+
+/**
+ * Health check request data interface
+ */
+interface HealthCheckData {
+  includeDetails?: boolean;
+}
+
+/**
+ * System alert creation data interface
+ */
+interface CreateAlertData {
+  type: string;
+  message: string;
+  severity?: "low" | "medium" | "high" | "critical";
+  details?: Record<string, unknown>;
+}
+
+/**
+ * Alert resolution data interface
+ */
+interface ResolveAlertData {
+  alertId: string;
+  resolution?: string;
 }
 
 /**
@@ -36,7 +63,7 @@ interface SystemMetrics {
  */
 export const collectSystemMetrics = functions.pubsub
   .schedule("every 24 hours")
-  .onRun(async (context) => {
+  .onRun(async () => {
     try {
       // Get user counts
       const userSnapshot = await db.collection("users").get();
@@ -65,27 +92,30 @@ export const collectSystemMetrics = functions.pubsub
       let totalStorageUsed = 0;
       let totalChunks = 0;
       let deduplicatedFiles = 0;
-      let potentialStorageWithoutDedup = 0;
+      let totalOriginalSize = 0;
 
       fileSnapshot.forEach((doc) => {
         const fileData = doc.data();
         const fileSize = fileData.totalSize || 0;
+        const originalSize = fileData.originalSize || fileSize;
 
         totalStorageUsed += fileSize;
         totalChunks += fileData.totalChunks || 0;
+        totalOriginalSize += originalSize;
 
         // Track deduplication savings
         if (fileData.isDeduplicated) {
           deduplicatedFiles++;
-          potentialStorageWithoutDedup += fileSize;
         }
       });
 
       const averageFileSize = fileCount > 0 ? totalStorageUsed / fileCount : 0;
       const averageChunksPerFile = fileCount > 0 ? totalChunks / fileCount : 0;
 
-      // Calculate deduplication savings
-      const deduplicationSavings = potentialStorageWithoutDedup;
+      // Calculate deduplication savings and rate
+      const deduplicationSavings = totalOriginalSize - totalStorageUsed;
+      const deduplicationRate = totalOriginalSize > 0 ?
+        (deduplicationSavings / totalOriginalSize) * 100 : 0;
 
       // Get vault item count
       const vaultItemSnapshot = await db.collection("vaultItems").get();
@@ -107,9 +137,9 @@ export const collectSystemMetrics = functions.pubsub
         .get();
 
       const errorRate =
-        apiLogsSnapshot.size > 0
-          ? errorLogsSnapshot.size / apiLogsSnapshot.size
-          : 0;
+        apiLogsSnapshot.size > 0 ?
+          errorLogsSnapshot.size / apiLogsSnapshot.size :
+          0;
 
       // Get API usage by endpoint
       const apiUsage: Record<string, number> = {};
@@ -131,6 +161,8 @@ export const collectSystemMetrics = functions.pubsub
         averageFileSize,
         averageChunksPerFile,
         deduplicationSavings,
+        deduplicationRate,
+        deduplicatedFileCount: deduplicatedFiles,
         errorRate,
         apiUsage,
         timestamp:
@@ -155,7 +187,7 @@ export const collectSystemMetrics = functions.pubsub
  * Provides current system metrics and health indicators
  */
 export const getSystemHealth = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: HealthCheckData, context: functions.https.CallableContext) => {
     try {
       // Ensure user is authenticated and an admin
       if (!context.auth) {
@@ -184,9 +216,9 @@ export const getSystemHealth = functions.https.onCall(
         .collection("systemStatus")
         .doc("currentMetrics")
         .get();
-      const currentMetrics = metricsDoc.exists
-        ? (metricsDoc.data() as SystemMetrics)
-        : null;
+      const currentMetrics = metricsDoc.exists ?
+        (metricsDoc.data() as SystemMetrics) :
+        null;
 
       // Get historical metrics for trends (last 30 days)
       const thirtyDaysAgo = admin.firestore.Timestamp.fromDate(
@@ -258,7 +290,7 @@ export const getSystemHealth = functions.https.onCall(
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
-      return handleError(error, "getSystemHealth");
+      return handleError(error as Error, "getSystemHealth");
     }
   },
 );
@@ -268,7 +300,7 @@ export const getSystemHealth = functions.https.onCall(
  * Performs diagnostic tests on system components
  */
 export const runSystemHealthCheck = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: HealthCheckData, context: functions.https.CallableContext) => {
     try {
       // Ensure user is authenticated and an admin
       if (!context.auth) {
@@ -303,21 +335,21 @@ export const runSystemHealthCheck = functions.https.onCall(
       // Process results
       const results = {
         firestore:
-          healthChecks[0].status === "fulfilled"
-            ? healthChecks[0].value
-            : { status: "error" },
+          healthChecks[0].status === "fulfilled" ?
+            healthChecks[0].value :
+            {status: "error"},
         storage:
-          healthChecks[1].status === "fulfilled"
-            ? healthChecks[1].value
-            : { status: "error" },
+          healthChecks[1].status === "fulfilled" ?
+            healthChecks[1].value :
+            {status: "error"},
         auth:
-          healthChecks[2].status === "fulfilled"
-            ? healthChecks[2].value
-            : { status: "error" },
+          healthChecks[2].status === "fulfilled" ?
+            healthChecks[2].value :
+            {status: "error"},
         functions:
-          healthChecks[3].status === "fulfilled"
-            ? healthChecks[3].value
-            : { status: "error" },
+          healthChecks[3].status === "fulfilled" ?
+            healthChecks[3].value :
+            {status: "error"},
         timestamp: new Date().toISOString(),
       };
 
@@ -330,7 +362,7 @@ export const runSystemHealthCheck = functions.https.onCall(
 
       return results;
     } catch (error) {
-      return handleError(error, "runSystemHealthCheck");
+      return handleError(error as Error, "runSystemHealthCheck");
     }
   },
 );
@@ -340,7 +372,7 @@ export const runSystemHealthCheck = functions.https.onCall(
  * Records system issues for admin attention
  */
 export const createSystemAlert = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: CreateAlertData, context: functions.https.CallableContext) => {
     try {
       // Ensure user is authenticated and an admin
       if (!context.auth) {
@@ -361,7 +393,7 @@ export const createSystemAlert = functions.https.onCall(
         );
       }
 
-      const { type, message, severity = "medium", details = null } = data;
+      const {type, message, severity = "medium", details = null} = data;
 
       // Validate input
       if (!type || !message) {
@@ -410,7 +442,7 @@ export const createSystemAlert = functions.https.onCall(
         alertId: alertRef.id,
       };
     } catch (error) {
-      return handleError(error, "createSystemAlert");
+      return handleError(error as Error, "createSystemAlert");
     }
   },
 );
@@ -420,7 +452,7 @@ export const createSystemAlert = functions.https.onCall(
  * Marks an alert as resolved
  */
 export const resolveSystemAlert = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: ResolveAlertData, context: functions.https.CallableContext) => {
     try {
       // Ensure user is authenticated and an admin
       if (!context.auth) {
@@ -441,7 +473,7 @@ export const resolveSystemAlert = functions.https.onCall(
         );
       }
 
-      const { alertId, resolution } = data;
+      const {alertId, resolution} = data;
 
       // Validate input
       if (!alertId) {
@@ -473,7 +505,7 @@ export const resolveSystemAlert = functions.https.onCall(
         alertId,
       };
     } catch (error) {
-      return handleError(error, "resolveSystemAlert");
+      return handleError(error as Error, "resolveSystemAlert");
     }
   },
 );
@@ -487,6 +519,9 @@ async function checkFirestoreHealth() {
     const startTime = Date.now();
     const testDoc = await db.collection("systemStatus").doc("health").get();
     const readLatency = Date.now() - startTime;
+
+    // Verify document accessibility
+    const documentExists = testDoc.exists;
 
     // Check write operations
     const writeStartTime = Date.now();
@@ -502,6 +537,7 @@ async function checkFirestoreHealth() {
       writeLatency,
       details: {
         timestamp: new Date().toISOString(),
+        documentExists,
       },
     };
   } catch (error) {
@@ -626,6 +662,7 @@ function calculateTrends(metrics: SystemMetrics[]) {
       storageGrowth: 0,
       vaultItemGrowth: 0,
       errorRateTrend: 0,
+      deduplicationTrend: 0,
     };
   }
 
@@ -645,12 +682,17 @@ function calculateTrends(metrics: SystemMetrics[]) {
     oldest.errorRate,
     newest.errorRate,
   );
+  const deduplicationTrend = calculateGrowthRate(
+    oldest.deduplicationRate || 0,
+    newest.deduplicationRate || 0,
+  );
 
   return {
     userGrowth,
     storageGrowth,
     vaultItemGrowth,
     errorRateTrend,
+    deduplicationTrend,
   };
 }
 
@@ -684,6 +726,11 @@ function calculateHealthScore(
   const userRatio =
     metrics.userCount > 0 ? metrics.activeUserCount / metrics.userCount : 1;
   score -= Math.min((1 - userRatio) * 20, 20);
+
+  // Bonus points for good deduplication rate (up to +10 points)
+  if (metrics.deduplicationRate && metrics.deduplicationRate > 0) {
+    score += Math.min(metrics.deduplicationRate / 10, 10);
+  }
 
   // Ensure score is between 0 and 100
   return Math.max(0, Math.min(100, score));

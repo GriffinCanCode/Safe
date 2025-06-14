@@ -6,12 +6,38 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { handleError } from "../utils/error-handler";
-import { checkRateLimit } from "../utils/rate-limiting";
+import {handleError} from "../utils/error-handler";
+import {checkRateLimit} from "../utils/rate-limiting";
 
 const db = admin.firestore();
 const storage = admin.storage();
 const bucket = storage.bucket();
+
+/**
+ * Interface for purge inactive users request data
+ */
+interface PurgeInactiveUsersData {
+  inactiveDays?: number;
+  dryRun?: boolean;
+}
+
+/**
+ * Interface for optimize system request data
+ */
+interface OptimizeSystemData {
+  operations?: string[];
+}
+
+/**
+ * Interface for optimization results
+ */
+interface OptimizationResults {
+  [key: string]: {
+    removed?: number;
+    errors?: number;
+    indexed?: number;
+  };
+}
 
 /**
  * Cleans up expired files and chunks
@@ -19,6 +45,7 @@ const bucket = storage.bucket();
  */
 export const cleanupExpiredFiles = functions.pubsub
   .schedule("every 24 hours")
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .onRun(async (context) => {
     try {
       // Find expired file records
@@ -79,7 +106,7 @@ export const cleanupExpiredFiles = functions.pubsub
               return bucket
                 .file(chunkPath)
                 .delete()
-                .catch((err: any) => {
+                .catch((err: Error) => {
                   console.warn(`Failed to delete chunk at ${chunkPath}:`, err);
                   // Continue with deletion even if some chunks fail
                   return null;
@@ -122,7 +149,7 @@ export const cleanupExpiredFiles = functions.pubsub
  * Removes accounts that have been inactive for a specified period
  */
 export const purgeInactiveUsers = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: PurgeInactiveUsersData, context: functions.https.CallableContext) => {
     try {
       // Ensure user is authenticated and an admin
       if (!context.auth) {
@@ -146,7 +173,7 @@ export const purgeInactiveUsers = functions.https.onCall(
       // Apply rate limiting for admin operations
       await checkRateLimit(context.auth.uid, "admin", 5);
 
-      const { inactiveDays = 365, dryRun = true } = data;
+      const {inactiveDays = 365, dryRun = true} = data;
 
       // Validate input
       if (inactiveDays < 30) {
@@ -213,7 +240,7 @@ export const purgeInactiveUsers = functions.https.onCall(
                   return bucket
                     .file(chunkPath)
                     .delete()
-                    .catch((err: any) => {
+                    .catch((err: Error) => {
                       console.warn(
                         `Failed to delete chunk at ${chunkPath}:`,
                         err,
@@ -259,7 +286,7 @@ export const purgeInactiveUsers = functions.https.onCall(
         await admin
           .auth()
           .deleteUser(userId)
-          .catch((err: any) => {
+          .catch((err: Error) => {
             console.warn(`Failed to delete auth user ${userId}:`, err);
           });
 
@@ -289,7 +316,7 @@ export const purgeInactiveUsers = functions.https.onCall(
         purgedUserIds,
       };
     } catch (error) {
-      return handleError(error, "purgeInactiveUsers");
+      return handleError(error as Error, "purgeInactiveUsers");
     }
   },
 );
@@ -299,7 +326,7 @@ export const purgeInactiveUsers = functions.https.onCall(
  * Performs maintenance operations to improve system performance
  */
 export const optimizeSystem = functions.https.onCall(
-  async (data: any, context: functions.https.CallableContext) => {
+  async (data: OptimizeSystemData, context: functions.https.CallableContext) => {
     try {
       // Ensure user is authenticated and an admin
       if (!context.auth) {
@@ -323,8 +350,8 @@ export const optimizeSystem = functions.https.onCall(
       // Apply rate limiting for admin operations
       await checkRateLimit(context.auth.uid, "admin", 2);
 
-      const { operations = ["all"] } = data;
-      const results: { [key: string]: any } = {};
+      const {operations = ["all"]} = data;
+      const results: OptimizationResults = {};
 
       // Check for orphaned chunks
       if (
@@ -365,7 +392,7 @@ export const optimizeSystem = functions.https.onCall(
         results,
       };
     } catch (error) {
-      return handleError(error, "optimizeSystem");
+      return handleError(error as Error, "optimizeSystem");
     }
   },
 );
@@ -379,7 +406,7 @@ async function cleanupOrphanedChunks(): Promise<{
 }> {
   try {
     // Get all file chunks in storage
-    const [files] = await bucket.getFiles({ prefix: "files/" });
+    const [files] = await bucket.getFiles({prefix: "files/"});
 
     // Get all valid chunk paths from Firestore
     const validChunkPaths = new Set<string>();
@@ -415,10 +442,10 @@ async function cleanupOrphanedChunks(): Promise<{
       }
     }
 
-    return { removed, errors };
+    return {removed, errors};
   } catch (error) {
     console.error("Error cleaning up orphaned chunks:", error);
-    return { removed: 0, errors: 1 };
+    return {removed: 0, errors: 1};
   }
 }
 
@@ -460,10 +487,15 @@ async function rebuildDeduplicationIndex(): Promise<{
       const userId = fileData.userId;
 
       if (!filesByHash.has(fileHash)) {
-        filesByHash.set(fileHash, { fileIds: [], userIds: [] });
+        filesByHash.set(fileHash, {fileIds: [], userIds: []});
       }
 
-      const entry = filesByHash.get(fileHash)!;
+      const entry = filesByHash.get(fileHash);
+      if (!entry) {
+        console.error(`Failed to get entry for fileHash: ${fileHash}`);
+        return;
+      }
+
       entry.fileIds.push(fileId);
 
       if (!entry.userIds.includes(userId)) {
@@ -493,10 +525,10 @@ async function rebuildDeduplicationIndex(): Promise<{
       }
     }
 
-    return { indexed, errors };
+    return {indexed, errors};
   } catch (error) {
     console.error("Error rebuilding deduplication index:", error);
-    return { indexed: 0, errors: 1 };
+    return {indexed: 0, errors: 1};
   }
 }
 
@@ -520,7 +552,7 @@ async function cleanupExpiredSessions(): Promise<{
       .get();
 
     if (expiredSessionsSnapshot.empty) {
-      return { removed: 0, errors: 0 };
+      return {removed: 0, errors: 0};
     }
 
     // Delete expired sessions in batches
@@ -564,9 +596,9 @@ async function cleanupExpiredSessions(): Promise<{
       }
     }
 
-    return { removed, errors };
+    return {removed, errors};
   } catch (error) {
     console.error("Error cleaning up expired sessions:", error);
-    return { removed: 0, errors: 1 };
+    return {removed: 0, errors: 1};
   }
 }
