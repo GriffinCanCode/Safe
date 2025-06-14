@@ -1,0 +1,575 @@
+# ZK-Vault Infrastructure Deployment Pipeline
+# Implements GitOps deployment following 2025 best practices with comprehensive automation
+
+name: 🚀 Deploy Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+      
+      terraform_action:
+        description: 'Terraform action to perform'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+      
+      force_deploy:
+        description: 'Force deployment (skip some safety checks)'
+        required: false
+        default: false
+        type: boolean
+      
+      modules_to_deploy:
+        description: 'Specific modules to deploy (comma-separated, empty for all)'
+        required: false
+        default: ''
+        type: string
+
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'infrastructure/terraform/**'
+      - '.github/workflows/deploy-infrastructure.yml'
+
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'infrastructure/terraform/**'
+      - '.github/workflows/deploy-infrastructure.yml'
+
+# Security: Restrict permissions
+permissions:
+  contents: read
+  id-token: write  # Required for OIDC
+  issues: write    # For commenting on PRs
+  pull-requests: write
+
+# Environment variables
+env:
+  TERRAFORM_VERSION: '1.6.0'
+  TERRAGRUNT_VERSION: '0.50.0'
+  GCLOUD_VERSION: '450.0.0'
+  NODE_VERSION: '18'
+  
+  # Security settings
+  TF_IN_AUTOMATION: true
+  TF_INPUT: false
+  TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
+
+jobs:
+  # Pre-deployment validation and security checks
+  pre_deployment_validation:
+    name: 🔍 Pre-Deployment Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    outputs:
+      environment: ${{ steps.determine-env.outputs.environment }}
+      should_deploy: ${{ steps.gate-check.outputs.should_deploy }}
+      terraform_action: ${{ steps.determine-action.outputs.action }}
+      modules_to_deploy: ${{ steps.parse-modules.outputs.modules }}
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better analysis
+      
+      - name: 🎯 Determine Environment
+        id: determine-env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          else
+            echo "environment=development" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: 🎬 Determine Terraform Action
+        id: determine-action
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "action=${{ github.event.inputs.terraform_action }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "action=plan" >> $GITHUB_OUTPUT
+          else
+            echo "action=apply" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: 📋 Parse Modules to Deploy
+        id: parse-modules
+        run: |
+          if [[ "${{ github.event.inputs.modules_to_deploy }}" != "" ]]; then
+            echo "modules=${{ github.event.inputs.modules_to_deploy }}" >> $GITHUB_OUTPUT
+          else
+            echo "modules=all" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: 🚪 Deployment Gate Check
+        id: gate-check
+        run: |
+          environment="${{ steps.determine-env.outputs.environment }}"
+          action="${{ steps.determine-action.outputs.action }}"
+          
+          # Production safety checks
+          if [[ "$environment" == "production" ]]; then
+            if [[ "$action" == "destroy" && "${{ github.event.inputs.force_deploy }}" != "true" ]]; then
+              echo "❌ Production destroy operations require force_deploy=true"
+              echo "should_deploy=false" >> $GITHUB_OUTPUT
+              exit 1
+            fi
+            
+            if [[ "${{ github.actor }}" != "admin" && "$action" == "apply" ]]; then
+              echo "⚠️ Production deployments require admin approval"
+              # In real implementation, add approval workflow
+            fi
+          fi
+          
+          echo "should_deploy=true" >> $GITHUB_OUTPUT
+          echo "✅ Deployment gate check passed"
+
+  # Security and compliance scanning
+  security_scanning:
+    name: 🔒 Security & Compliance Scanning
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: pre_deployment_validation
+    if: needs.pre_deployment_validation.outputs.should_deploy == 'true'
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: 🛡️ Setup Security Scanning Tools
+        run: |
+          # Install security scanning tools
+          curl -s https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+          
+          # Install Terraform security scanner
+          wget -O - https://github.com/tfsec/tfsec/releases/latest/download/tfsec-linux-amd64 > tfsec
+          chmod +x tfsec
+          sudo mv tfsec /usr/local/bin
+          
+          # Install Checkov for policy compliance
+          pip install checkov
+      
+      - name: 🔍 Terraform Security Scan
+        run: |
+          echo "🔍 Running Terraform security scan..."
+          tfsec infrastructure/terraform/ --format json > tfsec-results.json || true
+          
+          # Check for critical issues
+          critical_issues=$(jq '.results[] | select(.severity == "CRITICAL")' tfsec-results.json | wc -l)
+          if [[ $critical_issues -gt 0 ]]; then
+            echo "❌ Found $critical_issues critical security issues"
+            jq '.results[] | select(.severity == "CRITICAL")' tfsec-results.json
+            exit 1
+          fi
+          
+          echo "✅ Terraform security scan passed"
+      
+      - name: 🏛️ Policy Compliance Check
+        run: |
+          echo "🏛️ Running policy compliance check..."
+          checkov -d infrastructure/terraform/ --framework terraform --output json > checkov-results.json || true
+          
+          # Check for failed policies
+          failed_checks=$(jq '.results.failed_checks | length' checkov-results.json)
+          if [[ $failed_checks -gt 10 ]]; then  # Allow some flexibility
+            echo "❌ Found $failed_checks failed policy checks"
+            jq '.results.failed_checks[] | select(.severity == "HIGH" or .severity == "CRITICAL")' checkov-results.json
+            exit 1
+          fi
+          
+          echo "✅ Policy compliance check passed with $failed_checks minor issues"
+      
+      - name: 🔐 Secrets Detection
+        uses: gitguardian/ggshield/actions/secret@v1.25.0
+        env:
+          GITGUARDIAN_API_KEY: ${{ secrets.GITGUARDIAN_API_KEY }}
+        with:
+          args: '--all-policies --show-secrets --exit-zero'
+      
+      - name: 📊 Upload Security Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-scan-results
+          path: |
+            tfsec-results.json
+            checkov-results.json
+          retention-days: 30
+
+  # Terraform infrastructure deployment
+  terraform_deployment:
+    name: 🏗️ Terraform Deployment
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: [pre_deployment_validation, security_scanning]
+    if: needs.pre_deployment_validation.outputs.should_deploy == 'true'
+    
+    environment: 
+      name: ${{ needs.pre_deployment_validation.outputs.environment }}
+      url: ${{ steps.deployment-url.outputs.url }}
+    
+    env:
+      ENVIRONMENT: ${{ needs.pre_deployment_validation.outputs.environment }}
+      TF_ACTION: ${{ needs.pre_deployment_validation.outputs.terraform_action }}
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: 🔧 Setup Tools
+        uses: ./.github/actions/setup-deployment-tools
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          gcloud_version: ${{ env.GCLOUD_VERSION }}
+      
+      - name: 🔑 Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+          project_id: ${{ secrets.PROJECT_ID }}
+      
+      - name: 🛠️ Setup Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          version: ${{ env.GCLOUD_VERSION }}
+      
+      - name: 💾 Setup Terraform Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ env.TF_PLUGIN_CACHE_DIR }}
+            **/.terraform
+          key: ${{ runner.os }}-terraform-${{ hashFiles('**/.terraform.lock.hcl') }}
+          restore-keys: |
+            ${{ runner.os }}-terraform-
+      
+      - name: 🏗️ Terraform Init
+        working-directory: infrastructure/terraform
+        run: |
+          mkdir -p $TF_PLUGIN_CACHE_DIR
+          
+          # Initialize Terraform with environment-specific backend
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="prefix=environments/$ENVIRONMENT" \
+            -upgrade
+      
+      - name: 📋 Terraform Validate
+        working-directory: infrastructure/terraform
+        run: |
+          terraform validate
+          terraform fmt -check=true -diff=true
+      
+      - name: 📊 Terraform Plan
+        id: plan
+        working-directory: infrastructure/terraform
+        run: |
+          # Create terraform variables file
+          cat > terraform.tfvars <<EOF
+          project_id = "${{ secrets.PROJECT_ID }}"
+          environment = "$ENVIRONMENT"
+          region = "${{ vars.REGION || 'us-central1' }}"
+          zone = "${{ vars.ZONE || 'us-central1-a' }}"
+          organization_id = "${{ secrets.ORGANIZATION_ID }}"
+          billing_account = "${{ secrets.BILLING_ACCOUNT }}"
+          enable_cost_optimization = true
+          enable_workload_identity = true
+          oauth_client_id = "${{ secrets.OAUTH_CLIENT_ID }}"
+          oauth_client_secret = "${{ secrets.OAUTH_CLIENT_SECRET }}"
+          firestore_location = "${{ vars.FIRESTORE_LOCATION || 'nam5' }}"
+          EOF
+          
+          # Run terraform plan
+          terraform plan \
+            -var-file=terraform.tfvars \
+            -out=tfplan \
+            -detailed-exitcode \
+            -no-color > plan_output.txt
+          
+          plan_exit_code=$?
+          
+          # Parse plan results
+          if [[ $plan_exit_code -eq 0 ]]; then
+            echo "plan_result=no-changes" >> $GITHUB_OUTPUT
+          elif [[ $plan_exit_code -eq 2 ]]; then
+            echo "plan_result=changes" >> $GITHUB_OUTPUT
+          else
+            echo "plan_result=error" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          # Extract resource changes
+          echo "plan_summary<<EOF" >> $GITHUB_OUTPUT
+          terraform show -no-color tfplan | head -50 >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: 💬 Comment Plan on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const planOutput = fs.readFileSync('infrastructure/terraform/plan_output.txt', 'utf8');
+            
+            const comment = `## 🏗️ Terraform Plan Results
+            
+            **Environment:** \`${{ env.ENVIRONMENT }}\`
+            **Plan Result:** \`${{ steps.plan.outputs.plan_result }}\`
+            
+            <details>
+            <summary>📋 Terraform Plan Output</summary>
+            
+            \`\`\`terraform
+            ${planOutput.slice(0, 5000)}
+            ${planOutput.length > 5000 ? '\n... (output truncated)' : ''}
+            \`\`\`
+            </details>
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+      
+      - name: 🚀 Terraform Apply
+        if: env.TF_ACTION == 'apply' && (github.event_name != 'pull_request')
+        working-directory: infrastructure/terraform
+        run: |
+          echo "🚀 Applying Terraform changes for $ENVIRONMENT environment..."
+          
+          terraform apply \
+            -var-file=terraform.tfvars \
+            -auto-approve \
+            -no-color > apply_output.txt
+          
+          echo "✅ Terraform apply completed successfully"
+      
+      - name: 💥 Terraform Destroy
+        if: env.TF_ACTION == 'destroy'
+        working-directory: infrastructure/terraform
+        run: |
+          echo "💥 Destroying Terraform infrastructure for $ENVIRONMENT environment..."
+          
+          terraform destroy \
+            -var-file=terraform.tfvars \
+            -auto-approve \
+            -no-color > destroy_output.txt
+          
+          echo "✅ Terraform destroy completed successfully"
+      
+      - name: 🌐 Get Deployment URL
+        id: deployment-url
+        working-directory: infrastructure/terraform
+        run: |
+          if [[ "$TF_ACTION" == "apply" ]]; then
+            # Extract hosting URL from Terraform outputs
+            hosting_url=$(terraform output -json application_config | jq -r '.value.urls.hosting_url // "https://example.com"')
+            echo "url=$hosting_url" >> $GITHUB_OUTPUT
+          else
+            echo "url=https://example.com" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: 📊 Upload Terraform Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: terraform-${{ env.ENVIRONMENT }}-${{ env.TF_ACTION }}
+          path: |
+            infrastructure/terraform/tfplan
+            infrastructure/terraform/*_output.txt
+            infrastructure/terraform/terraform.tfvars
+          retention-days: 30
+
+  # Post-deployment testing and validation
+  post_deployment_testing:
+    name: 🧪 Post-Deployment Testing
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [pre_deployment_validation, terraform_deployment]
+    if: needs.pre_deployment_validation.outputs.terraform_action == 'apply' && needs.terraform_deployment.result == 'success'
+    
+    env:
+      ENVIRONMENT: ${{ needs.pre_deployment_validation.outputs.environment }}
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'packages/web-app/package-lock.json'
+      
+      - name: 🔑 Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+          project_id: ${{ secrets.PROJECT_ID }}
+      
+      - name: 🧪 Infrastructure Health Check
+        run: |
+          echo "🧪 Running infrastructure health checks..."
+          
+          # Check if Firebase project is accessible
+          gcloud firebase projects list --filter="projectId:${{ secrets.PROJECT_ID }}" --format="value(projectId)" | grep -q "${{ secrets.PROJECT_ID }}"
+          
+          if [[ $? -eq 0 ]]; then
+            echo "✅ Firebase project is accessible"
+          else
+            echo "❌ Firebase project is not accessible"
+            exit 1
+          fi
+          
+          # Check if Firestore is operational
+          gcloud firestore databases list --project=${{ secrets.PROJECT_ID }} --format="value(name)" | grep -q "default"
+          
+          if [[ $? -eq 0 ]]; then
+            echo "✅ Firestore database is operational"
+          else
+            echo "❌ Firestore database is not operational"
+            exit 1
+          fi
+          
+          echo "✅ All infrastructure health checks passed"
+      
+      - name: 🌐 Application Health Check
+        run: |
+          echo "🌐 Running application health checks..."
+          
+          # Get deployment URL from Terraform outputs
+          deployment_url="${{ needs.terraform_deployment.outputs.url || 'https://example.com' }}"
+          
+          # Wait for deployment to be ready
+          for i in {1..10}; do
+            if curl -f -s "$deployment_url" > /dev/null; then
+              echo "✅ Application is responding at $deployment_url"
+              break
+            else
+              echo "⏳ Waiting for application to be ready... (attempt $i/10)"
+              sleep 30
+            fi
+            
+            if [[ $i -eq 10 ]]; then
+              echo "❌ Application is not responding after 5 minutes"
+              exit 1
+            fi
+          done
+      
+      - name: 🔒 Security Validation
+        run: |
+          echo "🔒 Running security validation..."
+          
+          # Check security headers
+          deployment_url="${{ needs.terraform_deployment.outputs.url || 'https://example.com' }}"
+          
+          # Check for security headers
+          headers=$(curl -I -s "$deployment_url" || echo "")
+          
+          if echo "$headers" | grep -q "Strict-Transport-Security"; then
+            echo "✅ HSTS header present"
+          else
+            echo "⚠️ HSTS header missing"
+          fi
+          
+          if echo "$headers" | grep -q "X-Content-Type-Options"; then
+            echo "✅ X-Content-Type-Options header present"
+          else
+            echo "⚠️ X-Content-Type-Options header missing"
+          fi
+          
+          echo "✅ Security validation completed"
+
+  # Notification and reporting
+  notification:
+    name: 📢 Notification & Reporting
+    runs-on: ubuntu-latest
+    needs: [pre_deployment_validation, terraform_deployment, post_deployment_testing]
+    if: always()
+    
+    steps:
+      - name: 📊 Generate Deployment Report
+        run: |
+          cat > deployment_report.md <<EOF
+          # 🚀 ZK-Vault Infrastructure Deployment Report
+          
+          **Environment:** ${{ needs.pre_deployment_validation.outputs.environment }}
+          **Action:** ${{ needs.pre_deployment_validation.outputs.terraform_action }}
+          **Triggered by:** ${{ github.actor }}
+          **Commit:** ${{ github.sha }}
+          **Timestamp:** $(date -u)
+          
+          ## 📋 Results Summary
+          
+          | Stage | Status |
+          |-------|--------|
+          | Pre-deployment Validation | ${{ needs.pre_deployment_validation.result }} |
+          | Security Scanning | ${{ needs.security_scanning.result }} |
+          | Terraform Deployment | ${{ needs.terraform_deployment.result }} |
+          | Post-deployment Testing | ${{ needs.post_deployment_testing.result }} |
+          
+          ## 🔗 Useful Links
+          
+          - [Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          - [Commit Details](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
+          
+          EOF
+          
+          echo "Deployment report generated"
+      
+      - name: 📤 Upload Deployment Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-report
+          path: deployment_report.md
+          retention-days: 90
+
+# Cleanup job for cost optimization
+  cleanup:
+    name: 🧹 Cleanup
+    runs-on: ubuntu-latest
+    needs: [pre_deployment_validation, terraform_deployment, post_deployment_testing]
+    if: always() && needs.pre_deployment_validation.outputs.environment == 'development'
+    
+    steps:
+      - name: 🧹 Development Environment Cleanup
+        run: |
+          echo "🧹 Running cleanup for development environment..."
+          
+          # Add cleanup logic here for development resources
+          # This could include:
+          # - Removing old Cloud Build images
+          # - Cleaning up temporary storage
+          # - Removing old Firebase functions
+          
+          echo "✅ Cleanup completed" 

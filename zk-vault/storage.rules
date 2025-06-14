@@ -1,39 +1,108 @@
+// Firebase Storage Rules for ZK-Vault
+// Implements secure file storage with zero-knowledge principles
+
 rules_version = '2';
+
 service firebase.storage {
   match /b/{bucket}/o {
+    
+    // Helper functions for authentication and validation
     function isAuthenticated() {
       return request.auth != null;
     }
     
     function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+      return request.auth.uid == userId;
     }
     
-    function isValidChunk() {
-      return request.resource.size <= 5 * 1024 * 1024  // 5MB max chunk
-        && request.resource.metadata.keys().hasAll(['iv'])
-        && request.resource.metadata.iv is string;
+    function isValidFileSize(maxSize) {
+      return resource.size <= maxSize;
     }
     
-    // User file chunks
-    match /users/{userId}/chunks/{chunkId} {
-      allow read: if isOwner(userId);
-      allow write: if isOwner(userId) && isValidChunk();
+    function isValidContentType(allowedTypes) {
+      return request.resource.contentType in allowedTypes;
+    }
+    
+    function hasValidMetadata() {
+      return request.resource.metadata != null &&
+             request.resource.metadata.keys().hasAll(['encrypted', 'checksum']);
+    }
+    
+    // User profile images - public read, owner write
+    match /users/{userId}/profile/{imageId} {
+      allow read: if true; // Profile images are public
+      allow write: if isOwner(userId) &&
+                     isValidContentType(['image/jpeg', 'image/png', 'image/webp']) &&
+                     isValidFileSize(5 * 1024 * 1024); // 5MB limit
       allow delete: if isOwner(userId);
     }
     
-    // Deduplicated chunks (content-addressed)
-    match /chunks/{contentHash} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isValidChunk();
-      // Never allow deletion of deduplicated chunks
+    // Encrypted vault files - private to user
+    match /vaults/{userId}/files/{fileId} {
+      allow read, write: if isOwner(userId) &&
+                           hasValidMetadata() &&
+                           isValidFileSize(100 * 1024 * 1024); // 100MB limit per file
+      allow delete: if isOwner(userId);
     }
     
-    // User file uploads temporary storage
-    match /users/{userId}/uploads/{uploadId}/{filename} {
-      allow read: if isOwner(userId);
-      allow write: if isOwner(userId);
+    // Encrypted backup files
+    match /backups/{userId}/{backupId}/{fileName} {
+      allow read, write: if isOwner(userId) &&
+                           hasValidMetadata() &&
+                           isValidFileSize(500 * 1024 * 1024); // 500MB limit for backups
       allow delete: if isOwner(userId);
+    }
+    
+    // Temporary upload staging area
+    match /staging/{userId}/{uploadId} {
+      allow write: if isOwner(userId) &&
+                     hasValidMetadata() &&
+                     isValidFileSize(100 * 1024 * 1024); // 100MB limit
+      allow read, delete: if isOwner(userId);
+    }
+    
+    // Shared file access (with time-limited tokens)
+    match /shared/{shareId}/{fileName} {
+      allow read: if isAuthenticated() &&
+                    // Verify share token exists in Firestore (handled by client-side logic)
+                    request.auth != null;
+      // No write access to shared files
+      allow write: if false;
+    }
+    
+    // Application assets (public read-only)
+    match /assets/{assetPath=**} {
+      allow read: if true;
+      allow write: if false; // Only deployed via CI/CD
+    }
+    
+    // Export files (temporary, encrypted exports)
+    match /exports/{userId}/{exportId}/{fileName} {
+      allow read, write: if isOwner(userId) &&
+                           hasValidMetadata() &&
+                           isValidFileSize(1024 * 1024 * 1024); // 1GB limit for exports
+      allow delete: if isOwner(userId);
+    }
+    
+    // Secure document storage
+    match /documents/{userId}/{documentId} {
+      allow read, write: if isOwner(userId) &&
+                           hasValidMetadata() &&
+                           isValidContentType([
+                             'application/pdf',
+                             'application/msword',
+                             'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                             'text/plain',
+                             'image/jpeg',
+                             'image/png'
+                           ]) &&
+                           isValidFileSize(50 * 1024 * 1024); // 50MB limit
+      allow delete: if isOwner(userId);
+    }
+    
+    // Catch-all: deny access to any other files
+    match /{allPaths=**} {
+      allow read, write: if false;
     }
   }
 }

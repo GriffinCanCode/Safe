@@ -1,0 +1,528 @@
+/**
+ * Secure Registration Flow Component Styles
+ * Comprehensive registration flow with email/password and Google OAuth support
+ */
+
+.secure-registration-flow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: var(--spacing-6);
+}
+
+/* Registration Header */
+.registration-header {
+  text-align: center;
+  margin-bottom: var(--spacing-8);
+}
+
+.registration-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-2);
+  line-height: var(--line-height-tight);
+}
+
+.registration-subtitle {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+}
+
+/* Security Notice */
+.security-notice {
+  display: flex;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4);
+  background: var(--color-success-bg);
+  border: 1px solid var(--color-success-border);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--spacing-6);
+}
+
+.security-notice-icon {
+  flex-shrink: 0;
+  color: var(--color-success-text);
+  margin-top: var(--spacing-1);
+}
+
+.security-notice-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.security-notice-content {
+  flex: 1;
+}
+
+.security-notice-title {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-success-text);
+  margin-bottom: var(--spacing-1);
+  font-size: var(--font-size-sm);
+}
+
+.security-notice-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-success-text);
+  line-height: var(--line-height-relaxed);
+  opacity: 0.9;
+}
+
+/* Method Selection */
+.method-selection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.method-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  text-align: center;
+  margin-bottom: var(--spacing-4);
+}
+
+.registration-method {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.google-register-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border-radius: var(--radius-lg);
+  font-weight: var(--font-weight-medium);
+  transition: all var(--duration-200) var(--ease-out);
+  overflow: hidden;
+}
+
+.google-register-btn:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-border-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.google-register-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--color-primary-focus);
+}
+
+.google-register-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.email-register-btn {
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+  border: 1px solid var(--color-primary);
+  transition: all var(--duration-200) var(--ease-out);
+}
+
+.email-register-btn:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.email-register-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--color-primary-focus);
+}
+
+.method-description {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  text-align: center;
+  line-height: var(--line-height-relaxed);
+}
+
+/* Email Registration Form */
+.email-registration {
+  width: 100%;
+}
+
+.registration-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-5);
+}
+
+/* Password Section */
+.password-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+/* Password Analysis */
+.password-analysis {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  padding: var(--spacing-4);
+  background: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.strength-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-2);
+}
+
+.strength-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.strength-score {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-md);
+}
+
+.strength-score.strength-very-weak {
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+}
+
+.strength-score.strength-weak {
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+}
+
+.strength-score.strength-fair {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
+
+.strength-score.strength-good {
+  background: var(--color-info-bg);
+  color: var(--color-info-text);
+}
+
+.strength-score.strength-strong {
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+}
+
+.strength-score.strength-excellent {
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+}
+
+/* Security Requirements */
+.security-requirements {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.requirement-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.requirement-group-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-1);
+}
+
+.requirement {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  transition: color var(--duration-200) var(--ease-out);
+}
+
+.requirement.met {
+  color: var(--color-success-text);
+}
+
+.requirement-icon {
+  width: 1rem;
+  height: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  transition: all var(--duration-200) var(--ease-out);
+}
+
+.requirement.met .requirement-icon {
+  background: var(--color-success);
+  color: var(--color-success-contrast);
+  border-color: var(--color-success);
+}
+
+/* Form Agreements */
+.form-agreements {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.form-agreement {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-2);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
+}
+
+.form-agreement-checkbox {
+  margin-top: 0.125rem;
+  accent-color: var(--color-primary);
+}
+
+.form-agreement-text {
+  color: var(--color-text-secondary);
+}
+
+.form-agreement-link {
+  color: var(--color-primary);
+  text-decoration: underline;
+  transition: color var(--duration-200) var(--ease-out);
+}
+
+.form-agreement-link:hover {
+  color: var(--color-primary-hover);
+}
+
+.form-error {
+  color: var(--color-danger-text);
+  font-size: var(--font-size-sm);
+  margin-top: var(--spacing-1);
+}
+
+.form-error-offset {
+  margin-top: calc(-1 * var(--spacing-2));
+}
+
+/* Form Navigation */
+.form-navigation {
+  display: flex;
+  gap: var(--spacing-3);
+  margin-top: var(--spacing-2);
+}
+
+.form-navigation .btn {
+  flex: 1;
+}
+
+/* Registration Success */
+.registration-success {
+  text-align: center;
+  padding: var(--spacing-8) 0;
+}
+
+.success-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-6);
+}
+
+.success-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+  border-radius: var(--radius-full);
+  margin-bottom: var(--spacing-2);
+}
+
+.success-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-2);
+}
+
+.success-description {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+  max-width: 24rem;
+}
+
+.success-continue-btn {
+  margin-top: var(--spacing-4);
+}
+
+/* Error Alert */
+.error-alert {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4);
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+  border-radius: var(--radius-lg);
+  margin-top: var(--spacing-4);
+}
+
+.error-icon {
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--color-danger-text);
+}
+
+.error-alert p {
+  color: var(--color-danger-text);
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+
+/* Responsive Design */
+@container (max-width: 400px) {
+  .secure-registration-flow {
+    padding: var(--spacing-4);
+    gap: var(--spacing-4);
+  }
+
+  .registration-title {
+    font-size: var(--font-size-xl);
+  }
+
+  .form-navigation {
+    flex-direction: column;
+  }
+
+  .password-analysis {
+    padding: var(--spacing-3);
+  }
+
+  .security-requirements {
+    gap: var(--spacing-3);
+  }
+}
+
+/* Dark Mode Enhancements */
+@media (prefers-color-scheme: dark) {
+  .google-register-btn {
+    background: var(--color-surface-dark);
+    border-color: var(--color-border-dark);
+    color: var(--color-text-primary-dark);
+  }
+
+  .google-register-btn:hover {
+    background: var(--color-surface-hover-dark);
+    border-color: var(--color-border-hover-dark);
+  }
+
+  .password-analysis {
+    background: var(--color-surface-secondary-dark);
+    border-color: var(--color-border-dark);
+  }
+
+  .requirement-icon {
+    background: var(--color-surface-dark);
+    border-color: var(--color-border-dark);
+  }
+}
+
+/* Animation Enhancements */
+.secure-registration-flow {
+  animation: fadeInUp var(--duration-500) var(--ease-out);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.requirement {
+  transition: all var(--duration-300) var(--ease-out);
+}
+
+.requirement:hover {
+  transform: translateX(0.25rem);
+}
+
+/* Accessibility Enhancements */
+@media (prefers-reduced-motion: reduce) {
+  .secure-registration-flow,
+  .requirement,
+  .google-register-btn,
+  .email-register-btn {
+    animation: none;
+    transition: none;
+  }
+
+  .requirement:hover {
+    transform: none;
+  }
+
+  .google-register-btn:hover,
+  .email-register-btn:hover {
+    transform: none;
+  }
+}
+
+/* Focus Visible Support */
+.google-register-btn:focus-visible,
+.email-register-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.form-agreement-checkbox:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Print Styles */
+@media print {
+  .secure-registration-flow {
+    background: white;
+    color: black;
+    box-shadow: none;
+  }
+
+  .error-alert,
+  .security-notice {
+    border: 1px solid #ccc;
+    background: #f9f9f9;
+  }
+} 

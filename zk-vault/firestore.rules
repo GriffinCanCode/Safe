@@ -1,208 +1,132 @@
+// Firestore Security Rules for ZK-Vault
+// Implements zero-knowledge security principles with strict access controls
+
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper functions
+    
+    // Helper functions for authentication and authorization
     function isAuthenticated() {
       return request.auth != null;
     }
     
     function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+      return request.auth.uid == userId;
     }
     
-    function isAdmin() {
-      return isAuthenticated() 
-        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    function isValidUser() {
+      return isAuthenticated() && request.auth.uid != null;
     }
     
-    function isSuperAdmin() {
-      return isAdmin() 
-        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.level == 'super';
+    function isValidTimestamp(timestamp) {
+      return timestamp is timestamp && timestamp <= request.time;
     }
     
-    function hasRequiredFields(fields) {
-      return request.resource.data.keys().hasAll(fields);
+    function hasValidSchema(data, requiredFields) {
+      return data.keys().hasAll(requiredFields) &&
+             data.keys().hasOnly(requiredFields.concat(['createdAt', 'updatedAt']));
     }
     
-    function isValidEncryptedData() {
-      return request.resource.data.encrypted is map
-        && request.resource.data.encrypted.keys().hasAll(['data', 'iv', 'algorithm'])
-        && request.resource.data.encrypted.data is string
-        && request.resource.data.encrypted.iv is string;
-    }
-    
-    function isValidTimestamp(field) {
-      return request.resource.data[field] is timestamp
-        && request.resource.data[field] <= request.time;
-    }
-    
-    function isWithinSizeLimit(sizeBytes) {
-      return request.resource.size <= sizeBytes;
-    }
-
-    // Admin users collection
-    match /admins/{adminId} {
-      allow read: if isAdmin();
-      allow write: if isSuperAdmin();
-    }
-
-    // User profile (public keys for sharing)
+    // User profiles - users can only access their own data
     match /users/{userId} {
-      allow read: if isAuthenticated();
-      allow write: if isOwner(userId)
-        && hasRequiredFields(['publicKey', 'email'])
-        && isWithinSizeLimit(50000); // 50KB limit for user profiles
-      allow delete: if isOwner(userId) || isAdmin();
+      allow read, write: if isOwner(userId) &&
+                           hasValidSchema(resource.data, ['email', 'displayName', 'settings']);
+      
+      allow create: if isOwner(userId) &&
+                      hasValidSchema(request.resource.data, ['email', 'displayName', 'settings']) &&
+                      isValidTimestamp(request.resource.data.createdAt);
+      
+      allow update: if isOwner(userId) &&
+                      isValidTimestamp(request.resource.data.updatedAt) &&
+                      request.resource.data.createdAt == resource.data.createdAt;
     }
     
-    // Encrypted vault data
-    match /vaults/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
-      allow write: if isOwner(userId)
-        && isValidEncryptedData()
-        && isWithinSizeLimit(100000); // 100KB limit for vault metadata
-      allow delete: if isOwner(userId) || isAdmin();
-        
-      // Vault items
-      match /items/{itemId} {
-        allow read: if isOwner(userId) || isAdmin();
-        allow create: if isOwner(userId)
-          && isValidEncryptedData()
-          && isValidTimestamp('created')
-          && isWithinSizeLimit(500000); // 500KB limit per vault item
-        allow update: if isOwner(userId)
-          && isValidEncryptedData()
-          && isValidTimestamp('modified')
-          && resource.data.created == request.resource.data.created
-          && isWithinSizeLimit(500000);
-        allow delete: if isOwner(userId) || isAdmin();
-      }
+    // User settings - private to each user
+    match /users/{userId}/settings/{settingId} {
+      allow read, write: if isOwner(userId);
     }
     
-    // Shared items
-    match /shares/{shareId} {
-      allow read: if isAuthenticated()
-        && (resource.data.from == request.auth.uid 
-            || resource.data.to == request.auth.uid)
-        || isAdmin();
-      allow create: if isAuthenticated()
-        && request.auth.uid == request.resource.data.from
-        && hasRequiredFields(['from', 'to', 'itemId', 'encryptedKey'])
-        && isValidTimestamp('createdAt')
-        && isWithinSizeLimit(50000);
-      allow delete: if isAuthenticated()
-        && (resource.data.from == request.auth.uid 
-            || resource.data.to == request.auth.uid)
-        || isAdmin();
-    }
-
-    // Authentication data (SRP verifiers)
-    match /auth/{email} {
-      // Auth data can only be read by Cloud Functions and admins for debugging
-      allow read: if isAdmin();
-      // Users can create their own auth records
-      allow create: if hasRequiredFields(['salt', 'verifier'])
-        && isWithinSizeLimit(10000); // 10KB limit for auth data
-      // Updates must preserve the original email
-      allow update: if resource.data.email == request.resource.data.email
-        && isWithinSizeLimit(10000);
-      allow delete: if isAdmin();
+    // Encrypted vault items - zero-knowledge architecture
+    match /vaults/{userId}/items/{itemId} {
+      allow read, write: if isOwner(userId) &&
+                           hasValidSchema(resource.data, ['encryptedData', 'metadata', 'itemType']);
+      
+      allow create: if isOwner(userId) &&
+                      hasValidSchema(request.resource.data, ['encryptedData', 'metadata', 'itemType']) &&
+                      isValidTimestamp(request.resource.data.createdAt) &&
+                      // Ensure encrypted data is properly structured
+                      request.resource.data.encryptedData is map &&
+                      request.resource.data.encryptedData.keys().hasAll(['iv', 'data', 'authTag']) &&
+                      // Metadata should not contain sensitive information
+                      request.resource.data.metadata is map &&
+                      !request.resource.data.metadata.keys().hasAny(['password', 'secret', 'key']);
+      
+      allow update: if isOwner(userId) &&
+                      isValidTimestamp(request.resource.data.updatedAt) &&
+                      request.resource.data.createdAt == resource.data.createdAt &&
+                      request.resource.data.itemType == resource.data.itemType;
     }
     
-    // Rate limiting data
-    match /rateLimit/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
-      // Only Cloud Functions and admins can write rate limiting data
-      allow write: if isAdmin();
+    // Vault metadata - non-sensitive vault information
+    match /vaults/{userId}/metadata/{metadataId} {
+      allow read, write: if isOwner(userId);
     }
-
-    // System monitoring and analytics data
-    match /analyticsReports/{reportId} {
-      allow read: if isAdmin();
-      // Only Cloud Functions can create analytics reports
-      allow create: if false;
-      allow update: if false;
-      allow delete: if isSuperAdmin();
+    
+    // Encrypted file references - for secure file storage
+    match /files/{userId}/refs/{fileId} {
+      allow read, write: if isOwner(userId) &&
+                           // File references must include encrypted metadata
+                           request.resource.data.keys().hasAll(['encryptedMetadata', 'storageRef', 'checksum']);
+      
+      allow create: if isOwner(userId) &&
+                      isValidTimestamp(request.resource.data.createdAt);
     }
-
-    // User sessions for analytics
-    match /userSessions/{sessionId} {
-      allow read: if isOwner(resource.data.userId) || isAdmin();
-      // Only Cloud Functions can write session data
-      allow write: if false;
+    
+    // Security events - audit trail (read-only for users)
+    match /security/{userId}/events/{eventId} {
+      allow read: if isOwner(userId);
+      allow write: if false; // Only server-side functions can write security events
     }
-
-    // System health monitoring
-    match /systemHealth/{healthId} {
-      allow read: if isAdmin();
-      // Only Cloud Functions can write health data
-      allow write: if false;
+    
+    // User sessions - for managing active sessions
+    match /sessions/{userId}/active/{sessionId} {
+      allow read, write: if isOwner(userId) &&
+                           hasValidSchema(resource.data, ['deviceInfo', 'loginTime', 'lastActivity']);
+      
+      allow create: if isOwner(userId) &&
+                      isValidTimestamp(request.resource.data.loginTime);
     }
-
-    // Audit logs
-    match /auditLogs/{logId} {
-      allow read: if isAdmin();
-      // Only Cloud Functions can write audit logs
-      allow create: if false;
-      allow update: if false;
-      allow delete: if isSuperAdmin();
+    
+    // Backup metadata - encrypted backup references
+    match /backups/{userId}/metadata/{backupId} {
+      allow read, write: if isOwner(userId);
     }
-
-    // Files collection
-    match /files/{fileId} {
-      allow read: if isOwner(resource.data.userId) || isAdmin();
-      allow create: if isAuthenticated()
-        && request.auth.uid == request.resource.data.userId
-        && hasRequiredFields(['fileName', 'contentType', 'totalSize'])
-        && isValidTimestamp('createdAt')
-        && request.resource.data.totalSize <= 104857600; // 100MB file size limit
-      allow update: if isOwner(resource.data.userId)
-        && resource.data.userId == request.resource.data.userId
-        && resource.data.createdAt == request.resource.data.createdAt;
-      allow delete: if isOwner(resource.data.userId) || isAdmin();
+    
+    // Shared vault invitations (if implementing sharing features)
+    match /invitations/{invitationId} {
+      allow read: if request.auth.email == resource.data.recipientEmail;
+      allow write: if request.auth.uid == resource.data.senderUserId;
     }
-
-    // File shares
-    match /fileShares/{shareId} {
-      allow read: if isAuthenticated()
-        && (resource.data.from == request.auth.uid 
-            || resource.data.to == request.auth.uid)
-        || isAdmin();
-      allow create: if isAuthenticated()
-        && request.auth.uid == request.resource.data.from
-        && hasRequiredFields(['from', 'to', 'fileId'])
-        && isValidTimestamp('createdAt');
-      allow delete: if isAuthenticated()
-        && (resource.data.from == request.auth.uid 
-            || resource.data.to == request.auth.uid)
-        || isAdmin();
+    
+    // Rate limiting collection (server-managed)
+    match /rateLimit/{document=**} {
+      allow read, write: if false; // Only server functions can manage rate limiting
     }
-
-    // Security incidents and breach monitoring
-    match /securityIncidents/{incidentId} {
-      allow read: if isAdmin();
-      // Only Cloud Functions can create security incidents
-      allow create: if false;
-      allow update: if isAdmin(); // Admins can update incident status
-      allow delete: if isSuperAdmin();
+    
+    // Analytics data (anonymized, server-managed)
+    match /analytics/{document=**} {
+      allow read, write: if false; // Only server functions can write analytics
     }
-
-    // Feature flags and configuration
-    match /config/{configKey} {
-      allow read: if isAuthenticated();
-      allow write: if isSuperAdmin();
+    
+    // System configuration (admin only - managed server-side)
+    match /system/{document=**} {
+      allow read, write: if false; // Only admin functions can manage system config
     }
-
-    // User feedback and support
-    match /feedback/{feedbackId} {
-      allow read: if isOwner(resource.data.userId) || isAdmin();
-      allow create: if isAuthenticated()
-        && request.auth.uid == request.resource.data.userId
-        && hasRequiredFields(['message', 'type'])
-        && isValidTimestamp('createdAt')
-        && isWithinSizeLimit(10000);
-      allow update: if isAdmin(); // Only admins can update feedback status
-      allow delete: if isOwner(resource.data.userId) || isAdmin();
+    
+    // Catch-all: deny access to any other documents
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
