@@ -4,28 +4,13 @@
  */
 
 /* === COMMON COMPONENTS === */
-@import "./common/buttons.css";
-@import "./common/inputs.css";
-@import "./common/loading-spinner.css";
-@import "./common/modals.css";
-@import "./common/tooltips.css";
-@import "./common/dropdowns.css";
-@import "./common/badges.css";
-@import "./common/alerts.css";
-@import "./common/loading.css";
-@import "./common/progress-bar.css";
+@import "./common/index.css";
 
 /* === AUTHENTICATION COMPONENTS === */
-@import "./auth/login-form.css";
-@import "./auth/register-form.css";
-@import "./auth/auth-layout.css";
-@import "./auth/auth-view.css";
+@import "./auth/index.css";
 
 /* === LAYOUT COMPONENTS === */
-@import "./layout/sidebar.css";
-@import "./layout/header.css";
-@import "./layout/main-layout.css";
-@import "./layout/app-layout.css";
+@import "./layout/index.css";
 
 /* === VAULT COMPONENTS === */
 @import "./vault/index.css";
@@ -34,21 +19,13 @@
 @import "./files/index.css";
 
 /* === SEARCH COMPONENTS === */
-@import "./search/search-bar.css";
-@import "./search/search-results.css";
-@import "./search/search-filters.css";
-@import "./search/search-view.css";
+@import "./search/index.css";
 
 /* === SECURITY COMPONENTS === */
-@import "./security/security-status.css";
-@import "./security/audit-log.css";
-@import "./security/biometric-setup.css";
-@import "./security/two-factor-setup.css";
-@import "./security/security-view.css";
+@import "./security/index.css";
 
 /* === SETTINGS COMPONENTS === */
-@import "./settings/settings-view.css";
+@import "./settings/index.css";
 
 /* === ADMIN COMPONENTS === */
-@import "./admin/admin-dashboard.css";
-@import "./admin/metric-card.css"; 
+@import "./admin/index.css"; 

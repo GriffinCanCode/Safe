@@ -1,0 +1,20 @@
+/**
+ * Common Components Index
+ * Reusable UI components and patterns
+ */
+
+/* === FORM COMPONENTS === */
+@import "./buttons.css";
+@import "./inputs.css";
+@import "./dropdowns.css";
+
+/* === FEEDBACK COMPONENTS === */
+@import "./alerts.css";
+@import "./badges.css";
+@import "./tooltips.css";
+@import "./modals.css";
+
+/* === LOADING COMPONENTS === */
+@import "./loading.css";
+@import "./loading-spinner.css";
+@import "./progress-bar.css";

@@ -1,7 +1,7 @@
 <template>
   <div class="password-list">
     <!-- Header with Search and Add Button -->
-    <div class="list-header">
+    <div ref="headerElement" class="list-header">
       <div class="search-section">
         <BaseInput
           v-model="searchQuery"
@@ -28,16 +28,18 @@
         </div>
       </div>
       <BaseButton
+        ref="addButtonElement"
         variant="primary"
         @click="$emit('add-password')"
         icon="plus"
+        class="animate-button-hover"
       >
         Add Password
       </BaseButton>
     </div>
 
     <!-- List Controls -->
-    <div class="list-controls" v-if="passwords.length > 0">
+    <div ref="controlsElement" class="list-controls" v-if="passwords.length > 0">
       <div class="view-options">
         <button
           @click="viewMode = 'grid'"
@@ -80,13 +82,13 @@
     </div>
 
     <!-- Loading State -->
-    <div v-if="loading" class="loading-state">
+    <div v-if="loading" ref="loadingElement" class="loading-state animate-fade-in">
       <LoadingSpinner />
       <p class="loading-text">Loading passwords...</p>
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="passwords.length === 0" class="empty-state">
+    <div v-else-if="passwords.length === 0" ref="emptyStateElement" class="empty-state animate-fade-in">
       <svg class="empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
       </svg>
@@ -99,17 +101,20 @@
         variant="primary"
         @click="$emit('add-password')"
         icon="plus"
+        class="animate-button-hover"
       >
         Add Your First Password
       </BaseButton>
     </div>
 
     <!-- Password Items -->
-    <div v-else-if="viewMode === 'grid'" class="password-grid">
+    <div v-else-if="viewMode === 'grid'" ref="gridContainerElement" class="password-grid animate-stagger-in">
       <PasswordItem
-        v-for="password in sortedPasswords"
+        v-for="(password, index) in sortedPasswords"
         :key="password.id"
-        :item="password"
+        :item="convertToVaultItem(password)"
+        :style="{ '--stagger-delay': `${index * 0.1}s` }"
+        class="animate-slide-up-stagger"
         @edit="$emit('edit-password', password)"
         @delete="handleDelete"
         @copy-username="copyToClipboard"
@@ -119,11 +124,13 @@
       />
     </div>
 
-    <div v-else class="password-list-view">
+    <div v-else ref="listContainerElement" class="password-list-view animate-stagger-in">
       <PasswordItem
-        v-for="password in sortedPasswords"
+        v-for="(password, index) in sortedPasswords"
         :key="password.id"
-        :item="password"
+        :item="convertToVaultItem(password)"
+        :style="{ '--stagger-delay': `${index * 0.05}s` }"
+        class="animate-slide-up-stagger"
         @edit="$emit('edit-password', password)"
         @delete="handleDelete"
         @copy-username="copyToClipboard"
@@ -134,11 +141,12 @@
     </div>
 
     <!-- Load More Button -->
-    <div v-if="hasMore" class="load-more-section">
+    <div v-if="hasMore" ref="loadMoreElement" class="load-more-section">
       <BaseButton
         variant="outline"
         @click="loadMore"
         :loading="loadingMore"
+        class="animate-button-hover"
         block
       >
         Load More Passwords
@@ -148,12 +156,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import BaseInput from '@/components/common/BaseInput.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import PasswordItem from './PasswordItem.vue'
 import { vaultService } from '@/services/vault.service'
+import { useEnhancedAnimations } from '@/composables/useEnhancedAnimations'
 import type { PasswordVaultItem, VaultSearchFilters } from '@/services/vault.service'
 
 interface Emits {
@@ -162,6 +171,19 @@ interface Emits {
 }
 
 const emit = defineEmits<Emits>()
+
+// Template refs
+const headerElement = ref<HTMLElement>()
+const controlsElement = ref<HTMLElement>()
+const loadingElement = ref<HTMLElement>()
+const emptyStateElement = ref<HTMLElement>()
+const gridContainerElement = ref<HTMLElement>()
+const listContainerElement = ref<HTMLElement>()
+const loadMoreElement = ref<HTMLElement>()
+const addButtonElement = ref<HTMLElement>()
+
+// Animation composable
+const { shouldAnimate } = useEnhancedAnimations()
 
 // State
 const loading = ref(false)
@@ -178,12 +200,25 @@ const hasMore = ref(false)
 const currentCursor = ref<string | undefined>(undefined)
 
 // Computed
-const searchFilters = computed((): VaultSearchFilters => ({
-  query: searchQuery.value || undefined,
-  type: 'password',
-  folder: selectedFolder.value || undefined,
-  favorite: showFavoritesOnly.value || undefined
-}))
+const searchFilters = computed((): VaultSearchFilters => {
+  const filters: VaultSearchFilters = {
+    type: 'password'
+  }
+  
+  if (searchQuery.value) {
+    filters.query = searchQuery.value
+  }
+  
+  if (selectedFolder.value) {
+    filters.folder = selectedFolder.value
+  }
+  
+  if (showFavoritesOnly.value) {
+    filters.favorite = true
+  }
+  
+  return filters
+})
 
 const sortedPasswords = computed(() => {
   const sorted = [...passwords.value].sort((a, b) => {
@@ -217,10 +252,15 @@ const loadPasswords = async (append = false) => {
   else loadingMore.value = true
 
   try {
-    const result = await vaultService.searchItems(searchFilters.value, {
-      limit: 20,
-      cursor: append ? currentCursor.value : undefined
-    })
+    const searchOptions: any = {
+      limit: 20
+    }
+    
+    if (append && currentCursor.value) {
+      searchOptions.cursor = currentCursor.value
+    }
+    
+    const result = await vaultService.searchItems(searchFilters.value, searchOptions)
 
     const passwordItems = result.items.filter(item => item.type === 'password') as PasswordVaultItem[]
 
@@ -255,14 +295,31 @@ const loadFolders = async () => {
   }
 }
 
-const handleDelete = async (id: string) => {
+// Convert PasswordVaultItem to VaultItem for PasswordItem component
+const convertToVaultItem = (item: PasswordVaultItem) => ({
+  id: item.id,
+  name: item.name,
+  username: item.username,
+  password: item.password,
+  website: item.website,
+  iconUrl: item.iconUrl,
+  isFavorite: item.favorite || false,
+  tags: item.tags || [],
+  notes: item.notes,
+  createdAt: new Date(item.createdAt),
+  updatedAt: new Date(item.updatedAt),
+  passwordStrength: item.passwordStrength,
+  lastUsed: item.lastUsed ? new Date(item.lastUsed) : undefined
+})
+
+const handleDelete = async (vaultItem: any) => {
   if (!confirm('Are you sure you want to delete this password? This action cannot be undone.')) {
     return
   }
 
   try {
-    await vaultService.deleteItem(id)
-    passwords.value = passwords.value.filter((p: PasswordVaultItem) => p.id !== id)
+    await vaultService.deleteItem(vaultItem.id)
+    passwords.value = passwords.value.filter((p: PasswordVaultItem) => p.id !== vaultItem.id)
     // TODO: Show success notification
   } catch (error) {
     console.error('Failed to delete password:', error)
@@ -270,13 +327,13 @@ const handleDelete = async (id: string) => {
   }
 }
 
-const toggleFavorite = async (item: PasswordVaultItem) => {
+const toggleFavorite = async (vaultItem: any, favorite: boolean) => {
   try {
-    const updated = await vaultService.updateItem(item.id, {
-      favorite: !item.favorite
+    const updated = await vaultService.updateItem(vaultItem.id, {
+      favorite
     }) as PasswordVaultItem
 
-    const index = passwords.value.findIndex((p: PasswordVaultItem) => p.id === item.id)
+    const index = passwords.value.findIndex((p: PasswordVaultItem) => p.id === vaultItem.id)
     if (index > -1) {
       passwords.value[index] = updated
     }
@@ -296,10 +353,31 @@ const copyToClipboard = async (text: string) => {
   }
 }
 
+// Setup entrance animations
+const setupAnimations = () => {
+  if (!shouldAnimate.value) return
+  
+  nextTick(() => {
+    // Animate header entrance
+    if (headerElement.value) {
+      headerElement.value.classList.add('animate-slide-down')
+    }
+    
+    // Animate controls entrance
+    if (controlsElement.value) {
+      controlsElement.value.classList.add('animate-fade-in')
+    }
+  })
+}
+
 // Watchers
 watch([searchQuery, selectedFolder, showFavoritesOnly], () => {
   loadPasswords()
 }, { deep: true })
+
+watch(passwords, () => {
+  setupAnimations()
+}, { flush: 'post' })
 
 // Lifecycle
 onMounted(async () => {
@@ -307,154 +385,8 @@ onMounted(async () => {
     loadPasswords(),
     loadFolders()
   ])
+  setupAnimations()
 })
 </script>
 
-<style scoped>
-.password-list {
-  @apply space-y-6;
-}
 
-.list-header {
-  @apply flex items-center justify-between gap-4 flex-wrap;
-}
-
-.search-section {
-  @apply flex items-center gap-3 flex-1 min-w-0;
-}
-
-.search-input {
-  @apply flex-1 min-w-0;
-}
-
-.filters {
-  @apply flex items-center gap-2;
-}
-
-.filter-select {
-  @apply px-3 py-2 border border-neutral-300 rounded-lg text-sm;
-  @apply focus:ring-2 focus:ring-primary-500 focus:border-primary-500;
-}
-
-.filter-btn {
-  @apply p-2 border border-neutral-300 rounded-lg text-neutral-600;
-  @apply hover:bg-neutral-50 transition-colors;
-}
-
-.filter-btn.active {
-  @apply bg-primary-50 border-primary-300 text-primary-600;
-}
-
-.list-controls {
-  @apply flex items-center justify-between py-4 border-b border-neutral-200;
-}
-
-.view-options {
-  @apply flex items-center gap-1 p-1 bg-neutral-100 rounded-lg;
-}
-
-.view-btn {
-  @apply p-2 rounded-md text-neutral-600 hover:text-neutral-900 transition-colors;
-}
-
-.view-btn.active {
-  @apply bg-white text-primary-600 shadow-sm;
-}
-
-.sort-options {
-  @apply flex items-center gap-2;
-}
-
-.sort-label {
-  @apply text-sm font-medium text-neutral-700;
-}
-
-.sort-select {
-  @apply px-3 py-1 border border-neutral-300 rounded text-sm;
-  @apply focus:ring-1 focus:ring-primary-500 focus:border-primary-500;
-}
-
-.sort-direction-btn {
-  @apply p-1 text-neutral-600 hover:text-neutral-900 transition-colors;
-}
-
-.loading-state {
-  @apply flex flex-col items-center justify-center py-12 text-neutral-500;
-}
-
-.loading-text {
-  @apply mt-3 text-sm;
-}
-
-.empty-state {
-  @apply text-center py-12;
-}
-
-.empty-icon {
-  @apply w-16 h-16 mx-auto text-neutral-400 mb-4;
-}
-
-.empty-title {
-  @apply text-lg font-semibold text-neutral-900 mb-2;
-}
-
-.empty-description {
-  @apply text-neutral-600 mb-6 max-w-md mx-auto;
-}
-
-.password-grid {
-  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4;
-}
-
-.password-list-view {
-  @apply space-y-2;
-}
-
-.load-more-section {
-  @apply pt-6;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .filter-select,
-  .sort-select {
-    @apply bg-neutral-700 border-neutral-600 text-neutral-100;
-  }
-
-  .filter-btn {
-    @apply border-neutral-600 text-neutral-400;
-  }
-
-  .filter-btn:hover {
-    @apply bg-neutral-700;
-  }
-
-  .filter-btn.active {
-    @apply bg-primary-900 border-primary-700 text-primary-300;
-  }
-
-  .list-controls {
-    @apply border-neutral-700;
-  }
-
-  .view-options {
-    @apply bg-neutral-700;
-  }
-
-  .view-btn.active {
-    @apply bg-neutral-600 text-primary-400;
-  }
-
-  .sort-label {
-    @apply text-neutral-300;
-  }
-
-  .empty-title {
-    @apply text-neutral-100;
-  }
-
-  .empty-description {
-    @apply text-neutral-400;
-  }
-}
-</style>

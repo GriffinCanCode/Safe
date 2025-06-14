@@ -1,0 +1,598 @@
+/**
+ * Authentication Success Component Styles
+ * Enhanced success states for biometric and password authentication
+ * Tailwind CSS v4 with OKLCH colors, animations, and accessibility features
+ */
+
+/* === SUCCESS CONTAINER === */
+.auth-success {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-8);
+  background: linear-gradient(135deg, 
+    var(--color-success-50) 0%, 
+    var(--color-success-100) 50%, 
+    var(--color-primary-50) 100%);
+  border: 2px solid var(--color-success-200);
+  border-radius: var(--radius-2xl);
+  text-align: center;
+  overflow: hidden;
+  animation: successSlideIn var(--duration-500) var(--ease-out);
+}
+
+.auth-success::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.4), 
+    transparent);
+  animation: successShimmer 2s var(--ease-out) 0.5s;
+}
+
+.auth-success::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, 
+    var(--color-success-500), 
+    var(--color-primary-500), 
+    var(--color-success-500));
+  border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+  animation: successGlow 3s var(--ease-in-out) infinite;
+}
+
+/* === SUCCESS ICON === */
+.auth-success-icon {
+  position: relative;
+  width: var(--space-20);
+  height: var(--space-20);
+  background: linear-gradient(135deg, 
+    var(--color-success-500), 
+    var(--color-success-600));
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 
+    0 0 0 4px var(--color-success-100),
+    0 0 0 8px var(--color-success-50),
+    var(--shadow-xl);
+  animation: successIconPulse 2s var(--ease-out);
+  z-index: 1;
+}
+
+.auth-success-icon::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border: 2px solid var(--color-success-300);
+  border-radius: var(--radius-full);
+  animation: successRipple 2s var(--ease-out) infinite;
+  opacity: 0;
+}
+
+.auth-success-icon svg {
+  width: var(--space-10);
+  height: var(--space-10);
+  color: var(--color-white);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  animation: successCheckmark 0.6s var(--ease-out) 0.3s both;
+}
+
+/* === SUCCESS CONTENT === */
+.auth-success-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 400px;
+}
+
+.auth-success-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-success-700);
+  margin: 0;
+  animation: successTextSlide 0.6s var(--ease-out) 0.4s both;
+}
+
+.auth-success-subtitle {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-success-600);
+  margin: 0;
+  animation: successTextSlide 0.6s var(--ease-out) 0.5s both;
+}
+
+.auth-success-message {
+  font-size: var(--font-size-base);
+  color: var(--color-neutral-700);
+  line-height: var(--line-height-relaxed);
+  margin: 0;
+  animation: successTextSlide 0.6s var(--ease-out) 0.6s both;
+}
+
+/* === SUCCESS DETAILS === */
+.auth-success-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+  margin-top: var(--space-2);
+}
+
+.auth-success-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  background-color: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--color-success-200);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(8px);
+  animation: successDetailSlide 0.6s var(--ease-out) 0.7s both;
+}
+
+.auth-success-info-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-neutral-600);
+}
+
+.auth-success-info-value {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-success-700);
+}
+
+/* === SUCCESS ACTIONS === */
+.auth-success-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  margin-top: var(--space-4);
+  animation: successActionSlide 0.6s var(--ease-out) 0.8s both;
+}
+
+.auth-success-primary-action {
+  background: linear-gradient(135deg, 
+    var(--color-success-600), 
+    var(--color-success-700));
+  color: var(--color-white);
+  border: none;
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--duration-200) var(--ease-out);
+  box-shadow: var(--shadow-md);
+}
+
+.auth-success-primary-action:hover {
+  background: linear-gradient(135deg, 
+    var(--color-success-700), 
+    var(--color-success-800));
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-1px);
+}
+
+.auth-success-primary-action:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.auth-success-secondary-action {
+  background-color: transparent;
+  color: var(--color-success-600);
+  border: 1px solid var(--color-success-300);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--duration-200) var(--ease-out);
+}
+
+.auth-success-secondary-action:hover {
+  background-color: var(--color-success-50);
+  border-color: var(--color-success-400);
+  color: var(--color-success-700);
+}
+
+/* === SUCCESS VARIANTS === */
+.auth-success.biometric {
+  background: linear-gradient(135deg, 
+    var(--color-primary-50) 0%, 
+    var(--color-success-50) 50%, 
+    var(--color-primary-100) 100%);
+  border-color: var(--color-primary-300);
+}
+
+.auth-success.biometric::after {
+  background: linear-gradient(90deg, 
+    var(--color-primary-500), 
+    var(--color-success-500), 
+    var(--color-primary-500));
+}
+
+.auth-success.biometric .auth-success-icon {
+  background: linear-gradient(135deg, 
+    var(--color-primary-500), 
+    var(--color-primary-600));
+  box-shadow: 
+    0 0 0 4px var(--color-primary-100),
+    0 0 0 8px var(--color-primary-50),
+    var(--shadow-xl);
+}
+
+.auth-success.biometric .auth-success-icon::before {
+  border-color: var(--color-primary-300);
+}
+
+.auth-success.password {
+  background: linear-gradient(135deg, 
+    var(--color-success-50) 0%, 
+    var(--color-success-100) 100%);
+}
+
+.auth-success.quick {
+  animation-duration: var(--duration-300);
+}
+
+.auth-success.quick .auth-success-icon {
+  animation-duration: var(--duration-500);
+}
+
+/* === SUCCESS FEEDBACK === */
+.auth-success-feedback {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--color-success-100);
+  border: 1px solid var(--color-success-300);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-success-700);
+  animation: successFeedbackSlide 0.6s var(--ease-out) 0.9s both;
+}
+
+.auth-success-feedback-icon {
+  width: var(--space-4);
+  height: var(--space-4);
+  color: var(--color-success-600);
+}
+
+/* === PROGRESS INDICATOR === */
+.auth-success-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background-color: var(--color-success-500);
+  border-radius: 0 0 var(--radius-2xl) var(--radius-2xl);
+  animation: successProgress 3s linear;
+}
+
+/* === DARK MODE SUPPORT === */
+@media (prefers-color-scheme: dark) {
+  .auth-success {
+    background: linear-gradient(135deg, 
+      color-mix(in oklch, var(--color-success-900) 30%, transparent) 0%, 
+      color-mix(in oklch, var(--color-success-800) 20%, transparent) 50%, 
+      color-mix(in oklch, var(--color-primary-900) 30%, transparent) 100%);
+    border-color: var(--color-success-700);
+  }
+
+  .auth-success-title {
+    color: var(--color-success-300);
+  }
+
+  .auth-success-subtitle {
+    color: var(--color-success-400);
+  }
+
+  .auth-success-message {
+    color: var(--color-neutral-300);
+  }
+
+  .auth-success-info {
+    background-color: rgba(0, 0, 0, 0.3);
+    border-color: var(--color-success-700);
+  }
+
+  .auth-success-info-label {
+    color: var(--color-neutral-400);
+  }
+
+  .auth-success-info-value {
+    color: var(--color-success-300);
+  }
+
+  .auth-success-secondary-action {
+    color: var(--color-success-400);
+    border-color: var(--color-success-600);
+  }
+
+  .auth-success-secondary-action:hover {
+    background-color: color-mix(in oklch, var(--color-success-900) 20%, transparent);
+    border-color: var(--color-success-500);
+    color: var(--color-success-300);
+  }
+
+  .auth-success-feedback {
+    background-color: color-mix(in oklch, var(--color-success-900) 30%, transparent);
+    border-color: var(--color-success-600);
+    color: var(--color-success-300);
+  }
+
+  .auth-success-feedback-icon {
+    color: var(--color-success-400);
+  }
+
+  .auth-success.biometric {
+    background: linear-gradient(135deg, 
+      color-mix(in oklch, var(--color-primary-900) 30%, transparent) 0%, 
+      color-mix(in oklch, var(--color-success-900) 20%, transparent) 50%, 
+      color-mix(in oklch, var(--color-primary-800) 30%, transparent) 100%);
+    border-color: var(--color-primary-600);
+  }
+
+  .auth-success.biometric .auth-success-icon {
+    background: linear-gradient(135deg, 
+      var(--color-primary-600), 
+      var(--color-primary-700));
+    box-shadow: 
+      0 0 0 4px color-mix(in oklch, var(--color-primary-900) 50%, transparent),
+      0 0 0 8px color-mix(in oklch, var(--color-primary-900) 20%, transparent),
+      var(--shadow-xl);
+  }
+
+  .auth-success.biometric .auth-success-icon::before {
+    border-color: var(--color-primary-500);
+  }
+}
+
+/* === ANIMATIONS === */
+@keyframes successSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes successShimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+@keyframes successGlow {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 20px var(--color-success-300);
+  }
+  50% {
+    opacity: 0.7;
+    box-shadow: 0 0 30px var(--color-success-400);
+  }
+}
+
+@keyframes successIconPulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes successRipple {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes successCheckmark {
+  0% {
+    transform: scale(0) rotate(-45deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(-45deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes successTextSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes successDetailSlide {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes successActionSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes successFeedbackSlide {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes successProgress {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+/* === RESPONSIVE DESIGN === */
+@container (max-width: 480px) {
+  .auth-success {
+    padding: var(--space-6);
+    gap: var(--space-4);
+  }
+
+  .auth-success-icon {
+    width: var(--space-16);
+    height: var(--space-16);
+  }
+
+  .auth-success-icon svg {
+    width: var(--space-8);
+    height: var(--space-8);
+  }
+
+  .auth-success-title {
+    font-size: var(--font-size-xl);
+  }
+
+  .auth-success-subtitle {
+    font-size: var(--font-size-base);
+  }
+
+  .auth-success-message {
+    font-size: var(--font-size-sm);
+  }
+
+  .auth-success-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
+  }
+}
+
+/* === REDUCED MOTION === */
+@media (prefers-reduced-motion: reduce) {
+  .auth-success,
+  .auth-success::before,
+  .auth-success::after,
+  .auth-success-icon,
+  .auth-success-icon::before,
+  .auth-success-icon svg,
+  .auth-success-title,
+  .auth-success-subtitle,
+  .auth-success-message,
+  .auth-success-info,
+  .auth-success-actions,
+  .auth-success-feedback,
+  .auth-success-progress {
+    animation: none;
+  }
+
+  .auth-success-primary-action:hover {
+    transform: none;
+  }
+}
+
+/* === HIGH CONTRAST === */
+@media (prefers-contrast: high) {
+  .auth-success {
+    border-width: 3px;
+  }
+
+  .auth-success-icon {
+    box-shadow: 
+      0 0 0 4px var(--color-success-200),
+      0 0 0 8px var(--color-success-100),
+      0 0 0 12px var(--color-neutral-900);
+  }
+
+  .auth-success-info,
+  .auth-success-feedback {
+    border-width: 2px;
+  }
+
+  .auth-success-primary-action,
+  .auth-success-secondary-action {
+    border-width: 2px;
+  }
+}
+
+/* === PRINT STYLES === */
+@media print {
+  .auth-success {
+    background: none !important;
+    border: 2px solid #000 !important;
+    box-shadow: none !important;
+  }
+
+  .auth-success::before,
+  .auth-success::after {
+    display: none !important;
+  }
+
+  .auth-success-icon {
+    background: #000 !important;
+    color: #fff !important;
+    box-shadow: none !important;
+  }
+
+  .auth-success-progress {
+    display: none !important;
+  }
+} 

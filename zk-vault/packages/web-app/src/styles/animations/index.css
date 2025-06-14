@@ -6,4 +6,5 @@
 @import "./keyframes.css";
 @import "./page-transitions.css";
 @import "./loading-animations.css";
-@import "./micro-interactions.css"; 
+@import "./micro-interactions.css";
+@import "./framer-motion.css"; 

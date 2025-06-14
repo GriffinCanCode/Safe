@@ -1,0 +1,122 @@
+/**
+ * Page Transitions
+ * Optimized for performance with GPU acceleration and reduced layout shifts
+ */
+
+/* Vue Router Transitions */
+.page-enter-active,
+.page-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateZ(0); /* Force GPU acceleration */
+  will-change: transform, opacity;
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateX(20px) translateZ(0);
+}
+
+.page-leave-to {
+  opacity: 0;
+  transform: translateX(-20px) translateZ(0);
+}
+
+/* Fade Transition */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+  will-change: opacity;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Slide Transitions */
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform: translateZ(0);
+  will-change: transform, opacity;
+}
+
+.slide-up-enter-from {
+  opacity: 0;
+  transform: translateY(30px) translateZ(0);
+}
+
+.slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(-30px) translateZ(0);
+}
+
+/* Scale Transition */
+.scale-enter-active,
+.scale-leave-active {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateZ(0);
+  will-change: transform, opacity;
+}
+
+.scale-enter-from {
+  opacity: 0;
+  transform: scale(0.9) translateZ(0);
+}
+
+.scale-leave-to {
+  opacity: 0;
+  transform: scale(1.1) translateZ(0);
+}
+
+/* Modal/Dialog Transitions */
+.modal-enter-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-leave-active {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+  transform: scale(0.95) translateZ(0);
+}
+
+/* Backdrop transitions */
+.backdrop-enter-active,
+.backdrop-leave-active {
+  transition: opacity 0.3s ease;
+  will-change: opacity;
+}
+
+.backdrop-enter-from,
+.backdrop-leave-to {
+  opacity: 0;
+}
+
+/* Performance optimizations */
+@media (prefers-reduced-motion: reduce) {
+  .page-enter-active,
+  .page-leave-active,
+  .fade-enter-active,
+  .fade-leave-active,
+  .slide-up-enter-active,
+  .slide-up-leave-active,
+  .scale-enter-active,
+  .scale-leave-active,
+  .modal-enter-active,
+  .modal-leave-active {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Container query optimizations */
+@container (max-width: 768px) {
+  .page-enter-from,
+  .page-leave-to {
+    transform: translateY(20px) translateZ(0);
+  }
+} 

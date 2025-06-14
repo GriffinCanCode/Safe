@@ -1,6 +1,14 @@
-/* ===================================================================
-   VAULT COMPONENTS
-   ================================================================ */
+/**
+ * Vault Components Index
+ * Styles for password management and vault features
+ */
 
+/* === PASSWORD MANAGEMENT === */
 @import "./password-editor.css";
+@import "./password-item.css";
+@import "./password-list.css";
+@import "./password-generator.css";
+@import "./password-strength-meter.css";
+
+/* === VAULT DASHBOARD === */
 @import "./vault-dashboard.css"; 

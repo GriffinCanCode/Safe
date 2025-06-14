@@ -13,6 +13,17 @@ export default defineConfig({
     }),
   ],
 
+  // CSS Processing Configuration
+  css: {
+    postcss: './postcss.config.mjs',
+    devSourcemap: true,
+    preprocessorOptions: {
+      css: {
+        charset: false,
+      },
+    },
+  },
+
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),
@@ -45,6 +56,8 @@ export default defineConfig({
   build: {
     target: 'es2020',
     sourcemap: true,
+    cssCodeSplit: true,
+    cssMinify: 'esbuild',
     commonjsOptions: {
       include: [/node_modules/, /packages\/crypto\/dist/, /packages\/shared\/dist/],
       transformMixedEsModules: true,
@@ -72,6 +85,26 @@ export default defineConfig({
           crypto: ['@zk-vault/crypto'],
           shared: ['@zk-vault/shared'],
           workers: ['comlink'],
+          // Separate CSS chunk for better caching
+          styles: ['@/styles/index.css'],
+        },
+        // Optimize asset naming for better caching
+        assetFileNames: (assetInfo) => {
+          if (!assetInfo.names || assetInfo.names.length === 0) return 'assets/[name]-[hash][extname]';
+          
+          const fileName = assetInfo.names[0];
+          const info = fileName.split('.');
+          const ext = info[info.length - 1];
+          if (/\.(css)$/.test(fileName)) {
+            return `styles/[name]-[hash].${ext}`;
+          }
+          if (/\.(png|jpe?g|svg|gif|tiff|bmp|ico)$/i.test(fileName)) {
+            return `images/[name]-[hash].${ext}`;
+          }
+          if (/\.(woff2?|eot|ttf|otf)$/i.test(fileName)) {
+            return `fonts/[name]-[hash].${ext}`;
+          }
+          return `assets/[name]-[hash].${ext}`;
         },
       },
     },

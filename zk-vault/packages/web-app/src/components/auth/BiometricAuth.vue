@@ -98,9 +98,46 @@
 
     <!-- Success State -->
     <div v-else-if="currentStep === 'success'" class="auth-content">
-      <div class="success-message">
-        <h3 class="success-title">Authentication Successful!</h3>
-        <p class="success-text">You have been successfully authenticated using biometrics.</p>
+      <div class="auth-success biometric">
+        <div class="auth-success-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        
+        <div class="auth-success-content">
+          <h3 class="auth-success-title">Authentication Successful!</h3>
+          <p class="auth-success-subtitle">Access Granted</p>
+          <p class="auth-success-message">You have been successfully authenticated using biometrics.</p>
+        </div>
+
+        <div class="auth-success-details">
+          <div class="auth-success-info">
+            <span class="auth-success-info-label">Authentication Method</span>
+            <span class="auth-success-info-value">{{ authSuccess.successInfo.value.method }}</span>
+          </div>
+          <div class="auth-success-info">
+            <span class="auth-success-info-label">Security Level</span>
+            <span class="auth-success-info-value">{{ authSuccess.successInfo.value.securityLevel }}</span>
+          </div>
+          <div class="auth-success-info">
+            <span class="auth-success-info-label">Session Duration</span>
+            <span class="auth-success-info-value">{{ authSuccess.successInfo.value.sessionDuration }}</span>
+          </div>
+          <div v-if="authSuccess.successInfo.value.deviceInfo" class="auth-success-info">
+            <span class="auth-success-info-label">Device</span>
+            <span class="auth-success-info-value">{{ authSuccess.successInfo.value.deviceInfo }}</span>
+          </div>
+        </div>
+
+        <div v-if="authSuccess.showFeedback.value" class="auth-success-feedback">
+          <svg class="auth-success-feedback-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="authSuccess.feedbackIcon.value" />
+          </svg>
+          <span>{{ authSuccess.feedbackMessage.value }}</span>
+        </div>
+
+        <div class="auth-success-progress"></div>
       </div>
     </div>
 
@@ -194,6 +231,7 @@ import { ref, computed, onMounted } from 'vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import { formatRelativeTime } from '@/utils/helpers'
+import { useAuthSuccess } from '@/composables/useAuthSuccess'
 
 interface BiometricMethod {
   type: 'fingerprint' | 'face' | 'security-key'
@@ -239,6 +277,14 @@ const settingUp = ref(false)
 const canCancel = ref(true)
 const retryCount = ref(0)
 const maxRetries = 3
+
+// Auth success composable
+const authSuccess = useAuthSuccess({ 
+  type: 'biometric',
+  autoRedirect: true,
+  redirectDelay: 2500,
+  showProgress: true
+})
 
 // Mock data
 const availableMethods = ref<BiometricMethod[]>([
@@ -346,6 +392,13 @@ const startAuthentication = async () => {
     const credential = await authenticate()
     
     currentStep.value = 'success'
+    
+    // Show enhanced success animation
+    await authSuccess.show({
+      autoRedirect: true,
+      redirectDelay: 2500
+    })
+    
     setTimeout(() => {
       emit('success', credential)
     }, 1500)
@@ -549,17 +602,8 @@ onMounted(() => {
   @apply text-neutral-600;
 }
 
-.success-message,
 .error-message {
   @apply text-center space-y-2 py-4;
-}
-
-.success-title {
-  @apply text-lg font-semibold text-success-600;
-}
-
-.success-text {
-  @apply text-neutral-600;
 }
 
 .error-title {
@@ -696,7 +740,6 @@ onMounted(() => {
     @apply text-neutral-400;
   }
   
-  .success-text,
   .error-text {
     @apply text-neutral-400;
   }

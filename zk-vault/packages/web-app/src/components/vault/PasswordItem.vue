@@ -1,10 +1,18 @@
 <template>
-  <div class="password-item" :class="itemClasses">
+  <div 
+    ref="itemElement"
+    class="password-item card-lift" 
+    :class="itemClasses"
+  >
     <!-- Main Content -->
     <div class="item-content" @click="handleItemClick">
       <!-- Icon and Info -->
       <div class="item-info">
-        <div class="item-icon" :class="iconClasses">
+        <div 
+          ref="iconElement"
+          class="item-icon" 
+          :class="iconClasses"
+        >
           <img
             v-if="item.iconUrl"
             :src="item.iconUrl"
@@ -36,6 +44,7 @@
         <div v-if="passwordStrength" class="strength-indicator" :class="strengthClasses">
           <div class="strength-bar">
             <div 
+              ref="strengthBarElement"
               class="strength-fill dynamic-progress" 
               :style="{ '--progress-width': `${passwordStrength}%` }" 
             />
@@ -61,7 +70,8 @@
         <!-- Favorite Star -->
         <button
           v-if="showFavorite"
-          class="favorite-button"
+          ref="favoriteButtonElement"
+          class="favorite-button icon-bounce"
           :class="{ 'favorited': item.isFavorite }"
           @click.stop="toggleFavorite"
           :title="item.isFavorite ? 'Remove from favorites' : 'Add to favorites'"
@@ -76,48 +86,57 @@
     <!-- Quick Actions -->
     <div class="item-actions">
       <BaseButton
+        ref="copyUsernameButton"
         variant="ghost"
         size="sm"
         icon="copy"
         @click.stop="copyUsername"
         :disabled="!item.username"
         title="Copy username"
-        class="action-button"
+        class="action-button btn-hover"
       />
       
       <BaseButton
+        ref="copyPasswordButton"
         variant="ghost"
         size="sm"
         icon="key"
         @click.stop="copyPassword"
         title="Copy password"
-        class="action-button"
+        class="action-button btn-hover"
       />
       
       <BaseButton
         v-if="item.website"
+        ref="openWebsiteButton"
         variant="ghost"
         size="sm"
         icon="external-link"
         @click.stop="openWebsite"
         title="Open website"
-        class="action-button"
+        class="action-button btn-hover"
       />
       
       <!-- More Actions Menu -->
       <div class="more-actions-menu" v-if="showActions">
         <BaseButton
+          ref="moreActionsButton"
           variant="ghost"
           size="sm"
           icon="more-vertical"
           @click.stop="toggleActionsMenu"
           title="More actions"
-          class="action-button"
+          class="action-button btn-hover"
         />
         
-        <div v-if="showActionsMenu" class="actions-dropdown" @click.stop>
+        <div 
+          v-if="showActionsMenu" 
+          ref="actionsDropdownElement"
+          class="actions-dropdown animate-fade-in" 
+          @click.stop
+        >
           <button
-            class="dropdown-item"
+            class="dropdown-item btn-hover"
             @click="editItem"
           >
             <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,7 +146,7 @@
           </button>
           
           <button
-            class="dropdown-item"
+            class="dropdown-item btn-hover"
             @click="duplicateItem"
           >
             <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -137,7 +156,7 @@
           </button>
           
           <button
-            class="dropdown-item"
+            class="dropdown-item btn-hover"
             @click="shareItem"
           >
             <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,7 +168,7 @@
           <hr class="dropdown-divider" />
           
           <button
-            class="dropdown-item danger"
+            class="dropdown-item danger btn-hover"
             @click="deleteItem"
           >
             <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,7 +181,11 @@
     </div>
 
     <!-- Copy Success Toast -->
-    <div v-if="showCopySuccess" class="copy-toast">
+    <div 
+      v-if="showCopySuccess" 
+      ref="copyToastElement"
+      class="copy-toast animate-fade-in"
+    >
       <svg class="toast-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
       </svg>
@@ -221,6 +244,18 @@ const emit = defineEmits<{
   share: [item: VaultItem]
   favorite: [item: VaultItem, favorite: boolean]
 }>()
+
+// Template refs
+const itemElement = ref<HTMLElement>()
+const iconElement = ref<HTMLElement>()
+const strengthBarElement = ref<HTMLElement>()
+const favoriteButtonElement = ref<HTMLElement>()
+const copyUsernameButton = ref<HTMLElement>()
+const copyPasswordButton = ref<HTMLElement>()
+const openWebsiteButton = ref<HTMLElement>()
+const moreActionsButton = ref<HTMLElement>()
+const actionsDropdownElement = ref<HTMLElement>()
+const copyToastElement = ref<HTMLElement>()
 
 // State
 const showActionsMenu = ref(false)
@@ -316,6 +351,7 @@ const handleIconError = () => {
 const showCopyToast = (message: string) => {
   copySuccessMessage.value = message
   showCopySuccess.value = true
+  
   setTimeout(() => {
     showCopySuccess.value = false
   }, 2000)
@@ -387,253 +423,4 @@ onUnmounted(() => {
 })
 </script>
 
-<style scoped>
-.password-item {
-  @apply relative flex items-center justify-between p-4 bg-white rounded-lg border border-neutral-200;
-  @apply hover:border-neutral-300 hover:shadow-sm transition-all duration-200 cursor-pointer;
-}
 
-.password-item-selected {
-  @apply border-primary-500 bg-primary-50;
-}
-
-.password-item-compact {
-  @apply p-3;
-}
-
-.item-content {
-  @apply flex items-center gap-4 flex-1 min-w-0;
-}
-
-.item-info {
-  @apply flex items-center gap-3 flex-1 min-w-0;
-}
-
-.item-icon {
-  @apply w-10 h-10 rounded-lg bg-neutral-100 flex items-center justify-center shrink-0;
-}
-
-.icon-image {
-  @apply w-6 h-6 rounded;
-}
-
-.icon-fallback {
-  @apply w-5 h-5 text-neutral-500;
-}
-
-.icon-error .icon-fallback {
-  @apply text-neutral-400;
-}
-
-.item-details {
-  @apply flex-1 min-w-0 space-y-1;
-}
-
-.item-name {
-  @apply text-sm font-semibold text-neutral-900 truncate;
-}
-
-.item-username {
-  @apply text-sm text-neutral-600 truncate;
-}
-
-.item-meta {
-  @apply flex items-center gap-3 text-xs text-neutral-500;
-}
-
-.meta-website {
-  @apply truncate;
-}
-
-.meta-updated {
-  @apply whitespace-nowrap;
-}
-
-.item-indicators {
-  @apply flex items-center gap-3;
-}
-
-.strength-indicator {
-  @apply flex items-center gap-2;
-}
-
-.strength-bar {
-  @apply w-12 h-1.5 bg-neutral-200 rounded-full overflow-hidden;
-}
-
-.strength-fill {
-  @apply h-full transition-all duration-300;
-}
-
-.strength-weak .strength-fill {
-  @apply bg-danger-500;
-}
-
-.strength-fair .strength-fill {
-  @apply bg-warning-500;
-}
-
-.strength-good .strength-fill {
-  @apply bg-success-500;
-}
-
-.strength-text {
-  @apply text-xs font-medium;
-}
-
-.strength-weak .strength-text {
-  @apply text-danger-600;
-}
-
-.strength-fair .strength-text {
-  @apply text-warning-600;
-}
-
-.strength-good .strength-text {
-  @apply text-success-600;
-}
-
-.security-warnings {
-  @apply flex gap-1;
-}
-
-.warning-badge {
-  @apply w-4 h-4 rounded-full flex items-center justify-center;
-}
-
-.warning-badge.high {
-  @apply bg-danger-100 text-danger-600;
-}
-
-.warning-badge.medium {
-  @apply bg-warning-100 text-warning-600;
-}
-
-.warning-badge.low {
-  @apply bg-info-100 text-info-600;
-}
-
-.warning-icon {
-  @apply w-2.5 h-2.5;
-}
-
-.favorite-button {
-  @apply p-1 text-neutral-400 hover:text-warning-500 transition-colors duration-200;
-}
-
-.favorite-button.favorited {
-  @apply text-warning-500;
-}
-
-.star-icon {
-  @apply w-4 h-4;
-}
-
-.item-actions {
-  @apply flex items-center gap-1 shrink-0 relative;
-}
-
-.action-button {
-  @apply opacity-0 group-hover:opacity-100 transition-opacity duration-200;
-}
-
-.password-item:hover .action-button {
-  @apply opacity-100;
-}
-
-.more-actions-menu {
-  @apply relative;
-}
-
-.actions-dropdown {
-  @apply absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg border border-neutral-200 py-1 z-10;
-}
-
-.dropdown-item {
-  @apply w-full px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100;
-  @apply flex items-center gap-2 transition-colors duration-150;
-}
-
-.dropdown-item.danger {
-  @apply text-danger-700 hover:bg-danger-50;
-}
-
-.dropdown-icon {
-  @apply w-4 h-4;
-}
-
-.dropdown-divider {
-  @apply my-1 border-t border-neutral-200;
-}
-
-.copy-toast {
-  @apply absolute top-2 right-2 bg-success-600 text-white px-3 py-1 rounded-md text-sm;
-  @apply flex items-center gap-1 animate-fade-in-out;
-}
-
-.toast-icon {
-  @apply w-4 h-4;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .password-item {
-    @apply bg-neutral-800 border-neutral-700;
-    @apply hover:border-neutral-600;
-  }
-  
-  .password-item-selected {
-    @apply border-primary-400 bg-primary-900;
-  }
-  
-  .item-icon {
-    @apply bg-neutral-700;
-  }
-  
-  .icon-fallback {
-    @apply text-neutral-400;
-  }
-  
-  .item-name {
-    @apply text-neutral-100;
-  }
-  
-  .item-username {
-    @apply text-neutral-300;
-  }
-  
-  .item-meta {
-    @apply text-neutral-400;
-  }
-  
-  .strength-bar {
-    @apply bg-neutral-700;
-  }
-  
-  .actions-dropdown {
-    @apply bg-neutral-800 border-neutral-600;
-  }
-  
-  .dropdown-item {
-    @apply text-neutral-300 hover:bg-neutral-700;
-  }
-  
-  .dropdown-item.danger {
-    @apply text-danger-400 hover:bg-danger-900;
-  }
-  
-  .dropdown-divider {
-    @apply border-neutral-600;
-  }
-}
-
-/* Animations */
-@keyframes fade-in-out {
-  0%, 100% { opacity: 0; transform: translateY(-10px); }
-  10%, 90% { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fade-in-out {
-  animation: fade-in-out 2s ease-in-out;
-}
-</style>

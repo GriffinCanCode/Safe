@@ -1,25 +1,66 @@
 /**
  * ZK-Vault Styles Entry Point
- * Modern Tailwind CSS v4 Architecture with Component-Based Organization
+ * Tailwind CSS v4.1 Architecture with Component-Based Organization
+ * 
+ * @see https://tailwindcss.com/docs/installation/using-postcss
  */
 
-/* === CORE IMPORTS === */
+/* === TAILWIND CSS v4.1 CORE === */
 @import "tailwindcss";
 
 /* === THEME CONFIGURATION === */
+/* CSS-first theme configuration using @theme directive */
 @import "./theme/index.css";
 
 /* === BASE STYLES === */
+/* Foundational styles and resets */
 @import "./base/index.css";
 
 /* === LAYOUT STYLES === */
+/* Grid systems, containers, and layout utilities */
 @import "./layout/index.css";
 
 /* === COMPONENT STYLES === */
+/* Component-specific styles and variants */
 @import "./components/index.css";
 
 /* === UTILITIES === */
+/* Custom utility classes and helpers */
 @import "./utilities/index.css";
 
 /* === ANIMATIONS === */
-@import "./animations/index.css"; 
+/* Performance-optimized animations and transitions */
+@import "./animations/index.css";
+
+/* === PERFORMANCE OPTIMIZATIONS === */
+/* Critical CSS optimizations for better loading */
+@layer base {
+  /* Optimize font loading */
+  html {
+    font-display: swap;
+  }
+  
+  /* Improve scrolling performance */
+  * {
+    scroll-behavior: smooth;
+  }
+  
+  /* Optimize animations */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+  
+  /* Optimize rendering */
+  .password-item,
+  .vault-card,
+  .modal-content {
+    contain: layout style paint;
+    content-visibility: auto;
+  }
+} 

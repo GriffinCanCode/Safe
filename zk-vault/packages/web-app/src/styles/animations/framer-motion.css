@@ -1,0 +1,309 @@
+/**
+ * Framer Motion-style Animations
+ * CSS classes that work with useFramerMotion composable
+ */
+
+/* === MOTION VARIANTS === */
+.motion-fade-in {
+  opacity: 0;
+  transition: opacity var(--duration-300) var(--ease-out);
+}
+
+.motion-fade-in.animate {
+  opacity: 1;
+}
+
+.motion-slide-left {
+  opacity: 0;
+  transform: translateX(-100px);
+  transition: all var(--duration-400) var(--ease-out);
+}
+
+.motion-slide-left.animate {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.motion-slide-right {
+  opacity: 0;
+  transform: translateX(100px);
+  transition: all var(--duration-400) var(--ease-out);
+}
+
+.motion-slide-right.animate {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.motion-slide-up {
+  opacity: 0;
+  transform: translateY(100px);
+  transition: all var(--duration-400) var(--ease-out);
+}
+
+.motion-slide-up.animate {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.motion-slide-down {
+  opacity: 0;
+  transform: translateY(-100px);
+  transition: all var(--duration-400) var(--ease-out);
+}
+
+.motion-slide-down.animate {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.motion-scale-in {
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all var(--duration-300) cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.motion-scale-in.animate {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* === HOVER ANIMATIONS === */
+.motion-button-hover {
+  transform: scale(1);
+  transition: transform var(--duration-200) var(--ease-out);
+}
+
+.motion-button-hover:hover {
+  transform: scale(1.05);
+}
+
+.motion-button-hover:active {
+  transform: scale(0.95);
+}
+
+.motion-card-hover {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all var(--duration-300) var(--ease-out);
+}
+
+.motion-card-hover:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* === STAGGER ANIMATIONS === */
+.motion-stagger-container > * {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all var(--duration-500) cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.motion-stagger-container.animate > *:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.motion-stagger-container.animate > *:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.motion-stagger-container.animate > *:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.motion-stagger-container.animate > *:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+.motion-stagger-container.animate > *:nth-child(5) {
+  animation-delay: 0.5s;
+}
+
+.motion-stagger-container.animate > * {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* === GESTURE ANIMATIONS === */
+.motion-draggable {
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  transition: transform var(--duration-200) var(--ease-out);
+}
+
+.motion-draggable:active {
+  cursor: grabbing;
+}
+
+.motion-draggable.dragging {
+  z-index: var(--z-modal);
+  transition: none;
+}
+
+/* === LAYOUT ANIMATIONS === */
+.motion-layout {
+  transition: all var(--duration-300) var(--ease-out);
+}
+
+/* === ENTRANCE ANIMATIONS === */
+@keyframes motionFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes motionSlideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes motionSlideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes motionSlideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes motionSlideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes motionScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* === ANIMATION UTILITIES === */
+.motion-animate-fade-in {
+  animation: motionFadeIn var(--duration-300) var(--ease-out) forwards;
+}
+
+.motion-animate-slide-in-left {
+  animation: motionSlideInLeft var(--duration-400) var(--ease-out) forwards;
+}
+
+.motion-animate-slide-in-right {
+  animation: motionSlideInRight var(--duration-400) var(--ease-out) forwards;
+}
+
+.motion-animate-slide-in-up {
+  animation: motionSlideInUp var(--duration-400) var(--ease-out) forwards;
+}
+
+.motion-animate-slide-in-down {
+  animation: motionSlideInDown var(--duration-400) var(--ease-out) forwards;
+}
+
+.motion-animate-scale-in {
+  animation: motionScaleIn var(--duration-300) cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* === SPRING ANIMATIONS === */
+.motion-spring-gentle {
+  transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.motion-spring-wobbly {
+  transition-timing-function: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.motion-spring-stiff {
+  transition-timing-function: cubic-bezier(0.6, 0.04, 0.98, 0.335);
+}
+
+/* === DARK MODE ADAPTATIONS === */
+@media (prefers-color-scheme: dark) {
+  .motion-card-hover {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+  
+  .motion-card-hover:hover {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* === REDUCED MOTION === */
+@media (prefers-reduced-motion: reduce) {
+  .motion-fade-in,
+  .motion-slide-left,
+  .motion-slide-right,
+  .motion-slide-up,
+  .motion-slide-down,
+  .motion-scale-in,
+  .motion-button-hover,
+  .motion-card-hover,
+  .motion-stagger-container > *,
+  .motion-draggable,
+  .motion-layout {
+    transition: none !important;
+    animation: none !important;
+  }
+  
+  .motion-fade-in,
+  .motion-slide-left,
+  .motion-slide-right,
+  .motion-slide-up,
+  .motion-slide-down,
+  .motion-scale-in {
+    opacity: 1;
+    transform: none;
+  }
+  
+  .motion-stagger-container > * {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* === HIGH PERFORMANCE MODE === */
+.motion-gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.motion-gpu-accelerated.animating {
+  will-change: transform, opacity;
+}
+
+.motion-gpu-accelerated:not(.animating) {
+  will-change: auto;
+} 

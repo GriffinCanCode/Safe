@@ -1,0 +1,15 @@
+/**
+ * Authentication Components Index
+ * Styles for authentication forms and layouts
+ */
+
+/* === AUTHENTICATION LAYOUT === */
+@import "./auth-layout.css";
+@import "./auth-view.css";
+
+/* === AUTHENTICATION FORMS === */
+@import "./login-form.css";
+@import "./register-form.css";
+
+/* === AUTHENTICATION SUCCESS === */
+@import "./auth-success.css"; 

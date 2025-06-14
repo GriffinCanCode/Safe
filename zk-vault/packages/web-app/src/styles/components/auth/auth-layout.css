@@ -1,0 +1,121 @@
+/**
+ * Authentication Layout Styles
+ * Layout components for authentication pages
+ */
+
+/* === AUTH CONTAINER === */
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--color-primary-50) 0%, var(--color-primary-100) 100%);
+  padding: var(--space-4);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 28rem;
+  background: var(--color-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  padding: var(--space-8);
+  border: 1px solid var(--color-neutral-200);
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: var(--space-8);
+}
+
+.auth-logo {
+  width: var(--space-16);
+  height: var(--space-16);
+  margin: 0 auto var(--space-4);
+  display: block;
+}
+
+.auth-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.auth-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.auth-footer {
+  margin-top: var(--space-6);
+  text-align: center;
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-neutral-200);
+}
+
+.auth-link {
+  color: var(--color-primary-600);
+  text-decoration: none;
+  font-weight: var(--font-weight-medium);
+  transition: color var(--transition-normal);
+}
+
+.auth-link:hover {
+  color: var(--color-primary-700);
+  text-decoration: underline;
+}
+
+/* === DARK MODE === */
+@media (prefers-color-scheme: dark) {
+  .auth-container {
+    background: linear-gradient(135deg, var(--color-neutral-900) 0%, var(--color-neutral-800) 100%);
+  }
+  
+  .auth-card {
+    background: var(--color-neutral-800);
+    border-color: var(--color-neutral-700);
+    box-shadow: var(--shadow-2xl);
+  }
+  
+  .auth-title {
+    color: var(--color-white);
+  }
+  
+  .auth-subtitle {
+    color: var(--color-neutral-400);
+  }
+  
+  .auth-footer {
+    border-color: var(--color-neutral-700);
+  }
+  
+  .auth-link {
+    color: var(--color-primary-400);
+  }
+  
+  .auth-link:hover {
+    color: var(--color-primary-300);
+  }
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 640px) {
+  .auth-container {
+    padding: var(--space-2);
+  }
+  
+  .auth-card {
+    padding: var(--space-6);
+  }
+  
+  .auth-title {
+    font-size: var(--font-size-xl);
+  }
+} 
