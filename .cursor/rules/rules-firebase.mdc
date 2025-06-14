@@ -1,0 +1,290 @@
+---
+description: 
+globs: *firebase*
+alwaysApply: false
+---
+# Firebase Rules - ZK-Vault
+
+## Firebase Configuration Overview
+ZK-Vault uses **Firebase v10.7.0** with **Authentication**, **Firestore**, **Functions**, **Storage**, and **Hosting**. The project includes comprehensive emulator setup for local development.
+
+## Firebase Services Configuration
+
+### Project Structure (Based on firebase.json)
+```
+zk-vault/
+├── firebase.json              # Main Firebase configuration
+├── firestore.rules           # Firestore security rules
+├── storage.rules             # Storage security rules
+├── firestore.indexes.json    # Firestore composite indexes
+├── functions/                # Cloud Functions (Node.js)
+└── public/                   # Hosting static files
+```
+
+### Emulator Configuration (Ports from firebase.json)
+- **Auth**: Port 9099
+- **Functions**: Port 5001  
+- **Firestore**: Port 8080
+- **Hosting**: Port 5000
+- **PubSub**: Port 8085
+- **Storage**: Port 9199
+- **UI**: Enabled
+
+## Firebase SDK Integration
+
+### Firebase Initialization Pattern
+```typescript
+// src/plugins/firebase.ts
+import { initializeApp } from 'firebase/app'
+import { getAuth, connectAuthEmulator } from 'firebase/auth'
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore'
+import { getFunctions, connectFunctionsEmulator } from 'firebase/functions'
+import { getStorage, connectStorageEmulator } from 'firebase/storage'
+
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
+}
+
+export const app = initializeApp(firebaseConfig)
+export const auth = getAuth(app)
+export const db = getFirestore(app)
+export const functions = getFunctions(app)
+export const storage = getStorage(app)
+
+// Connect to emulators in development (only once)
+if (import.meta.env.DEV && !auth.config.emulatorConfig) {
+  connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true })
+  connectFirestoreEmulator(db, 'localhost', 8080)
+  connectFunctionsEmulator(functions, 'localhost', 5001)
+  connectStorageEmulator(storage, 'localhost', 9199)
+}
+```
+
+## Authentication Patterns
+
+### Auth Service Implementation
+```typescript
+// src/services/auth.ts
+import { 
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  updateProfile,
+  sendEmailVerification,
+  User as FirebaseUser
+} from 'firebase/auth'
+import { auth } from '@/plugins/firebase'
+
+export class AuthService {
+  static async login(email: string, password: string): Promise<ApiResponse<User>> {
+    try {
+      const credential = await signInWithEmailAndPassword(auth, email, password)
+      const user = await this.mapFirebaseUser(credential.user)
+      return { success: true, data: user }
+    } catch (error) {
+      return {
+        success: false,
+        message: this.getAuthErrorMessage(error),
+        data: null
+      }
+    }
+  }
+
+  static onAuthStateChange(callback: (user: User | null) => void): () => void {
+    return onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const user = await this.mapFirebaseUser(firebaseUser)
+        callback(user)
+      } else {
+        callback(null)
+      }
+    })
+  }
+
+  private static getAuthErrorMessage(error: any): string {
+    switch (error.code) {
+      case 'auth/user-not-found':
+        return 'No account found with this email address'
+      case 'auth/wrong-password':
+        return 'Incorrect password'
+      case 'auth/email-already-in-use':
+        return 'An account with this email already exists'
+      case 'auth/weak-password':
+        return 'Password should be at least 6 characters'
+      case 'auth/invalid-email':
+        return 'Invalid email address'
+      case 'auth/too-many-requests':
+        return 'Too many failed attempts. Please try again later'
+      default:
+        return error.message || 'An authentication error occurred'
+    }
+  }
+}
+```
+
+## Firestore Database Patterns
+
+### Document Structure Types
+```typescript
+// src/types/firestore.ts
+export interface FirestoreDocument {
+  id: string
+  createdAt: Date
+  updatedAt: Date
+  createdBy: string
+}
+
+export interface VaultItem extends FirestoreDocument {
+  name: string
+  type: 'password' | 'note' | 'card' | 'identity'
+  encrypted: boolean
+  data: string // Encrypted JSON string
+  tags: string[]
+  favorite: boolean
+  lastAccessed?: Date
+  folder?: string
+}
+```
+
+### Firestore Service Pattern
+```typescript
+// src/services/firestore.ts
+import {
+  doc, collection, query, where, orderBy,
+  getDocs, onSnapshot, serverTimestamp, setDoc
+} from 'firebase/firestore'
+import { db } from '@/plugins/firebase'
+
+export class VaultService {
+  private static readonly COLLECTION = 'vaultItems'
+
+  static async getUserVaultItems(userId: string): Promise<VaultItem[]> {
+    const q = query(
+      collection(db, this.COLLECTION),
+      where('createdBy', '==', userId),
+      orderBy('updatedAt', 'desc')
+    )
+    
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt?.toDate(),
+      updatedAt: doc.data().updatedAt?.toDate()
+    })) as VaultItem[]
+  }
+
+  static onVaultItemsChange(
+    userId: string,
+    callback: (items: VaultItem[]) => void
+  ): () => void {
+    const q = query(
+      collection(db, this.COLLECTION),
+      where('createdBy', '==', userId),
+      orderBy('updatedAt', 'desc')
+    )
+
+    return onSnapshot(q, (snapshot) => {
+      const items = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate(),
+        updatedAt: doc.data().updatedAt?.toDate()
+      })) as VaultItem[]
+      
+      callback(items)
+    })
+  }
+}
+```
+
+## Security Rules Best Practices
+
+### Firestore Security Rules
+```javascript
+// firestore.rules
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can only access their own vault items
+    match /vaultItems/{itemId} {
+      allow read, write: if request.auth != null 
+        && resource.data.createdBy == request.auth.uid;
+      allow create: if request.auth != null 
+        && request.resource.data.createdBy == request.auth.uid;
+    }
+    
+    // User settings - user can only access their own
+    match /userSettings/{userId} {
+      allow read, write: if request.auth != null 
+        && request.auth.uid == userId;
+    }
+  }
+}
+```
+
+### Storage Security Rules
+```javascript
+// storage.rules
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // User-specific file uploads
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null 
+        && request.auth.uid == userId;
+    }
+    
+    // Backup files with size limit
+    match /backups/{userId}/{backupId} {
+      allow read, write: if request.auth != null 
+        && request.auth.uid == userId
+        && request.resource.size < 50 * 1024 * 1024; // 50MB limit
+    }
+  }
+}
+```
+
+## Error Handling
+
+### Firebase Error Handler
+```typescript
+// src/utils/firebaseErrors.ts
+import { FirebaseError } from 'firebase/app'
+
+export const handleFirebaseError = (error: FirebaseError): string => {
+  switch (error.code) {
+    case 'permission-denied':
+      return 'You do not have permission to perform this action'
+    case 'not-found':
+      return 'The requested document was not found'
+    case 'unavailable':
+      return 'The service is currently unavailable'
+    case 'storage/object-not-found':
+      return 'File not found'
+    case 'storage/unauthorized':
+      return 'User is not authorized to perform this action'
+    default:
+      return error.message || 'An unexpected error occurred'
+  }
+}
+```
+
+## Environment Variables
+```bash
+# .env.local (never commit to version control)
+VITE_FIREBASE_API_KEY=your-api-key
+VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your-project-id
+VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
+VITE_FIREBASE_APP_ID=1:123456789:web:abcdef
+```
+
+Remember: Always use Firebase security rules, handle errors gracefully, never expose sensitive data in client code, and use emulators for development. 

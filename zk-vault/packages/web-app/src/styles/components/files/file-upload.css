@@ -1,0 +1,394 @@
+/**
+ * File Upload Component Styles
+ * Styles for drag-and-drop file upload interface with progress tracking
+ */
+
+/* === FILE UPLOAD CONTAINER === */
+.file-upload {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* === UPLOAD ZONE === */
+.upload-zone {
+  position: relative;
+  border: 2px dashed var(--color-neutral-300);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  cursor: pointer;
+  transition: all var(--duration-200) var(--ease-out);
+}
+
+.upload-zone:hover {
+  border-color: var(--color-primary-400);
+  background-color: var(--color-primary-50);
+}
+
+.upload-zone.drag-over {
+  border-color: var(--color-primary-500);
+  background-color: var(--color-primary-100);
+}
+
+.upload-zone.uploading {
+  border-color: var(--color-blue-400);
+  background-color: var(--color-blue-50);
+  cursor: not-allowed;
+}
+
+.upload-zone.disabled {
+  border-color: var(--color-neutral-200);
+  background-color: var(--color-neutral-50);
+  cursor: not-allowed;
+}
+
+/* === UPLOAD CONTENT === */
+.upload-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-4);
+}
+
+.upload-icon {
+  display: flex;
+  justify-content: center;
+}
+
+.upload-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.upload-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-neutral-900);
+}
+
+.upload-description {
+  color: var(--color-neutral-600);
+}
+
+.upload-limits {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-500);
+}
+
+.file-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* === UPLOAD OPTIONS === */
+.upload-options {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background-color: var(--color-neutral-50);
+  border-radius: var(--radius-lg);
+}
+
+@media (min-width: 768px) {
+  .upload-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.option-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.option-label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-neutral-700);
+}
+
+.option-select,
+.option-input {
+  margin-top: var(--space-1);
+  display: block;
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-neutral-300);
+  border-radius: var(--radius-md);
+  background-color: var(--color-white);
+  color: var(--color-text-primary);
+  transition: all var(--duration-200) var(--ease-out);
+}
+
+.option-select:focus,
+.option-input:focus {
+  outline: none;
+  ring: 2px;
+  ring-color: var(--color-primary-500);
+  border-color: var(--color-primary-500);
+}
+
+.option-textarea {
+  margin-top: var(--space-1);
+  display: block;
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-neutral-300);
+  border-radius: var(--radius-md);
+  background-color: var(--color-white);
+  color: var(--color-text-primary);
+  resize: none;
+  transition: all var(--duration-200) var(--ease-out);
+}
+
+.option-textarea:focus {
+  outline: none;
+  ring: 2px;
+  ring-color: var(--color-primary-500);
+  border-color: var(--color-primary-500);
+}
+
+.option-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+.checkbox-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-700);
+}
+
+/* === UPLOAD PROGRESS === */
+.upload-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.progress-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-neutral-900);
+}
+
+.progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.progress-item {
+  padding: var(--space-4);
+  background-color: var(--color-white);
+  border: 1px solid var(--color-neutral-200);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.progress-item.error {
+  border-color: var(--color-red-200);
+  background-color: var(--color-red-50);
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.progress-name {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-neutral-900);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.progress-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+}
+
+.status-text {
+  color: var(--color-neutral-600);
+}
+
+.status-percentage {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-neutral-900);
+}
+
+/* === PROGRESS BAR === */
+.progress-bar {
+  width: 100%;
+  background-color: var(--color-neutral-200);
+  border-radius: var(--radius-full);
+  height: var(--space-2);
+}
+
+.progress-fill {
+  height: var(--space-2);
+  border-radius: var(--radius-full);
+  transition: all var(--duration-300) var(--ease-out);
+}
+
+.progress-fill.dynamic-progress {
+  width: var(--progress-width, 0%);
+}
+
+.progress-fill.bg-primary-600 {
+  background-color: var(--color-primary-600);
+}
+
+.progress-fill.bg-red-600 {
+  background-color: var(--color-red-600);
+}
+
+.progress-fill.bg-blue-600 {
+  background-color: var(--color-blue-600);
+}
+
+.progress-error {
+  font-size: var(--font-size-sm);
+  color: var(--color-red-600);
+  margin-top: var(--space-2);
+}
+
+.progress-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+/* === DARK MODE === */
+@media (prefers-color-scheme: dark) {
+  .upload-zone {
+    border-color: var(--color-neutral-600);
+  }
+
+  .upload-zone:hover {
+    border-color: var(--color-primary-500);
+    background-color: var(--color-primary-900);
+  }
+
+  .upload-zone.drag-over {
+    border-color: var(--color-primary-400);
+    background-color: var(--color-primary-900);
+  }
+
+  .upload-zone.uploading {
+    border-color: var(--color-blue-500);
+    background-color: var(--color-blue-900);
+  }
+
+  .upload-zone.disabled {
+    border-color: var(--color-neutral-700);
+    background-color: var(--color-neutral-800);
+  }
+
+  .upload-title {
+    color: var(--color-neutral-100);
+  }
+
+  .upload-description {
+    color: var(--color-neutral-400);
+  }
+
+  .upload-limits {
+    color: var(--color-neutral-500);
+  }
+
+  .upload-options {
+    background-color: var(--color-neutral-800);
+  }
+
+  .option-label {
+    color: var(--color-neutral-300);
+  }
+
+  .option-select,
+  .option-input,
+  .option-textarea {
+    background-color: var(--color-neutral-700);
+    border-color: var(--color-neutral-600);
+    color: var(--color-neutral-100);
+  }
+
+  .checkbox-label {
+    color: var(--color-neutral-300);
+  }
+
+  .progress-title {
+    color: var(--color-neutral-100);
+  }
+
+  .progress-item {
+    background-color: var(--color-neutral-800);
+    border-color: var(--color-neutral-700);
+  }
+
+  .progress-item.error {
+    border-color: var(--color-red-700);
+    background-color: var(--color-red-900);
+  }
+
+  .progress-name {
+    color: var(--color-neutral-100);
+  }
+
+  .status-text {
+    color: var(--color-neutral-400);
+  }
+
+  .status-percentage {
+    color: var(--color-neutral-100);
+  }
+
+  .progress-bar {
+    background-color: var(--color-neutral-700);
+  }
+
+  .progress-error {
+    color: var(--color-red-400);
+  }
+}
+
+/* === ACCESSIBILITY === */
+@media (prefers-reduced-motion: reduce) {
+  .upload-zone,
+  .option-select,
+  .option-input,
+  .option-textarea,
+  .progress-fill {
+    transition: none;
+  }
+}
+
+/* === HIGH CONTRAST MODE === */
+@media (prefers-contrast: high) {
+  .upload-zone {
+    border-width: 3px;
+  }
+
+  .progress-item {
+    border-width: 2px;
+  }
+
+  .progress-item.error {
+    border-width: 3px;
+  }
+}

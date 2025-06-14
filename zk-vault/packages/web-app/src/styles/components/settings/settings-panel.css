@@ -1,0 +1,137 @@
+/**
+ * Settings Panel Component Styles
+ * Modular CSS following Tailwind v4.1 best practices
+ */
+
+@layer components {
+  .settings-panel {
+    @apply mx-auto max-w-7xl p-6;
+  }
+
+  .settings-header {
+    @apply mb-8;
+  }
+
+  .settings-title {
+    @apply mb-2 text-3xl font-bold text-neutral-900;
+  }
+
+  .settings-subtitle {
+    @apply text-lg text-neutral-600;
+  }
+
+  .settings-layout {
+    @apply flex gap-8;
+  }
+
+  .settings-nav {
+    @apply w-64 flex-shrink-0 space-y-6;
+  }
+
+  .nav-section {
+    @apply space-y-3;
+  }
+
+  .nav-section-title {
+    @apply text-sm font-semibold tracking-wider text-neutral-900 uppercase;
+  }
+
+  .nav-list {
+    @apply space-y-1;
+  }
+
+  .nav-item {
+    @apply flex w-full items-center gap-3 px-3 py-2 text-left;
+    @apply text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900;
+    @apply rounded-lg transition-colors;
+
+    /* Modern focus states */
+    &:focus-visible {
+      @apply ring-2 ring-primary-500 ring-offset-2 outline-none;
+    }
+
+    /* Active state with enhanced visual feedback */
+    &.active {
+      @apply bg-primary-100 text-primary-900;
+      box-shadow: inset 3px 0 0 var(--color-primary-600);
+    }
+  }
+
+  .nav-icon {
+    @apply h-5 w-5 flex-shrink-0;
+  }
+
+  .settings-content {
+    @apply min-w-0 flex-1;
+  }
+
+  .settings-placeholder {
+    @apply rounded-lg border border-neutral-200 bg-white p-8 shadow-sm;
+    @apply text-center text-neutral-500;
+  }
+
+  /* Dark mode support using modern CSS */
+  @media (prefers-color-scheme: dark) {
+    .settings-title {
+      @apply text-neutral-100;
+    }
+
+    .settings-subtitle {
+      @apply text-neutral-400;
+    }
+
+    .nav-section-title {
+      @apply text-neutral-300;
+    }
+
+    .nav-item {
+      @apply text-neutral-300 hover:bg-neutral-700 hover:text-neutral-100;
+
+      &.active {
+        @apply bg-primary-900 text-primary-100;
+        box-shadow: inset 3px 0 0 var(--color-primary-400);
+      }
+    }
+
+    .settings-placeholder {
+      @apply border-neutral-700 bg-neutral-800 text-neutral-400;
+    }
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .nav-item.active {
+      border: 2px solid var(--color-primary-600);
+    }
+  }
+
+  /* Responsive design with container queries */
+  @container (max-width: 768px) {
+    .settings-layout {
+      @apply flex-col gap-6;
+    }
+
+    .settings-nav {
+      @apply w-full;
+    }
+
+    .nav-section {
+      @apply space-y-2;
+    }
+
+    .nav-list {
+      @apply flex flex-wrap gap-2;
+    }
+
+    .nav-item {
+      @apply min-w-0 flex-1 justify-center text-center;
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .nav-item {
+      transition: none;
+    }
+  }
+}

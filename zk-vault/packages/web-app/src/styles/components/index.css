@@ -4,28 +4,28 @@
  */
 
 /* === COMMON COMPONENTS === */
-@import "./common/index.css";
+@import './common/index.css';
 
 /* === AUTHENTICATION COMPONENTS === */
-@import "./auth/index.css";
+@import './auth/index.css';
 
 /* === LAYOUT COMPONENTS === */
-@import "./layout/index.css";
+@import './layout/index.css';
 
 /* === VAULT COMPONENTS === */
-@import "./vault/index.css";
+@import './vault/index.css';
 
 /* === FILE COMPONENTS === */
-@import "./files/index.css";
+@import './files/index.css';
 
 /* === SEARCH COMPONENTS === */
-@import "./search/index.css";
+@import './search/index.css';
 
 /* === SECURITY COMPONENTS === */
-@import "./security/index.css";
+@import './security/index.css';
 
 /* === SETTINGS COMPONENTS === */
-@import "./settings/index.css";
+@import './settings/index.css';
 
 /* === ADMIN COMPONENTS === */
-@import "./admin/index.css"; 
+@import './admin/index.css';

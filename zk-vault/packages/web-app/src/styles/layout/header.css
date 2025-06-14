@@ -207,11 +207,11 @@
   .header-nav {
     display: none;
   }
-  
+
   .header-mobile-menu {
     display: flex;
   }
-  
+
   .header-search {
     max-width: 200px;
   }
@@ -222,15 +222,15 @@
   .header-container-fluid {
     padding: var(--space-3) var(--space-4);
   }
-  
+
   .header-brand-text {
     display: none;
   }
-  
+
   .header-search {
     display: none;
   }
-  
+
   .header-actions {
     gap: var(--space-1);
   }
@@ -240,11 +240,11 @@
   .header-left {
     gap: var(--space-2);
   }
-  
+
   .header-right {
     gap: var(--space-1);
   }
-  
+
   .header-breadcrumbs {
     display: none;
   }
@@ -286,21 +286,21 @@
     background-color: var(--color-background-primary);
     border-bottom-color: var(--border-default);
   }
-  
+
   .header-nav-item:hover {
     background-color: var(--color-background-secondary);
   }
-  
+
   .header-nav-item.active {
     color: var(--color-primary-400);
     background-color: var(--color-primary-900);
   }
-  
+
   .header-action-button:hover {
     background-color: var(--color-background-secondary);
   }
-  
+
   .header-mobile-menu:hover {
     background-color: var(--color-background-secondary);
   }
-} 
+}

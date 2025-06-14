@@ -4,12 +4,14 @@
  */
 
 /* === SECURITY STATUS & OVERVIEW === */
-@import "./security-status.css";
-@import "./security-view.css";
+@import './security-status.css';
+@import './security-view.css';
 
 /* === AUTHENTICATION SETUP === */
-@import "./biometric-setup.css";
-@import "./two-factor-setup.css";
+@import './biometric-setup.css';
+@import './two-factor-setup.css';
 
 /* === SECURITY MONITORING === */
-@import "./audit-log.css"; 
+@import './audit-log.css';
+@import './breach-monitor.css';
+@import './security-dashboard.css';

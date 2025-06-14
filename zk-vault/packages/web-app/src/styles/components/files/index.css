@@ -2,5 +2,9 @@
    FILES COMPONENTS
    ================================================================ */
 
-@import "./files-view.css";
-@import "./file-download.css"; 
+@import './files-view.css';
+@import './file-download.css';
+@import './file-explorer.css';
+@import './file-preview.css';
+@import './file-sharing.css';
+@import './file-upload.css';

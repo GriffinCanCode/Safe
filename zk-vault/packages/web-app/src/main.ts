@@ -4,6 +4,8 @@ import App from './App.vue';
 import router from './router';
 import { vaultIntegration } from './services/vault-integration.service';
 import { integrationStatusService } from './services/integration-status';
+import { firebaseService } from '@/services/firebase.service';
+import { useAuthStore } from '@/store/auth.store';
 
 // Import comprehensive CSS architecture
 import '@/styles/index.css';
@@ -29,6 +31,26 @@ async function initializeApp() {
     });
 
     console.log('✅ Worker services initialized successfully');
+
+    // Initialize Firebase if configuration is available
+    if (firebaseService.isInitialized) {
+      console.log('✅ Firebase initialized successfully');
+      
+      // Check for Google authentication redirect result
+      try {
+        const authStore = useAuthStore();
+        const redirectResult = await authStore.checkGoogleRedirectResult();
+        
+        if (redirectResult) {
+          console.log('✅ Google authentication completed via redirect');
+          // The auth store will handle the user state update
+        }
+      } catch (error) {
+        console.warn('⚠️ Google redirect result check failed:', error);
+      }
+    } else {
+      console.log('ℹ️ Firebase not configured, continuing without OAuth features');
+    }
 
     // Check integration status in development
     if (import.meta.env.DEV) {

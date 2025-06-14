@@ -1,0 +1,136 @@
+# Multi-stage Dockerfile for ZK-Vault Web Application
+# Stage 1: Build dependencies and shared packages
+FROM node:18-alpine as base
+
+# Install system dependencies
+RUN apk add --no-cache \
+    git \
+    python3 \
+    make \
+    g++ \
+    && ln -sf python3 /usr/bin/python
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY lerna.json ./
+COPY packages/shared/package*.json ./packages/shared/
+COPY packages/crypto/package*.json ./packages/crypto/
+COPY packages/web-app/package*.json ./packages/web-app/
+
+# Install dependencies
+RUN npm ci --only=production && npm cache clean --force
+
+# Stage 2: Development
+FROM base as development
+
+# Install all dependencies (including dev)
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Build shared packages
+RUN cd packages/shared && npm run build
+RUN cd packages/crypto && npm run build
+
+# Expose port
+EXPOSE 3000
+
+# Set environment variables
+ENV NODE_ENV=development
+ENV VITE_PORT=3000
+ENV VITE_HOST=0.0.0.0
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:3000 || exit 1
+
+# Start development server
+CMD ["sh", "-c", "cd packages/web-app && npm run dev -- --host 0.0.0.0"]
+
+# Stage 3: Build
+FROM base as build
+
+# Install all dependencies for build
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Build shared packages
+RUN cd packages/shared && npm run build
+RUN cd packages/crypto && npm run build
+
+# Build web application
+RUN cd packages/web-app && npm run build
+
+# Stage 4: Production
+FROM nginx:alpine as production
+
+# Install Node.js for any runtime needs
+RUN apk add --no-cache nodejs npm
+
+# Copy custom nginx configuration
+COPY infrastructure/docker/nginx.conf /etc/nginx/nginx.conf
+
+# Copy built application
+COPY --from=build /app/packages/web-app/dist /usr/share/nginx/html
+
+# Copy SSL certificates (if any)
+COPY infrastructure/docker/ssl/ /etc/nginx/ssl/
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S zkvault -u 1001
+
+# Set permissions
+RUN chown -R zkvault:nodejs /usr/share/nginx/html && \
+    chown -R zkvault:nodejs /var/cache/nginx && \
+    chown -R zkvault:nodejs /var/log/nginx && \
+    chown -R zkvault:nodejs /etc/nginx/conf.d
+
+# Switch to non-root user
+USER zkvault
+
+# Expose ports
+EXPOSE 80 443
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:80 || exit 1
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]
+
+# Stage 5: Local development with hot reload
+FROM base as dev-hot
+
+# Install all dependencies
+RUN npm ci
+
+# Install nodemon for hot reload
+RUN npm install -g nodemon
+
+# Copy source code
+COPY . .
+
+# Build shared packages in watch mode
+RUN cd packages/shared && npm run build && cd ../crypto && npm run build
+
+# Expose port
+EXPOSE 3000
+
+# Environment variables
+ENV NODE_ENV=development
+ENV VITE_PORT=3000
+ENV VITE_HOST=0.0.0.0
+ENV CHOKIDAR_USEPOLLING=true
+
+# Volume for hot reload
+VOLUME ["/app/packages/web-app/src"]
+
+# Start with hot reload
+CMD ["sh", "-c", "cd packages/web-app && npm run dev -- --host 0.0.0.0 --port 3000"]

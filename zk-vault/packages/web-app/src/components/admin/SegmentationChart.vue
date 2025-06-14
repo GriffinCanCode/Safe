@@ -4,26 +4,23 @@
       <div class="loading-spinner"></div>
       <p>Loading segmentation data...</p>
     </div>
-    
+
     <div v-else-if="!data" class="chart-empty">
       <p>No segmentation data available</p>
     </div>
-    
+
     <div v-else class="chart-container">
       <canvas ref="chartCanvas" :width="chartSize" :height="chartSize"></canvas>
-      
+
       <div class="chart-legend">
-        <div 
-          v-for="(segment, key) in data" 
-          :key="key" 
+        <div
+          v-for="(segment, key) in data"
+          :key="key"
           class="legend-item"
           @mouseenter="highlightSegment(key)"
           @mouseleave="clearHighlight"
         >
-          <span 
-            class="legend-color" 
-            :style="{ backgroundColor: colors[key] }"
-          ></span>
+          <span class="legend-color" :style="{ backgroundColor: colors[key] }"></span>
           <div class="legend-details">
             <div class="legend-title">{{ formatSegmentName(key) }}</div>
             <div class="legend-stats">
@@ -34,7 +31,7 @@
           </div>
         </div>
       </div>
-      
+
       <div class="chart-tooltip" ref="tooltip" v-show="tooltipVisible" :style="tooltipStyle">
         <div class="tooltip-title">{{ tooltipData.title }}</div>
         <div class="tooltip-count">{{ tooltipData.count?.toLocaleString() }} users</div>
@@ -60,7 +57,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  loading: false
+  loading: false,
 });
 
 const chartCanvas = ref<HTMLCanvasElement | null>(null);
@@ -77,78 +74,79 @@ const colors: Record<string, string> = {
   regularUsers: '#10b981',
   lightUsers: '#f59e0b',
   inactiveUsers: '#ef4444',
-  newUsers: '#8b5cf6'
+  newUsers: '#8b5cf6',
 };
 
 const drawChart = () => {
   if (!chartCanvas.value || !props.data) return;
-  
+
   const canvas = chartCanvas.value;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
-  
+
   // Clear canvas
   ctx.clearRect(0, 0, chartSize.value, chartSize.value);
-  
+
   const centerX = chartSize.value / 2;
   const centerY = chartSize.value / 2;
   const outerRadius = chartSize.value / 2 - 20;
   const innerRadius = outerRadius * 0.6; // Donut hole
-  
+
   // Calculate total for percentages
   const total = Object.values(props.data).reduce((sum, segment) => sum + segment.count, 0);
-  
+
   let currentAngle = -Math.PI / 2; // Start at top
-  
+
   Object.entries(props.data).forEach(([key, segment]) => {
     const sliceAngle = (segment.count / total) * 2 * Math.PI;
     const endAngle = currentAngle + sliceAngle;
-    
+
     // Determine if this segment should be highlighted
     const isHighlighted = highlightedSegment.value === key;
     const currentOuterRadius = isHighlighted ? outerRadius + 10 : outerRadius;
-    
+
     // Draw outer arc
     ctx.beginPath();
     ctx.arc(centerX, centerY, currentOuterRadius, currentAngle, endAngle);
     ctx.arc(centerX, centerY, innerRadius, endAngle, currentAngle, true);
     ctx.closePath();
-    
+
     ctx.fillStyle = colors[key] || '#6b7280';
     ctx.fill();
-    
+
     // Add stroke
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 2;
     ctx.stroke();
-    
+
     // Draw percentage labels
-    if (segment.percentage >= 5) { // Only show labels for segments >= 5%
+    if (segment.percentage >= 5) {
+      // Only show labels for segments >= 5%
       const labelAngle = currentAngle + sliceAngle / 2;
       const labelRadius = (currentOuterRadius + innerRadius) / 2;
       const labelX = centerX + Math.cos(labelAngle) * labelRadius;
       const labelY = centerY + Math.sin(labelAngle) * labelRadius;
-      
+
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 14px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(`${segment.percentage}%`, labelX, labelY);
     }
-    
+
     currentAngle = endAngle;
   });
-  
+
   // Draw center text
   ctx.fillStyle = '#374151';
   ctx.font = 'bold 16px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('Users', centerX, centerY - 10);
-  
+
   ctx.font = '24px sans-serif';
   ctx.fillText(total.toLocaleString(), centerX, centerY + 15);
-  
+
   // Add mouse event handlers
   canvas.addEventListener('mousemove', handleMouseMove);
   canvas.addEventListener('mouseleave', handleMouseLeave);
@@ -156,51 +154,51 @@ const drawChart = () => {
 
 const handleMouseMove = (event: MouseEvent) => {
   if (!chartCanvas.value || !props.data) return;
-  
+
   const rect = chartCanvas.value.getBoundingClientRect();
   const x = event.clientX - rect.left;
   const y = event.clientY - rect.top;
-  
+
   const centerX = chartSize.value / 2;
   const centerY = chartSize.value / 2;
   const outerRadius = chartSize.value / 2 - 20;
   const innerRadius = outerRadius * 0.6;
-  
+
   // Calculate distance from center
   const distance = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
-  
+
   // Check if mouse is within donut area
   if (distance >= innerRadius && distance <= outerRadius) {
     // Calculate angle
     const angle = Math.atan2(y - centerY, x - centerX);
     const normalizedAngle = (angle + Math.PI / 2 + 2 * Math.PI) % (2 * Math.PI);
-    
+
     // Find which segment the mouse is over
     const total = Object.values(props.data).reduce((sum, segment) => sum + segment.count, 0);
     let currentAngle = 0;
-    
+
     for (const [key, segment] of Object.entries(props.data)) {
       const sliceAngle = (segment.count / total) * 2 * Math.PI;
       const endAngle = currentAngle + sliceAngle;
-      
+
       if (normalizedAngle >= currentAngle && normalizedAngle <= endAngle) {
         // Show tooltip
         tooltipData.value = {
           title: formatSegmentName(key),
           count: segment.count,
           percentage: segment.percentage,
-          description: segment.definition
+          description: segment.definition,
         };
-        
+
         tooltipStyle.value = {
           left: `${event.clientX - rect.left + 10}px`,
-          top: `${event.clientY - rect.top - 10}px`
+          top: `${event.clientY - rect.top - 10}px`,
         };
-        
+
         tooltipVisible.value = true;
         break;
       }
-      
+
       currentAngle = endAngle;
     }
   } else {
@@ -224,9 +222,7 @@ const clearHighlight = () => {
 };
 
 const formatSegmentName = (key: string): string => {
-  return key
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/^./, str => str.toUpperCase());
+  return key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
 };
 
 const resizeChart = () => {
@@ -245,11 +241,15 @@ onMounted(() => {
   });
 });
 
-watch(() => props.data, () => {
-  nextTick(() => {
-    drawChart();
-  });
-}, { deep: true });
+watch(
+  () => props.data,
+  () => {
+    nextTick(() => {
+      drawChart();
+    });
+  },
+  { deep: true }
+);
 
 watch(highlightedSegment, () => {
   drawChart();
@@ -289,8 +289,12 @@ watch(highlightedSegment, () => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .chart-container {
@@ -406,28 +410,28 @@ canvas {
     gap: 1rem;
     min-height: auto;
   }
-  
+
   .chart-container {
     flex-direction: column;
     gap: 1rem;
   }
-  
+
   .chart-legend {
     min-width: auto;
     width: 100%;
   }
-  
+
   .legend-item {
     padding: 0.5rem;
   }
-  
+
   .legend-details {
     font-size: 0.875rem;
   }
-  
+
   .chart-tooltip {
     font-size: 0.75rem;
     min-width: 150px;
   }
 }
-</style> 
+</style>

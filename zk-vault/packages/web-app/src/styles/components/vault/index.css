@@ -4,11 +4,11 @@
  */
 
 /* === PASSWORD MANAGEMENT === */
-@import "./password-editor.css";
-@import "./password-item.css";
-@import "./password-list.css";
-@import "./password-generator.css";
-@import "./password-strength-meter.css";
+@import './password-editor.css';
+@import './password-item.css';
+@import './password-list.css';
+@import './password-generator.css';
+@import './password-strength-meter.css';
 
 /* === VAULT DASHBOARD === */
-@import "./vault-dashboard.css"; 
+@import './vault-dashboard.css';

@@ -1,0 +1,599 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Security & Cryptography Rules - ZK-Vault
+
+## Security Architecture Overview
+ZK-Vault implements **zero-knowledge architecture** with **client-side encryption**, **post-quantum cryptography**, and **memory protection**. All cryptographic operations use the `@zk-vault/crypto` package.
+
+## Core Security Principles
+
+### Zero-Knowledge Architecture
+- **Server never sees plaintext** - All encryption/decryption happens client-side
+- **Server never sees encryption keys** - Keys derived and stored client-side only
+- **Authentication without passwords** - Use SRP (Secure Remote Password) protocol
+- **Minimal data exposure** - Only encrypted data and metadata sent to server
+- **Forward secrecy** - Keys rotated and properly disposed
+
+### Security Boundaries
+```typescript
+// CORRECT: Use crypto package for all security operations
+import { ZeroKnowledgeVault, encrypt, decrypt } from '@zk-vault/crypto'
+
+// WRONG: Direct cryptographic operations in components
+// Never implement crypto operations directly in Vue components
+```
+
+## Cryptographic Standards
+
+### Encryption Algorithms (Multi-Algorithm Support)
+```typescript
+// Primary algorithms used in ZK-Vault
+export enum SupportedAlgorithms {
+  AES_GCM = 'aes-gcm',           // AES-256-GCM (hardware accelerated)
+  XCHACHA20_POLY1305 = 'xchacha20-poly1305',  // XChaCha20-Poly1305 (software)
+  ARGON2ID = 'argon2id',         // Argon2id for password hashing
+  KYBER = 'kyber',               // Post-quantum key encapsulation
+  HYBRID = 'hybrid'              // Hybrid classical + post-quantum
+}
+
+// Algorithm selection pattern
+const algorithm = await AlgorithmSelector.selectOptimalAlgorithm()
+```
+
+### Key Derivation Hierarchy
+```typescript
+// Master Key Derivation Chain
+interface KeyDerivationChain {
+  userPassword: string           // User input (never stored)
+  salt: Uint8Array              // Random salt (stored)
+  masterKey: CryptoKey          // Root key (memory only)
+  accountKey: CryptoKey         // Account-level key
+  itemKeys: Map<string, CryptoKey>  // Item-specific keys
+}
+
+// Key derivation pattern
+const masterKeyResult = await MasterKeyDerivation.createMasterKeyStructure(
+  password, 
+  email
+)
+
+const itemKey = await vault.deriveItemKey(itemId)
+```
+
+## Memory Protection Patterns
+
+### Secure Memory Management
+```typescript
+// Use SecureMemoryManager for sensitive data
+import { SecureMemoryManager, MemoryProtection } from '@zk-vault/crypto'
+
+class SecureDataHandler {
+  private secureBuffer: SecureMemoryManager
+
+  constructor() {
+    this.secureBuffer = new SecureMemoryManager()
+  }
+
+  async processSecretData(data: Uint8Array): Promise<void> {
+    // Allocate protected memory
+    const protectedData = await this.secureBuffer.allocateSecure(data.length)
+    
+    try {
+      // Copy data to protected memory
+      protectedData.set(data)
+      
+      // Process data...
+      await this.performSecureOperation(protectedData)
+      
+    } finally {
+      // Always clear sensitive data
+      await this.secureBuffer.clear()
+      MemoryProtection.secureZero(data)
+    }
+  }
+}
+```
+
+### Constant-Time Operations
+```typescript
+// Use constant-time operations for security-critical comparisons
+import { ConstantTime } from '@zk-vault/crypto'
+
+// CORRECT: Constant-time comparison
+const isValid = await ConstantTime.compare(hash1, hash2)
+
+// WRONG: Variable-time comparison (timing attack vulnerable)
+const isValid = hash1 === hash2
+```
+
+## Authentication Patterns
+
+### SRP (Secure Remote Password) Implementation
+```typescript
+// Client-side SRP authentication
+import { SRPClient, ZeroKnowledgeAuth } from '@zk-vault/crypto'
+
+class AuthService {
+  async authenticateUser(email: string, password: string): Promise<AuthResult> {
+    try {
+      // Initialize SRP client
+      const srpClient = new SRPClient()
+      
+      // Generate client ephemeral
+      const clientEphemeral = await srpClient.generateEphemeral(email)
+      
+      // Exchange with server (server never sees password)
+      const serverChallenge = await this.exchangeWithServer({
+        email,
+        clientPublic: clientEphemeral.public
+      })
+      
+      // Compute client proof
+      const clientProof = await srpClient.computeProof(
+        password,
+        serverChallenge.salt,
+        serverChallenge.serverPublic,
+        clientEphemeral.private
+      )
+      
+      // Verify server proof (mutual authentication)
+      const verification = await this.verifyServerProof(clientProof)
+      
+      if (verification.success) {
+        // Derive session key from SRP shared secret
+        const sessionKey = await srpClient.deriveSessionKey()
+        return { success: true, sessionKey }
+      }
+      
+      return { success: false, error: 'Authentication failed' }
+      
+    } catch (error) {
+      return {
+        success: false,
+        error: 'Authentication error',
+        // Never expose cryptographic details in production
+        details: import.meta.env.DEV ? error.message : undefined
+      }
+    }
+  }
+}
+```
+
+### Two-Factor Authentication
+```typescript
+// TOTP-based 2FA implementation
+import { generateSecret, generateToken, verifyToken } from '@zk-vault/crypto'
+
+class TwoFactorAuth {
+  async setupTOTP(userId: string): Promise<TOTPSetup> {
+    // Generate cryptographically secure secret
+    const secret = await generateSecret()
+    
+    // Encrypt secret before storage
+    const encryptedSecret = await vault.encrypt(secret, {
+      purpose: 'totp-secret',
+      userId
+    })
+    
+    return {
+      secret: secret, // Show to user once
+      qrCode: this.generateQRCode(secret, userId),
+      backupCodes: await this.generateBackupCodes()
+    }
+  }
+
+  async verifyTOTP(userId: string, token: string): Promise<boolean> {
+    const encryptedSecret = await this.getUserTOTPSecret(userId)
+    const secret = await vault.decrypt(encryptedSecret)
+    
+    return await verifyToken(secret, token, {
+      window: 1, // Allow 1 period tolerance
+      counter: await this.getCounter(userId)
+    })
+  }
+}
+```
+
+## Vault Operations Security
+
+### Data Encryption Patterns
+```typescript
+// Vault item encryption with proper context
+interface VaultItemSecurity {
+  encrypt(item: VaultItem): Promise<EncryptedVaultItem>
+  decrypt(encryptedItem: EncryptedVaultItem): Promise<VaultItem>
+  reencrypt(itemId: string): Promise<void> // Key rotation
+}
+
+class SecureVaultService implements VaultItemSecurity {
+  async encrypt(item: VaultItem): Promise<EncryptedVaultItem> {
+    // Derive item-specific key
+    const itemKey = await vault.deriveItemKey(item.id)
+    
+    // Encrypt with proper context
+    const encryptedData = await vault.encrypt(JSON.stringify(item.data), {
+      purpose: 'vault-item',
+      itemId: item.id,
+      itemType: item.type,
+      timestamp: Date.now()
+    })
+    
+    return {
+      id: item.id,
+      type: item.type,
+      encryptedData,
+      metadata: {
+        algorithm: encryptedData.algorithm,
+        keyDerivation: 'item-specific',
+        encrypted: true
+      }
+    }
+  }
+
+  async decrypt(encryptedItem: EncryptedVaultItem): Promise<VaultItem> {
+    // Verify integrity first
+    if (!this.verifyItemIntegrity(encryptedItem)) {
+      throw new SecurityError('Item integrity check failed')
+    }
+    
+    const decryptedData = await vault.decrypt(encryptedItem.encryptedData, {
+      purpose: 'vault-item',
+      itemId: encryptedItem.id
+    })
+    
+    return {
+      id: encryptedItem.id,
+      type: encryptedItem.type,
+      data: JSON.parse(decryptedData)
+    }
+  }
+}
+```
+
+### File Encryption with Chunked Processing
+```typescript
+// Large file encryption with streaming
+import { FileEncryption, ChunkedEncryption } from '@zk-vault/crypto'
+
+class SecureFileService {
+  async encryptFile(
+    file: File, 
+    progressCallback?: FileProgressCallback
+  ): Promise<EncryptedFile> {
+    try {
+      // Use chunked encryption for large files
+      const chunkedEncryption = new ChunkedEncryption({
+        chunkSize: 1024 * 1024, // 1MB chunks
+        algorithm: 'xchacha20-poly1305'
+      })
+      
+      const encryptedChunks: EncryptedChunk[] = []
+      const reader = file.stream().getReader()
+      
+      let chunkIndex = 0
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        
+        // Encrypt chunk with authentication
+        const encryptedChunk = await chunkedEncryption.encryptChunk(
+          value, 
+          chunkIndex,
+          {
+            fileId: file.name,
+            totalChunks: Math.ceil(file.size / (1024 * 1024))
+          }
+        )
+        
+        encryptedChunks.push(encryptedChunk)
+        
+        // Report progress
+        progressCallback?.({
+          bytesProcessed: chunkIndex * (1024 * 1024) + value.length,
+          totalBytes: file.size,
+          progress: ((chunkIndex + 1) / Math.ceil(file.size / (1024 * 1024))) * 100
+        })
+        
+        chunkIndex++
+      }
+      
+      return {
+        metadata: await this.createFileMetadata(file, encryptedChunks),
+        chunks: encryptedChunks,
+        integrity: await this.computeFileIntegrity(encryptedChunks)
+      }
+      
+    } catch (error) {
+      throw new SecurityError(`File encryption failed: ${error.message}`)
+    }
+  }
+}
+```
+
+## Post-Quantum Cryptography
+
+### Hybrid Encryption Implementation
+```typescript
+// Post-quantum resistant encryption
+import { KyberKEM, HybridEncryption } from '@zk-vault/crypto'
+
+class PostQuantumSecurity {
+  async generateKeyPair(): Promise<PostQuantumKeyPair> {
+    // Generate both classical and post-quantum keys
+    const classicalKeyPair = await crypto.subtle.generateKey(
+      { name: 'ECDH', namedCurve: 'P-384' },
+      true,
+      ['deriveKey']
+    )
+    
+    const postQuantumKeyPair = await KyberKEM.generateKeyPair()
+    
+    return {
+      classical: classicalKeyPair,
+      postQuantum: postQuantumKeyPair,
+      hybrid: true
+    }
+  }
+  
+  async hybridEncrypt(
+    data: Uint8Array, 
+    recipientKeys: PostQuantumKeyPair
+  ): Promise<HybridEncryptionResult> {
+    const hybridEncryption = new HybridEncryption()
+    
+    return await hybridEncryption.encrypt(data, {
+      classicalPublicKey: recipientKeys.classical.publicKey,
+      postQuantumPublicKey: recipientKeys.postQuantum.publicKey,
+      algorithm: 'kyber1024'
+    })
+  }
+}
+```
+
+## Security Event Logging
+
+### Audit Trail Implementation
+```typescript
+// Security-focused audit logging
+interface SecurityEvent {
+  eventType: SecurityEventType
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  userId?: string
+  timestamp: Date
+  context: SecurityContext
+  outcome: 'success' | 'failure' | 'suspicious'
+}
+
+class SecurityEventLogger {
+  async logSecurityEvent(event: SecurityEvent): Promise<void> {
+    // Encrypt security logs
+    const encryptedEvent = await vault.encrypt(JSON.stringify(event), {
+      purpose: 'security-audit',
+      classification: 'confidential'
+    })
+    
+    // Store with tamper detection
+    await this.storeWithIntegrity(encryptedEvent, {
+      hash: await this.computeEventHash(event),
+      signature: await this.signEvent(event),
+      timestamp: Date.now()
+    })
+    
+    // Alert on critical events
+    if (event.severity === 'critical') {
+      await this.triggerSecurityAlert(event)
+    }
+  }
+  
+  async detectAnomalies(userId: string): Promise<SecurityAnomaly[]> {
+    const recentEvents = await this.getRecentEvents(userId, 24 * 60 * 60 * 1000)
+    
+    return [
+      ...this.detectUnusualLoginPatterns(recentEvents),
+      ...this.detectSuspiciousOperations(recentEvents),
+      ...this.detectPotentialCompromise(recentEvents)
+    ]
+  }
+}
+```
+
+## Error Handling & Security
+
+### Secure Error Handling
+```typescript
+// Security-conscious error handling
+class SecurityError extends Error {
+  constructor(
+    message: string,
+    public readonly code: string,
+    public readonly severity: 'low' | 'medium' | 'high' | 'critical' = 'medium',
+    public readonly context?: Record<string, any>
+  ) {
+    super(message)
+    this.name = 'SecurityError'
+  }
+}
+
+class CryptographicError extends SecurityError {
+  constructor(message: string, context?: Record<string, any>) {
+    super(message, 'CRYPTO_ERROR', 'high', context)
+    
+    // Never expose cryptographic details in production
+    if (import.meta.env.PROD) {
+      this.message = 'Cryptographic operation failed'
+      this.stack = undefined
+    }
+  }
+}
+
+// Error handling pattern
+try {
+  const result = await vault.encrypt(sensitiveData)
+} catch (error) {
+  if (error instanceof CryptographicError) {
+    // Log security event
+    await securityLogger.logSecurityEvent({
+      eventType: 'ENCRYPTION_FAILURE',
+      severity: 'high',
+      outcome: 'failure',
+      context: { operation: 'vault_encrypt' }
+    })
+    
+    // Return safe error to user
+    throw new Error('Unable to secure data. Please try again.')
+  }
+  throw error
+}
+```
+
+## Secure Development Patterns
+
+### Input Validation & Sanitization
+```typescript
+// Security-first input validation
+class SecureInputValidator {
+  static validatePassword(password: string): ValidationResult {
+    const rules = [
+      { test: /.{12,}/, message: 'At least 12 characters' },
+      { test: /[A-Z]/, message: 'At least one uppercase letter' },
+      { test: /[a-z]/, message: 'At least one lowercase letter' },
+      { test: /\d/, message: 'At least one number' },
+      { test: /[!@#$%^&*(),.?":{}|<>]/, message: 'At least one special character' }
+    ]
+    
+    const failures = rules.filter(rule => !rule.test.test(password))
+    
+    return {
+      isValid: failures.length === 0,
+      strength: this.calculatePasswordStrength(password),
+      issues: failures.map(f => f.message)
+    }
+  }
+  
+  static sanitizeForEncryption(data: any): string {
+    // Remove potential malicious content before encryption
+    if (typeof data === 'string') {
+      return data.replace(/[\x00-\x1F\x7F]/g, '') // Remove control characters
+    }
+    
+    return JSON.stringify(data, null, 0)
+  }
+}
+```
+
+### Secure Component Integration
+```vue
+<!-- SecurityDashboard.vue pattern -->
+<template>
+  <div class="security-dashboard">
+    <SecurityMetrics :metrics="securityMetrics" />
+    <ThreatIndicators :threats="activeThreatList" />
+    <AuditLog :events="recentSecurityEvents" />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useSecurityMonitoring } from '@/composables/useSecurity'
+import type { SecurityMetrics, ThreatIndicator } from '@/types/security'
+
+// Security monitoring composable
+const {
+  securityMetrics,
+  activeThreatList,
+  recentSecurityEvents,
+  startMonitoring,
+  stopMonitoring
+} = useSecurityMonitoring()
+
+// Security lifecycle management
+onMounted(async () => {
+  await startMonitoring()
+})
+
+onUnmounted(() => {
+  stopMonitoring()
+})
+</script>
+```
+
+## Performance & Security Balance
+
+### Hardware Acceleration Detection
+```typescript
+// Use hardware acceleration when available
+class PerformanceSecurityOptimizer {
+  static async selectOptimalAlgorithm(): Promise<AlgorithmSelection> {
+    const capabilities = await this.detectCapabilities()
+    
+    if (capabilities.hardwareAES) {
+      return {
+        algorithm: 'aes-gcm',
+        hardwareAccelerated: true,
+        reason: 'Hardware AES support detected'
+      }
+    }
+    
+    return {
+      algorithm: 'xchacha20-poly1305',
+      hardwareAccelerated: false,
+      reason: 'Software implementation for compatibility'
+    }
+  }
+  
+  private static async detectCapabilities(): Promise<HardwareCapabilities> {
+    // Detect available cryptographic hardware
+    return {
+      hardwareAES: await this.testHardwareAES(),
+      hardwareRNG: await this.testHardwareRNG(),
+      simdSupport: await this.testSIMDSupport()
+    }
+  }
+}
+```
+
+## Security Testing Patterns
+
+### Cryptographic Unit Tests
+```typescript
+// Security-focused testing
+describe('ZeroKnowledgeVault Security', () => {
+  let vault: ZeroKnowledgeVault
+  
+  beforeEach(async () => {
+    vault = new ZeroKnowledgeVault()
+    await vault.initialize(TEST_PASSWORD, TEST_EMAIL)
+  })
+  
+  afterEach(() => {
+    // Always clean up sensitive test data
+    vault.lock()
+    MemoryProtection.secureZero(TEST_PASSWORD_BYTES)
+  })
+  
+  it('should maintain data confidentiality', async () => {
+    const plaintext = 'sensitive test data'
+    const encrypted = await vault.encrypt(plaintext)
+    
+    // Encrypted data should not contain plaintext
+    expect(encrypted.data).not.toContain(plaintext)
+    expect(encrypted.data.length).toBeGreaterThan(plaintext.length)
+  })
+  
+  it('should provide authenticated encryption', async () => {
+    const plaintext = 'test data'
+    const encrypted = await vault.encrypt(plaintext)
+    
+    // Tamper with ciphertext
+    encrypted.data[0] ^= 1
+    
+    // Should fail authentication
+    await expect(vault.decrypt(encrypted)).rejects.toThrow()
+  })
+})
+```
+
+Remember: Security is paramount in ZK-Vault. Always use the crypto package for security operations, implement proper key management, maintain zero-knowledge architecture, and never expose sensitive data in logs or error messages. 

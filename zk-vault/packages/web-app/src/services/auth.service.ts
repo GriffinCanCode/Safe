@@ -8,6 +8,15 @@
 
 import { ZeroKnowledgeAuth, ZeroKnowledgeVault } from '@zk-vault/crypto';
 import type { SRPAuthProof, MasterKeyStructure, CryptoOperationResult } from '@zk-vault/shared';
+import { firebaseService } from '@/services/firebase.service';
+import { 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signInWithRedirect, 
+  getRedirectResult,
+  type UserCredential,
+  type User as FirebaseUser
+} from 'firebase/auth';
 
 // User profile interface matching system patterns
 export interface UserProfile {
@@ -75,6 +84,15 @@ export interface BiometricOptions {
 export interface BiometricAuthResult {
   success: boolean;
   error?: string;
+}
+
+// Google authentication result
+export interface GoogleAuthResult {
+  user: ZKUser;
+  profile: UserProfile;
+  isNewUser: boolean;
+  masterKeyStructure: MasterKeyStructure;
+  credential?: any; // Google credential object
 }
 
 /**
@@ -410,6 +428,325 @@ class AuthService {
     } catch (error) {
       console.error('Biometric authentication failed:', error);
       return false;
+    }
+  }
+
+  /**
+   * Sign in with Google OAuth
+   */
+  async signInWithGoogle(useRedirect: boolean = false): Promise<GoogleAuthResult> {
+    try {
+      if (!firebaseService.isInitialized) {
+        throw new Error('Firebase not initialized');
+      }
+
+      const provider = new GoogleAuthProvider();
+      
+      // Add additional scopes for user profile information
+      provider.addScope('profile');
+      provider.addScope('email');
+      
+      // Set custom parameters for better UX
+      provider.setCustomParameters({
+        prompt: 'select_account'
+      });
+
+      let result: UserCredential | null = null;
+
+      if (useRedirect) {
+        // Use redirect flow for mobile or restricted environments
+        await signInWithRedirect(firebaseService.auth, provider);
+        result = await getRedirectResult(firebaseService.auth);
+        
+        if (!result) {
+          throw new Error('Google sign-in was cancelled or failed');
+        }
+      } else {
+        // Use popup flow for desktop (better UX)
+        result = await signInWithPopup(firebaseService.auth, provider);
+      }
+
+      const { user: firebaseUser } = result;
+      
+      if (!firebaseUser || !firebaseUser.email) {
+        throw new Error('Failed to get user information from Google');
+      }
+
+      // Convert Firebase user to ZK user
+      const zkUser: ZKUser = {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email,
+        emailVerified: firebaseUser.emailVerified,
+        ...(firebaseUser.displayName && { displayName: firebaseUser.displayName }),
+      };
+
+      // Check if user already exists in our system
+      let existingUser = this.getStoredUser(firebaseUser.email);
+      let isNewUser = !existingUser;
+      let profile: UserProfile;
+
+      if (existingUser) {
+        // Existing user - load their profile
+        profile = await this.getUserProfile(existingUser.uid);
+        
+                 // Update user with any new information from Google
+        if (firebaseUser.displayName && !existingUser.displayName) {
+          existingUser.displayName = firebaseUser.displayName;
+          localStorage.setItem(`zk-vault-user-${existingUser.email}`, JSON.stringify(existingUser, this.dateReplacer));
+        }
+        
+        zkUser.uid = existingUser.uid; // Use our internal UID
+      } else {
+        // New user - create profile
+        profile = await this.createUserProfile(zkUser, {
+          displayName: firebaseUser.displayName,
+          photoURL: firebaseUser.photoURL,
+          acceptTerms: true, // Implicit acceptance for OAuth
+          acceptMarketing: false, // Default to false
+        });
+        
+        // Store the new user
+        localStorage.setItem(`zk-vault-user-${zkUser.email}`, JSON.stringify(zkUser, this.dateReplacer));
+      }
+
+      // Create a temporary master key structure for OAuth users
+      // In a real implementation, you might prompt for a master password
+      // or use a different key derivation strategy for OAuth users
+      const tempSalt = new Uint8Array(32);
+      crypto.getRandomValues(tempSalt);
+      
+      const tempKeyMaterial = new Uint8Array(32);
+      crypto.getRandomValues(tempKeyMaterial);
+      
+      const masterKey = await crypto.subtle.importKey(
+        'raw',
+        tempKeyMaterial,
+        { name: 'AES-GCM' },
+        false,
+        ['encrypt', 'decrypt']
+      );
+      
+      const accountKey = await crypto.subtle.importKey(
+        'raw', 
+        tempKeyMaterial,
+        { name: 'AES-GCM' },
+        false,
+        ['encrypt', 'decrypt']
+      );
+
+      const masterKeyStructure: MasterKeyStructure = {
+        masterKey,
+        accountKey,
+        salt: tempSalt,
+        authProof: {
+          clientPublic: '',
+          clientProof: '',
+          timestamp: Date.now(),
+          salt: Array.from(tempSalt).map(b => b.toString(16).padStart(2, '0')).join(''),
+        },
+        derivationParams: {
+          password: '', // Don't store password for OAuth users
+          salt: tempSalt,
+          time: 3,
+          memory: 65536,
+          parallelism: 4,
+          outputLength: 32,
+        },
+      };
+
+      // Store session
+      this.storeUserSession(zkUser, profile, masterKeyStructure);
+
+      // Update instance state
+      this.currentUser = zkUser;
+      this.currentProfile = profile;
+      this.masterKeyStructure = masterKeyStructure;
+      
+      // Update login timestamp
+      await this.updateLastLoginTime(zkUser.uid);
+      
+      // Setup session timeout
+      this.setupSessionTimeout();
+      
+      // Notify listeners
+      this.notifyAuthStateListeners(zkUser);
+
+      return {
+        user: zkUser,
+        profile,
+        isNewUser,
+        masterKeyStructure,
+        credential: result,
+      };
+    } catch (error: any) {
+      console.error('Google sign-in failed:', error);
+      
+      // Handle specific Google Auth errors
+      if (error.code === 'auth/popup-closed-by-user') {
+        throw new Error('Sign-in was cancelled');
+      } else if (error.code === 'auth/popup-blocked') {
+        throw new Error('Pop-up was blocked by your browser. Please allow pop-ups and try again.');
+      } else if (error.code === 'auth/network-request-failed') {
+        throw new Error('Network error. Please check your connection and try again.');
+      }
+      
+      throw this.handleAuthError(error);
+    }
+  }
+
+  /**
+   * Check if there's a pending Google redirect result
+   */
+  async checkGoogleRedirectResult(): Promise<GoogleAuthResult | null> {
+    try {
+      if (!firebaseService.isInitialized) {
+        return null;
+      }
+
+      const result = await getRedirectResult(firebaseService.auth);
+      
+      if (!result) {
+        return null;
+      }
+
+      // Process the redirect result same as popup
+      // We would call the same Google auth processing logic here
+      // For now, return null as this is a redirect flow check
+      return null;
+    } catch (error: any) {
+      console.error('Google redirect result failed:', error);
+      throw this.handleAuthError(error);
+    }
+  }
+
+  /**
+   * Link Google account to existing user
+   */
+  async linkGoogleAccount(): Promise<void> {
+    try {
+      if (!this.currentUser) {
+        throw new Error('No authenticated user to link account to');
+      }
+
+      if (!firebaseService.isInitialized) {
+        throw new Error('Firebase not initialized');
+      }
+
+      const provider = new GoogleAuthProvider();
+      provider.addScope('profile');
+      provider.addScope('email');
+
+      // This would link the Google account to the current user
+      // For now, we'll simulate this since we're using local storage
+      console.log('Google account linking simulated for user:', this.currentUser.email);
+      
+      // In a real implementation, you would:
+      // const result = await linkWithPopup(firebaseService.auth.currentUser, provider);
+      
+    } catch (error: any) {
+      console.error('Google account linking failed:', error);
+      throw this.handleAuthError(error);
+    }
+  }
+
+  /**
+   * Authenticate user with email (for biometric flow)
+   */
+  async authenticateUserByEmail(email: string): Promise<AuthResult> {
+    try {
+      // Find the user by email
+      const user = this.getStoredUser(email);
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      // Get user profile
+      const profile = await this.getUserProfile(user.uid);
+      if (!profile) {
+        throw new Error('User profile not found');
+      }
+
+      // Check if account is locked
+      if (profile.security.lockedUntil && profile.security.lockedUntil > new Date()) {
+        throw new Error('Account is temporarily locked');
+      }
+
+      // Set current user and profile
+      this.currentUser = user;
+      this.currentProfile = profile;
+
+      // Create master key structure for the session
+      // In a real app, this would be derived from stored encrypted data
+      // For biometric auth, we'll create a minimal valid structure
+      const tempSalt = new Uint8Array(32);
+      crypto.getRandomValues(tempSalt);
+      
+      // Create placeholder CryptoKey objects
+      const tempKeyMaterial = new Uint8Array(32);
+      crypto.getRandomValues(tempKeyMaterial);
+      
+      const masterKey = await crypto.subtle.importKey(
+        'raw',
+        tempKeyMaterial,
+        { name: 'AES-GCM' },
+        false,
+        ['encrypt', 'decrypt']
+      );
+      
+      const accountKey = await crypto.subtle.importKey(
+        'raw', 
+        tempKeyMaterial,
+        { name: 'AES-GCM' },
+        false,
+        ['encrypt', 'decrypt']
+      );
+
+      const tempMasterKey: MasterKeyStructure = {
+        masterKey,
+        accountKey,
+        salt: tempSalt,
+        authProof: {
+          clientPublic: '',
+          clientProof: '',
+          timestamp: Date.now(),
+          salt: Array.from(tempSalt).map(b => b.toString(16).padStart(2, '0')).join(''),
+        },
+        derivationParams: {
+          password: '', // Don't store password
+          salt: tempSalt,
+          time: 3,
+          memory: 65536,
+          parallelism: 4,
+          outputLength: 32,
+        },
+      };
+      
+      this.masterKeyStructure = tempMasterKey;
+
+      // Store session
+      this.storeUserSession(user, profile, tempMasterKey);
+
+      // Reset login attempts
+      await this.resetLoginAttempts(user.uid);
+
+      // Update last login time
+      await this.updateLastLoginTime(user.uid);
+
+      // Setup session timeout
+      this.setupSessionTimeout();
+
+      // Notify listeners
+      this.notifyAuthStateListeners(user);
+
+      return {
+        user,
+        profile,
+        isNewUser: false,
+        masterKeyStructure: tempMasterKey,
+      };
+    } catch (error: any) {
+      console.error('Email authentication failed:', error);
+      throw this.handleAuthError(error);
     }
   }
 

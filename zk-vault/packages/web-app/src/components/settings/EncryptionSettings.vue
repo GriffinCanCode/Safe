@@ -8,15 +8,20 @@
           <h3 class="group-title">Vault Encryption</h3>
           <div class="info-card">
             <div class="info-icon">
-              <svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              <svg class="h-6 w-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fill-rule="evenodd"
+                  d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clip-rule="evenodd"
+                />
               </svg>
             </div>
             <div class="info-content">
               <h4 class="info-title">Your vault is fully encrypted</h4>
               <p class="info-description">
-                All your data is protected with end-to-end encryption using AES-256 and zero-knowledge architecture. 
-                Only you can decrypt your data with your master password.
+                All your data is protected with end-to-end encryption using AES-256 and
+                zero-knowledge architecture. Only you can decrypt your data with your master
+                password.
               </p>
               <div class="encryption-details">
                 <div class="detail-item">
@@ -43,10 +48,11 @@
             <div class="password-info">
               <h4 class="password-title">Change Master Password</h4>
               <p class="password-description">
-                Your master password is the key to your vault. Choose a strong, unique password that you'll remember.
+                Your master password is the key to your vault. Choose a strong, unique password that
+                you'll remember.
               </p>
             </div>
-            
+
             <div class="password-form" v-if="showPasswordForm">
               <div class="form-grid">
                 <BaseInput
@@ -57,7 +63,7 @@
                   :error="passwordErrors.currentPassword"
                   autocomplete="current-password"
                 />
-                
+
                 <BaseInput
                   v-model="passwordForm.newPassword"
                   label="New Master Password"
@@ -66,7 +72,7 @@
                   :error="passwordErrors.newPassword"
                   autocomplete="new-password"
                 />
-                
+
                 <BaseInput
                   v-model="passwordForm.confirmPassword"
                   label="Confirm New Password"
@@ -86,25 +92,24 @@
 
               <div class="warning-notice">
                 <div class="warning-icon">
-                  <svg class="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                  <svg class="h-5 w-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fill-rule="evenodd"
+                      d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                      clip-rule="evenodd"
+                    />
                   </svg>
                 </div>
                 <div class="warning-content">
                   <p class="warning-text">
-                    <strong>Warning:</strong> Changing your master password will re-encrypt all your vault data. 
-                    This process may take a few moments to complete.
+                    <strong>Warning:</strong> Changing your master password will re-encrypt all your
+                    vault data. This process may take a few moments to complete.
                   </p>
                 </div>
               </div>
 
               <div class="password-actions">
-                <BaseButton
-                  variant="ghost"
-                  @click="cancelPasswordChange"
-                >
-                  Cancel
-                </BaseButton>
+                <BaseButton variant="ghost" @click="cancelPasswordChange"> Cancel </BaseButton>
                 <BaseButton
                   variant="primary"
                   @click="changeMasterPassword"
@@ -117,10 +122,7 @@
             </div>
 
             <div v-else class="password-actions">
-              <BaseButton
-                variant="outline"
-                @click="showPasswordForm = true"
-              >
+              <BaseButton variant="outline" @click="showPasswordForm = true">
                 Change Master Password
               </BaseButton>
             </div>
@@ -141,13 +143,9 @@
                 <span class="date-value">{{ formatDate(keyCreatedDate) }}</span>
               </div>
             </div>
-            
+
             <div class="key-actions">
-              <BaseButton
-                variant="outline"
-                @click="rotateKeys"
-                :loading="rotatingKeys"
-              >
+              <BaseButton variant="outline" @click="rotateKeys" :loading="rotatingKeys">
                 Rotate Encryption Keys
               </BaseButton>
             </div>
@@ -159,147 +157,160 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
-import BaseInput from '@/components/common/BaseInput.vue'
-import BaseButton from '@/components/common/BaseButton.vue'
-import PasswordStrengthMeter from '@/components/vault/PasswordStrengthMeter.vue'
-import { authService } from '@/services/auth.service'
-import { cryptoVaultService } from '@/services/crypto-vault.service'
+import { ref, reactive, computed, onMounted } from 'vue';
+import BaseInput from '@/components/common/BaseInput.vue';
+import BaseButton from '@/components/common/BaseButton.vue';
+import PasswordStrengthMeter from '@/components/vault/PasswordStrengthMeter.vue';
+import { authService } from '@/services/auth.service';
+import { cryptoVaultService } from '@/services/crypto-vault.service';
 
 // State
-const showPasswordForm = ref(false)
-const changingPassword = ref(false)
-const rotatingKeys = ref(false)
-const keyCreatedDate = ref(new Date())
+const showPasswordForm = ref(false);
+const changingPassword = ref(false);
+const rotatingKeys = ref(false);
+const keyCreatedDate = ref(new Date());
 
 const passwordForm = reactive({
   currentPassword: '',
   newPassword: '',
-  confirmPassword: ''
-})
+  confirmPassword: '',
+});
 
 const passwordErrors = reactive({
   currentPassword: '',
   newPassword: '',
-  confirmPassword: ''
-})
+  confirmPassword: '',
+});
 
 // Computed
 const isPasswordFormValid = computed(() => {
-  return passwordForm.currentPassword &&
-         passwordForm.newPassword &&
-         passwordForm.confirmPassword &&
-         passwordForm.newPassword === passwordForm.confirmPassword &&
-         passwordForm.newPassword.length >= 12 &&
-         !passwordErrors.currentPassword &&
-         !passwordErrors.newPassword &&
-         !passwordErrors.confirmPassword
-})
+  return (
+    passwordForm.currentPassword &&
+    passwordForm.newPassword &&
+    passwordForm.confirmPassword &&
+    passwordForm.newPassword === passwordForm.confirmPassword &&
+    passwordForm.newPassword.length >= 12 &&
+    !passwordErrors.currentPassword &&
+    !passwordErrors.newPassword &&
+    !passwordErrors.confirmPassword
+  );
+});
 
 // Methods
 const loadKeyData = async () => {
   try {
-    const user = authService.getCurrentUser()
-    if (!user) return
+    const user = authService.getCurrentUser();
+    if (!user) return;
 
-    const profile = await authService.getUserProfile(user.uid)
-    
+    const profile = await authService.getUserProfile(user.uid);
+
     // Set key creation date (mock data for now)
-    keyCreatedDate.value = profile.createdAt
+    keyCreatedDate.value = profile.createdAt;
   } catch (error) {
-    console.error('Failed to load key data:', error)
+    console.error('Failed to load key data:', error);
   }
-}
+};
 
 const validatePasswordForm = () => {
-  passwordErrors.currentPassword = ''
-  passwordErrors.newPassword = ''
-  passwordErrors.confirmPassword = ''
+  passwordErrors.currentPassword = '';
+  passwordErrors.newPassword = '';
+  passwordErrors.confirmPassword = '';
 
   if (!passwordForm.currentPassword) {
-    passwordErrors.currentPassword = 'Current master password is required'
+    passwordErrors.currentPassword = 'Current master password is required';
   }
 
   if (!passwordForm.newPassword) {
-    passwordErrors.newPassword = 'New master password is required'
+    passwordErrors.newPassword = 'New master password is required';
   } else if (passwordForm.newPassword.length < 12) {
-    passwordErrors.newPassword = 'Master password must be at least 12 characters'
+    passwordErrors.newPassword = 'Master password must be at least 12 characters';
   } else if (passwordForm.newPassword === passwordForm.currentPassword) {
-    passwordErrors.newPassword = 'New password must be different from current password'
+    passwordErrors.newPassword = 'New password must be different from current password';
   }
 
   if (!passwordForm.confirmPassword) {
-    passwordErrors.confirmPassword = 'Please confirm your new master password'
+    passwordErrors.confirmPassword = 'Please confirm your new master password';
   } else if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-    passwordErrors.confirmPassword = 'Passwords do not match'
+    passwordErrors.confirmPassword = 'Passwords do not match';
   }
 
-  return !passwordErrors.currentPassword && !passwordErrors.newPassword && !passwordErrors.confirmPassword
-}
+  return (
+    !passwordErrors.currentPassword &&
+    !passwordErrors.newPassword &&
+    !passwordErrors.confirmPassword
+  );
+};
 
 const changeMasterPassword = async () => {
-  if (!validatePasswordForm()) return
+  if (!validatePasswordForm()) return;
 
-  changingPassword.value = true
+  changingPassword.value = true;
 
   try {
     // Verify current password first
-    const isValid = await cryptoVaultService.initialize(passwordForm.currentPassword, authService.getCurrentUser()?.email || '')
+    const isValid = await cryptoVaultService.initialize(
+      passwordForm.currentPassword,
+      authService.getCurrentUser()?.email || ''
+    );
     if (!isValid) {
-      passwordErrors.currentPassword = 'Current master password is incorrect'
-      return
+      passwordErrors.currentPassword = 'Current master password is incorrect';
+      return;
     }
 
     // Update to new password
-    await authService.updatePassword(passwordForm.newPassword)
-    
+    await authService.updatePassword(passwordForm.newPassword);
+
     // Clear form and hide it
-    cancelPasswordChange()
-    
+    cancelPasswordChange();
+
     // TODO: Show success notification
   } catch (error: any) {
-    console.error('Failed to change master password:', error)
-    passwordErrors.currentPassword = 'Failed to change master password'
+    console.error('Failed to change master password:', error);
+    passwordErrors.currentPassword = 'Failed to change master password';
     // TODO: Show error notification
   } finally {
-    changingPassword.value = false
+    changingPassword.value = false;
   }
-}
+};
 
 const cancelPasswordChange = () => {
-  showPasswordForm.value = false
-  passwordForm.currentPassword = ''
-  passwordForm.newPassword = ''
-  passwordForm.confirmPassword = ''
-  
+  showPasswordForm.value = false;
+  passwordForm.currentPassword = '';
+  passwordForm.newPassword = '';
+  passwordForm.confirmPassword = '';
+
   // Clear errors
-  passwordErrors.currentPassword = ''
-  passwordErrors.newPassword = ''
-  passwordErrors.confirmPassword = ''
-}
+  passwordErrors.currentPassword = '';
+  passwordErrors.newPassword = '';
+  passwordErrors.confirmPassword = '';
+};
 
 const rotateKeys = async () => {
-  if (!confirm('Are you sure you want to rotate encryption keys? This will re-encrypt all your vault data.')) {
-    return
+  if (
+    !confirm(
+      'Are you sure you want to rotate encryption keys? This will re-encrypt all your vault data.'
+    )
+  ) {
+    return;
   }
 
-  rotatingKeys.value = true
+  rotatingKeys.value = true;
 
   try {
     // In a real implementation, this would rotate the encryption keys
     // For now, we'll simulate the process
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    keyCreatedDate.value = new Date()
-    
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    keyCreatedDate.value = new Date();
+
     // TODO: Show success notification
   } catch (error) {
-    console.error('Failed to rotate keys:', error)
+    console.error('Failed to rotate keys:', error);
     // TODO: Show error notification
   } finally {
-    rotatingKeys.value = false
+    rotatingKeys.value = false;
   }
-}
+};
 
 const formatDate = (date: Date) => {
   return new Intl.DateTimeFormat('en-US', {
@@ -307,217 +318,14 @@ const formatDate = (date: Date) => {
     month: 'long',
     day: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
-  }).format(date)
-}
+    minute: '2-digit',
+  }).format(date);
+};
 
 // Lifecycle
 onMounted(() => {
   loadKeyData();
-})
+});
 </script>
 
-<style scoped>
-.encryption-settings {
-  @apply space-y-8;
-}
-
-.settings-section {
-  @apply bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden;
-}
-
-.section-title {
-  @apply text-xl font-semibold text-neutral-900 p-6 border-b border-neutral-200;
-}
-
-.section-content {
-  @apply p-6 space-y-8;
-}
-
-.setting-group {
-  @apply space-y-6;
-}
-
-.group-title {
-  @apply text-lg font-medium text-neutral-900;
-}
-
-.info-card {
-  @apply flex gap-4 p-6 bg-green-50 border border-green-200 rounded-lg;
-}
-
-.info-icon {
-  @apply flex-shrink-0;
-}
-
-.info-content {
-  @apply flex-1;
-}
-
-.info-title {
-  @apply font-semibold text-green-900 mb-2;
-}
-
-.info-description {
-  @apply text-green-800 mb-4;
-}
-
-.encryption-details {
-  @apply space-y-2;
-}
-
-.detail-item {
-  @apply flex justify-between text-sm;
-}
-
-.detail-label {
-  @apply text-green-700 font-medium;
-}
-
-.detail-value {
-  @apply text-green-800;
-}
-
-.master-password-card {
-  @apply p-6 bg-neutral-50 border border-neutral-200 rounded-lg space-y-6;
-}
-
-.password-info {
-  @apply space-y-2;
-}
-
-.password-title {
-  @apply font-semibold text-neutral-900;
-}
-
-.password-description {
-  @apply text-neutral-600;
-}
-
-.password-form {
-  @apply space-y-6;
-}
-
-.form-grid {
-  @apply grid grid-cols-1 gap-4;
-}
-
-.warning-notice {
-  @apply flex gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg;
-}
-
-.warning-icon {
-  @apply flex-shrink-0;
-}
-
-.warning-content {
-  @apply flex-1;
-}
-
-.warning-text {
-  @apply text-sm text-yellow-800;
-}
-
-.password-actions {
-  @apply flex justify-end gap-3;
-}
-
-.key-info-card {
-  @apply p-6 bg-neutral-50 border border-neutral-200 rounded-lg;
-  @apply flex items-center justify-between;
-}
-
-.key-status {
-  @apply space-y-2;
-}
-
-.status-indicator {
-  @apply flex items-center gap-2;
-}
-
-.status-dot {
-  @apply w-2 h-2 rounded-full;
-}
-
-.status-indicator.active .status-dot {
-  @apply bg-green-500;
-}
-
-.status-text {
-  @apply text-sm font-medium text-neutral-900;
-}
-
-.key-date {
-  @apply flex items-center gap-2 text-sm text-neutral-600;
-}
-
-.date-label {
-  @apply font-medium;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .settings-section {
-    @apply bg-neutral-800 border-neutral-700;
-  }
-
-  .section-title {
-    @apply text-neutral-100 border-neutral-700;
-  }
-
-  .group-title {
-    @apply text-neutral-100;
-  }
-
-  .info-card {
-    @apply bg-green-900/20 border-green-700;
-  }
-
-  .info-title {
-    @apply text-green-300;
-  }
-
-  .info-description {
-    @apply text-green-400;
-  }
-
-  .detail-label {
-    @apply text-green-400;
-  }
-
-  .detail-value {
-    @apply text-green-300;
-  }
-
-  .master-password-card,
-  .key-info-card {
-    @apply bg-neutral-700 border-neutral-600;
-  }
-
-  .password-title,
-  .status-text {
-    @apply text-neutral-100;
-  }
-
-  .password-description,
-  .key-date {
-    @apply text-neutral-400;
-  }
-
-  .warning-notice {
-    @apply bg-yellow-900/20 border-yellow-700;
-  }
-
-  .warning-text {
-    @apply text-yellow-300;
-  }
-
-  .option-select {
-    @apply bg-neutral-700 border-neutral-600 text-neutral-100;
-  }
-
-  .toggle-slider {
-    @apply bg-neutral-600;
-  }
-}
-</style>
+<!-- CSS classes are now defined in /styles/components/settings/encryption-settings.css -->

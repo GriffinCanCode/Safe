@@ -63,4 +63,4 @@
   --spacing-responsive-md: clamp(var(--spacing-4), 4vw, var(--spacing-8));
   --spacing-responsive-lg: clamp(var(--spacing-8), 6vw, var(--spacing-16));
   --spacing-responsive-xl: clamp(var(--spacing-12), 8vw, var(--spacing-24));
-} 
+}

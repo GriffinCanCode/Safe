@@ -152,11 +152,10 @@ integration
 ### Using the Search Composable
 
 ```ts
-const { query, filters, results, isLoading, search, setQuery, setFilters } =
-  useSearch({
-    autoSearch: true,
-    debounceMs: 300,
-  });
+const { query, filters, results, isLoading, search, setQuery, setFilters } = useSearch({
+  autoSearch: true,
+  debounceMs: 300,
+});
 
 // Programmatic search
 await search();

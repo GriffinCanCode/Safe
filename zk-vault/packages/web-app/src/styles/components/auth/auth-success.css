@@ -12,10 +12,12 @@
   align-items: center;
   gap: var(--space-6);
   padding: var(--space-8);
-  background: linear-gradient(135deg, 
-    var(--color-success-50) 0%, 
-    var(--color-success-100) 50%, 
-    var(--color-primary-50) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-success-50) 0%,
+    var(--color-success-100) 50%,
+    var(--color-primary-50) 100%
+  );
   border: 2px solid var(--color-success-200);
   border-radius: var(--radius-2xl);
   text-align: center;
@@ -30,10 +32,7 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, 
-    transparent, 
-    rgba(255, 255, 255, 0.4), 
-    transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
   animation: successShimmer 2s var(--ease-out) 0.5s;
 }
 
@@ -44,10 +43,12 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, 
-    var(--color-success-500), 
-    var(--color-primary-500), 
-    var(--color-success-500));
+  background: linear-gradient(
+    90deg,
+    var(--color-success-500),
+    var(--color-primary-500),
+    var(--color-success-500)
+  );
   border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
   animation: successGlow 3s var(--ease-in-out) infinite;
 }
@@ -57,14 +58,12 @@
   position: relative;
   width: var(--space-20);
   height: var(--space-20);
-  background: linear-gradient(135deg, 
-    var(--color-success-500), 
-    var(--color-success-600));
+  background: linear-gradient(135deg, var(--color-success-500), var(--color-success-600));
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 
+  box-shadow:
     0 0 0 4px var(--color-success-100),
     0 0 0 8px var(--color-success-50),
     var(--shadow-xl);
@@ -166,9 +165,7 @@
 }
 
 .auth-success-primary-action {
-  background: linear-gradient(135deg, 
-    var(--color-success-600), 
-    var(--color-success-700));
+  background: linear-gradient(135deg, var(--color-success-600), var(--color-success-700));
   color: var(--color-white);
   border: none;
   padding: var(--space-3) var(--space-6);
@@ -181,9 +178,7 @@
 }
 
 .auth-success-primary-action:hover {
-  background: linear-gradient(135deg, 
-    var(--color-success-700), 
-    var(--color-success-800));
+  background: linear-gradient(135deg, var(--color-success-700), var(--color-success-800));
   box-shadow: var(--shadow-lg);
   transform: translateY(-1px);
 }
@@ -213,25 +208,27 @@
 
 /* === SUCCESS VARIANTS === */
 .auth-success.biometric {
-  background: linear-gradient(135deg, 
-    var(--color-primary-50) 0%, 
-    var(--color-success-50) 50%, 
-    var(--color-primary-100) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-50) 0%,
+    var(--color-success-50) 50%,
+    var(--color-primary-100) 100%
+  );
   border-color: var(--color-primary-300);
 }
 
 .auth-success.biometric::after {
-  background: linear-gradient(90deg, 
-    var(--color-primary-500), 
-    var(--color-success-500), 
-    var(--color-primary-500));
+  background: linear-gradient(
+    90deg,
+    var(--color-primary-500),
+    var(--color-success-500),
+    var(--color-primary-500)
+  );
 }
 
 .auth-success.biometric .auth-success-icon {
-  background: linear-gradient(135deg, 
-    var(--color-primary-500), 
-    var(--color-primary-600));
-  box-shadow: 
+  background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-600));
+  box-shadow:
     0 0 0 4px var(--color-primary-100),
     0 0 0 8px var(--color-primary-50),
     var(--shadow-xl);
@@ -242,9 +239,7 @@
 }
 
 .auth-success.password {
-  background: linear-gradient(135deg, 
-    var(--color-success-50) 0%, 
-    var(--color-success-100) 100%);
+  background: linear-gradient(135deg, var(--color-success-50) 0%, var(--color-success-100) 100%);
 }
 
 .auth-success.quick {
@@ -290,10 +285,12 @@
 /* === DARK MODE SUPPORT === */
 @media (prefers-color-scheme: dark) {
   .auth-success {
-    background: linear-gradient(135deg, 
-      color-mix(in oklch, var(--color-success-900) 30%, transparent) 0%, 
-      color-mix(in oklch, var(--color-success-800) 20%, transparent) 50%, 
-      color-mix(in oklch, var(--color-primary-900) 30%, transparent) 100%);
+    background: linear-gradient(
+      135deg,
+      color-mix(in oklch, var(--color-success-900) 30%, transparent) 0%,
+      color-mix(in oklch, var(--color-success-800) 20%, transparent) 50%,
+      color-mix(in oklch, var(--color-primary-900) 30%, transparent) 100%
+    );
     border-color: var(--color-success-700);
   }
 
@@ -344,18 +341,18 @@
   }
 
   .auth-success.biometric {
-    background: linear-gradient(135deg, 
-      color-mix(in oklch, var(--color-primary-900) 30%, transparent) 0%, 
-      color-mix(in oklch, var(--color-success-900) 20%, transparent) 50%, 
-      color-mix(in oklch, var(--color-primary-800) 30%, transparent) 100%);
+    background: linear-gradient(
+      135deg,
+      color-mix(in oklch, var(--color-primary-900) 30%, transparent) 0%,
+      color-mix(in oklch, var(--color-success-900) 20%, transparent) 50%,
+      color-mix(in oklch, var(--color-primary-800) 30%, transparent) 100%
+    );
     border-color: var(--color-primary-600);
   }
 
   .auth-success.biometric .auth-success-icon {
-    background: linear-gradient(135deg, 
-      var(--color-primary-600), 
-      var(--color-primary-700));
-    box-shadow: 
+    background: linear-gradient(135deg, var(--color-primary-600), var(--color-primary-700));
+    box-shadow:
       0 0 0 4px color-mix(in oklch, var(--color-primary-900) 50%, transparent),
       0 0 0 8px color-mix(in oklch, var(--color-primary-900) 20%, transparent),
       var(--shadow-xl);
@@ -388,7 +385,8 @@
 }
 
 @keyframes successGlow {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
     box-shadow: 0 0 20px var(--color-success-300);
   }
@@ -556,7 +554,7 @@
   }
 
   .auth-success-icon {
-    box-shadow: 
+    box-shadow:
       0 0 0 4px var(--color-success-200),
       0 0 0 8px var(--color-success-100),
       0 0 0 12px var(--color-neutral-900);
@@ -595,4 +593,4 @@
   .auth-success-progress {
     display: none !important;
   }
-} 
+}

@@ -1,0 +1,147 @@
+# Dockerfile for ZK-Vault Firebase Functions
+FROM node:18-alpine as base
+
+# Install system dependencies
+RUN apk add --no-cache \
+    git \
+    python3 \
+    make \
+    g++ \
+    curl \
+    && ln -sf python3 /usr/bin/python
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files for dependency installation
+COPY package*.json ./
+COPY lerna.json ./
+COPY packages/shared/package*.json ./packages/shared/
+COPY packages/crypto/package*.json ./packages/crypto/
+COPY functions/package*.json ./functions/
+
+# Install global Firebase CLI
+RUN npm install -g firebase-tools
+
+# Development stage
+FROM base as development
+
+# Install all dependencies
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Build shared packages
+RUN cd packages/shared && npm run build
+RUN cd packages/crypto && npm run build
+
+# Build functions
+RUN cd functions && npm run build
+
+# Expose Firebase Functions port
+EXPOSE 5001
+
+# Set environment variables
+ENV NODE_ENV=development
+ENV FUNCTIONS_EMULATOR=true
+ENV FIREBASE_PROJECT_ID=zk-vault-local
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:5001/zk-vault-local/us-central1/healthCheck || exit 1
+
+# Start Functions emulator
+CMD ["sh", "-c", "cd functions && npm run serve"]
+
+# Production build stage
+FROM base as build
+
+# Install all dependencies for build
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Build shared packages
+RUN cd packages/shared && npm run build
+RUN cd packages/crypto && npm run build
+
+# Build functions
+RUN cd functions && npm run build
+
+# Production stage
+FROM node:18-alpine as production
+
+# Install system dependencies
+RUN apk add --no-cache \
+    curl \
+    ca-certificates
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S zkvault -u 1001
+
+# Set working directory
+WORKDIR /app
+
+# Copy built functions and dependencies
+COPY --from=build --chown=zkvault:nodejs /app/functions/lib ./functions/lib
+COPY --from=build --chown=zkvault:nodejs /app/functions/package*.json ./functions/
+COPY --from=build --chown=zkvault:nodejs /app/packages/shared/dist ./packages/shared/dist
+COPY --from=build --chown=zkvault:nodejs /app/packages/crypto/dist ./packages/crypto/dist
+
+# Install production dependencies only
+RUN cd functions && npm ci --only=production && npm cache clean --force
+
+# Switch to non-root user
+USER zkvault
+
+# Expose port
+EXPOSE 5001
+
+# Set production environment
+ENV NODE_ENV=production
+ENV FUNCTIONS_EMULATOR=false
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:5001/health || exit 1
+
+# Start functions
+CMD ["node", "functions/lib/index.js"]
+
+# Local emulator stage for development
+FROM base as emulator
+
+# Install all dependencies
+RUN npm ci
+
+# Install Firebase CLI globally
+RUN npm install -g firebase-tools
+
+# Copy source code
+COPY . .
+
+# Build packages
+RUN cd packages/shared && npm run build
+RUN cd packages/crypto && npm run build
+RUN cd functions && npm run build
+
+# Expose Firebase emulator ports
+EXPOSE 5001 9099 8080 9199 4000
+
+# Set environment variables
+ENV NODE_ENV=development
+ENV FIREBASE_PROJECT_ID=zk-vault-local
+ENV FIREBASE_TOKEN=""
+
+# Create firebase emulator data directory
+RUN mkdir -p /app/emulator-data
+
+# Health check for emulator suite
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD curl -f http://localhost:4000 || exit 1
+
+# Start Firebase emulators
+CMD ["firebase", "emulators:start", "--only", "functions,auth,firestore,storage", "--project", "zk-vault-local"]

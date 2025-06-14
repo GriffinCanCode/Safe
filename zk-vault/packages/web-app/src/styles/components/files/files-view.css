@@ -152,30 +152,30 @@
   .files-header {
     padding: var(--space-4) var(--space-6);
   }
-  
+
   .header-content {
     flex-direction: column;
     gap: var(--space-4);
     align-items: flex-start;
   }
-  
+
   .page-title {
     font-size: var(--font-size-2xl);
   }
-  
+
   .stats-grid {
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: var(--space-4);
   }
-  
+
   .stat-card {
     padding: var(--space-4);
   }
-  
+
   .files-content {
     padding: var(--space-4);
   }
-  
+
   .bulk-actions-bar {
     left: var(--space-4);
     right: var(--space-4);
@@ -191,42 +191,42 @@
   .files-view {
     background-color: var(--color-neutral-900);
   }
-  
+
   .files-header {
     background-color: var(--color-neutral-800);
     border-color: var(--color-neutral-700);
   }
-  
+
   .page-title {
     color: var(--color-neutral-100);
   }
-  
+
   .page-description {
     color: var(--color-neutral-400);
   }
-  
+
   .stat-card {
     background-color: var(--color-neutral-800);
     border-color: var(--color-neutral-700);
   }
-  
+
   .stat-value {
     color: var(--color-neutral-100);
   }
-  
+
   .stat-label {
     color: var(--color-neutral-400);
   }
-  
+
   .bulk-actions-bar {
     background-color: var(--color-neutral-800);
     border-color: var(--color-neutral-700);
   }
-  
+
   .selected-count {
     color: var(--color-neutral-300);
   }
-  
+
   .preview-actions {
     border-color: var(--color-neutral-700);
   }
@@ -266,4 +266,4 @@
   .bulk-actions-bar {
     animation: none;
   }
-} 
+}

@@ -30,26 +30,26 @@
 
   /* Focus management */
   .focus-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
+    @apply focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:outline-none;
   }
 
   .focus-ring-inset {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-inset;
+    @apply focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:outline-none focus-visible:ring-inset;
   }
 
   /* Skip links for keyboard navigation */
   .skip-link {
-    @apply absolute -top-10 left-6 z-50 bg-primary-600 text-white px-4 py-2 rounded-md;
-    @apply focus:top-6 transition-all duration-300;
+    @apply absolute -top-10 left-6 z-50 rounded-md bg-primary-600 px-4 py-2 text-white;
+    @apply transition-all duration-300 focus:top-6;
   }
 
   /* === LAYOUT === */
   .container-narrow {
-    @apply max-w-3xl mx-auto px-4;
+    @apply mx-auto max-w-3xl px-4;
   }
 
   .container-wide {
-    @apply max-w-7xl mx-auto px-4;
+    @apply mx-auto max-w-7xl px-4;
   }
 
   .full-bleed {
@@ -132,15 +132,15 @@
   }
 
   .font-feature-small-caps {
-    font-feature-settings: "smcp" 1;
+    font-feature-settings: 'smcp' 1;
   }
 
   .font-feature-oldstyle-nums {
-    font-feature-settings: "onum" 1;
+    font-feature-settings: 'onum' 1;
   }
 
   .font-feature-tabular-nums {
-    font-feature-settings: "tnum" 1;
+    font-feature-settings: 'tnum' 1;
   }
 
   /* === ANIMATIONS === */
@@ -231,12 +231,12 @@
   }
 
   .secure-input {
-    @apply password-hidden bg-neutral-50 border-neutral-300;
-    @apply focus:bg-white focus:border-primary-500;
-    
+    @apply password-hidden border-neutral-300 bg-neutral-50;
+    @apply focus:border-primary-500 focus:bg-white;
+
     @media (prefers-color-scheme: dark) {
-      @apply bg-neutral-900 border-neutral-600;
-      @apply focus:bg-neutral-800 focus:border-primary-400;
+      @apply border-neutral-600 bg-neutral-900;
+      @apply focus:border-primary-400 focus:bg-neutral-800;
     }
   }
 
@@ -272,7 +272,7 @@
 
   .glass {
     @apply glass-light;
-    
+
     @media (prefers-color-scheme: dark) {
       @apply glass-dark;
     }
@@ -349,7 +349,7 @@
 
   /* === DEBUGGING === */
   .debug-grid {
-    background-image: 
+    background-image:
       linear-gradient(rgba(255, 0, 0, 0.1) 1px, transparent 1px),
       linear-gradient(90deg, rgba(255, 0, 0, 0.1) 1px, transparent 1px);
     background-size: 20px 20px;
@@ -368,38 +368,74 @@
 
 /* === KEYFRAMES === */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideInLeft {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(0); }
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 @keyframes slideInRight {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 @keyframes slideInUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 @keyframes slideInDown {
-  from { transform: translateY(-100%); }
-  to { transform: translateY(0); }
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 @keyframes scaleIn {
-  from { transform: scale(0.9); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 @keyframes bounceIn {
-  0% { transform: scale(0.3); opacity: 0; }
-  50% { transform: scale(1.05); }
-  70% { transform: scale(0.9); }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }

@@ -198,13 +198,13 @@
     padding: var(--space-6);
     margin: var(--space-4);
   }
-  
+
   .login-options {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-3);
   }
-  
+
   .login-title {
     font-size: var(--font-size-xl);
   }
@@ -216,39 +216,39 @@
     background-color: var(--color-neutral-800);
     border-color: var(--border-muted);
   }
-  
+
   .login-title {
     color: var(--color-neutral-100);
   }
-  
+
   .login-subtitle {
     color: var(--color-neutral-400);
   }
-  
+
   .remember-label {
     color: var(--color-neutral-300);
   }
-  
+
   .signup-prompt {
     color: var(--color-neutral-400);
   }
-  
+
   .divider::before,
   .divider::after {
     background-color: var(--border-muted);
   }
-  
+
   .divider-text {
     color: var(--color-neutral-400);
     background-color: var(--color-neutral-800);
   }
-  
+
   .error-alert {
     background-color: var(--color-danger-900);
     border-color: var(--color-danger-700);
     color: var(--color-danger-300);
   }
-  
+
   .forgot-password:hover {
     background-color: var(--color-primary-900);
   }
@@ -260,11 +260,11 @@
     border-width: 2px;
     border-color: var(--color-neutral-900);
   }
-  
+
   .remember-checkbox {
     border-width: 2px;
   }
-  
+
   .error-alert {
     border-width: 2px;
   }
@@ -281,7 +281,9 @@
 
 /* === FOCUS MANAGEMENT === */
 .login-form:focus-within {
-  box-shadow: var(--shadow-lg), 0 0 0 1px color-mix(in oklch, var(--color-primary-500) 20%, transparent);
+  box-shadow:
+    var(--shadow-lg),
+    0 0 0 1px color-mix(in oklch, var(--color-primary-500) 20%, transparent);
 }
 
 /* === LOADING STATES === */
@@ -300,4 +302,4 @@
   background-color: color-mix(in oklch, var(--color-background-secondary) 50%, transparent);
   backdrop-filter: blur(2px);
   border-radius: var(--radius-card);
-} 
+}

@@ -73,6 +73,35 @@ export interface FirebaseAuthCredential {
 }
 
 /**
+ * Google Auth provider
+ */
+export interface GoogleAuthProvider {
+  providerId: string;
+  addScope(scope: string): GoogleAuthProvider;
+  setCustomParameters(customOAuthParameters: Record<string, string>): GoogleAuthProvider;
+  credential(idToken?: string | null, accessToken?: string | null): FirebaseAuthCredential;
+}
+
+/**
+ * OAuth credentials for Google
+ */
+export interface GoogleAuthCredential extends FirebaseAuthCredential {
+  idToken?: string | null;
+  accessToken?: string | null;
+}
+
+/**
+ * Google user additional info
+ */
+export interface GoogleUserInfo {
+  given_name?: string;
+  family_name?: string;
+  picture?: string;
+  locale?: string;
+  verified_email?: boolean;
+}
+
+/**
  * Firebase auth error
  */
 export interface FirebaseAuthError extends Error {

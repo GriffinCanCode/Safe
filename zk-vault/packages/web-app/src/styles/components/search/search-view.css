@@ -344,31 +344,31 @@
     padding: var(--space-4);
     gap: var(--space-6);
   }
-  
+
   .page-title {
     font-size: var(--font-size-3xl);
   }
-  
+
   .quick-search-grid {
     grid-template-columns: 1fr;
     gap: var(--space-4);
   }
-  
+
   .shortcuts-grid {
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: var(--space-3);
   }
-  
+
   .tips-grid {
     grid-template-columns: 1fr;
     gap: var(--space-4);
   }
-  
+
   .results-grid {
     grid-template-columns: 1fr;
     gap: var(--space-4);
   }
-  
+
   .results-stats {
     grid-template-columns: repeat(2, 1fr);
     gap: var(--space-4);
@@ -380,23 +380,23 @@
   .page-title {
     color: var(--color-neutral-100);
   }
-  
+
   .page-subtitle {
     color: var(--color-neutral-400);
   }
-  
+
   .section-title {
     color: var(--color-neutral-100);
   }
-  
+
   .clear-history-button {
     color: var(--color-primary-400);
   }
-  
+
   .clear-history-button:hover {
     color: var(--color-primary-300);
   }
-  
+
   .quick-search-card,
   .shortcut-button,
   .recent-search-item,
@@ -404,44 +404,44 @@
     background-color: var(--color-neutral-800);
     border-color: var(--color-neutral-600);
   }
-  
+
   .quick-search-card:hover,
   .shortcut-button:hover,
   .recent-search-item:hover {
     border-color: var(--color-primary-400);
   }
-  
+
   .quick-search-title,
   .recent-search-query,
   .tip-title {
     color: var(--color-neutral-100);
   }
-  
+
   .quick-search-description,
   .recent-search-meta,
   .tip-description,
   .results-stat-label {
     color: var(--color-neutral-400);
   }
-  
+
   .quick-search-count {
     color: var(--color-primary-400);
   }
-  
+
   .shortcut-label {
     color: var(--color-neutral-300);
   }
-  
+
   .filter-badge {
     background-color: var(--color-primary-900);
     color: var(--color-primary-100);
   }
-  
+
   .tip-card {
     background-color: var(--color-neutral-800);
     border-color: var(--color-neutral-600);
   }
-  
+
   .results-stat-value {
     color: var(--color-primary-400);
   }
@@ -455,4 +455,4 @@
   .clear-history-button {
     transition: none;
   }
-} 
+}

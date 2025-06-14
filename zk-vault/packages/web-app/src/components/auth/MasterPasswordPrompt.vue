@@ -4,7 +4,12 @@
     <div class="prompt-header">
       <div class="vault-icon">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+          />
         </svg>
       </div>
       <h2 class="prompt-title">Unlock Your Vault</h2>
@@ -14,9 +19,9 @@
     <!-- User Info -->
     <div class="user-info">
       <div class="user-avatar">
-        <img 
-          v-if="userEmail" 
-          :src="avatarUrl" 
+        <img
+          v-if="userEmail"
+          :src="avatarUrl"
           :alt="userEmail"
           class="avatar-image"
           @error="showAvatarFallback = true"
@@ -41,13 +46,13 @@
           label="Master Password"
           placeholder="Enter your master password"
           :error="passwordError"
-          :disabled="loading || isLocked"
+          :disabled="loading || !!isLocked"
           required
           autocomplete="current-password"
           prefix-icon="key"
           @keydown="handleKeydown"
         />
-        
+
         <!-- Password Hint -->
         <button
           v-if="passwordHint && !showHint"
@@ -58,11 +63,16 @@
         >
           Show password hint
         </button>
-        
+
         <div v-if="showHint && passwordHint" class="password-hint">
           <div class="hint-content">
             <svg class="hint-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+              />
             </svg>
             <span class="hint-text">{{ passwordHint }}</span>
           </div>
@@ -76,7 +86,7 @@
         size="lg"
         block
         :loading="loading"
-        :disabled="!masterPassword || isLocked"
+        :disabled="!masterPassword || !!isLocked"
       >
         <span v-if="!loading">Unlock Vault</span>
         <span v-else>Unlocking...</span>
@@ -115,18 +125,29 @@
     <!-- Attempt Counter -->
     <div v-if="failedAttempts > 0" class="attempt-warning">
       <svg class="warning-icon" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+        <path
+          fill-rule="evenodd"
+          d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+          clip-rule="evenodd"
+        />
       </svg>
       <span class="warning-text">
         {{ failedAttempts }} failed attempt{{ failedAttempts > 1 ? 's' : '' }}.
-        {{ maxAttempts - failedAttempts }} attempt{{ maxAttempts - failedAttempts > 1 ? 's' : '' }} remaining.
+        {{ (maxAttempts || 5) - failedAttempts }} attempt{{
+          (maxAttempts || 5) - failedAttempts > 1 ? 's' : ''
+        }}
+        remaining.
       </span>
     </div>
 
     <!-- Lockout Message -->
     <div v-if="isLocked" class="lockout-message">
       <svg class="lockout-icon" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+        <path
+          fill-rule="evenodd"
+          d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+          clip-rule="evenodd"
+        />
       </svg>
       <div class="lockout-content">
         <h3 class="lockout-title">Account Temporarily Locked</h3>
@@ -155,13 +176,19 @@
         <div class="emergency-option">
           <div class="option-icon">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+              />
             </svg>
           </div>
           <div class="option-content">
             <h3 class="option-title">Reset Master Password</h3>
             <p class="option-description">
-              Reset your master password using your email. This will permanently delete all your data.
+              Reset your master password using your email. This will permanently delete all your
+              data.
             </p>
             <BaseButton
               variant="danger"
@@ -177,19 +204,18 @@
         <div class="emergency-option">
           <div class="option-icon">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
             </svg>
           </div>
           <div class="option-content">
             <h3 class="option-title">Recovery Kit</h3>
-            <p class="option-description">
-              Use your emergency recovery kit if you have one saved.
-            </p>
-            <BaseButton
-              variant="outline"
-              size="sm"
-              @click="initiateRecoveryKit"
-            >
+            <p class="option-description">Use your emergency recovery kit if you have one saved.</p>
+            <BaseButton variant="outline" size="sm" @click="initiateRecoveryKit">
               Use Recovery Kit
             </BaseButton>
           </div>
@@ -198,7 +224,12 @@
         <div class="emergency-option">
           <div class="option-icon">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 109.75 9.75A9.75 9.75 0 0012 2.25z" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 109.75 9.75A9.75 9.75 0 0012 2.25z"
+              />
             </svg>
           </div>
           <div class="option-content">
@@ -206,11 +237,7 @@
             <p class="option-description">
               Get help from our support team. Note: We cannot recover your master password.
             </p>
-            <BaseButton
-              variant="outline"
-              size="sm"
-              @click="contactSupport"
-            >
+            <BaseButton variant="outline" size="sm" @click="contactSupport">
               Contact Support
             </BaseButton>
           </div>
@@ -221,19 +248,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
-import BaseInput from '@/components/common/BaseInput.vue'
-import BaseButton from '@/components/common/BaseButton.vue'
-import BaseModal from '@/components/common/BaseModal.vue'
-import ProgressBar from '@/components/common/ProgressBar.vue'
-import { useAuthStore } from '@/store/auth.store'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
+import BaseInput from '@/components/common/BaseInput.vue';
+import BaseButton from '@/components/common/BaseButton.vue';
+import BaseModal from '@/components/common/BaseModal.vue';
+import ProgressBar from '@/components/common/ProgressBar.vue';
+import { useAuthStore } from '@/store/auth.store';
 
 interface Props {
-  userEmail?: string
-  passwordHint?: string
-  lastLogin?: Date
-  biometricAvailable?: boolean
-  maxAttempts?: number
+  userEmail?: string;
+  passwordHint?: string;
+  lastLogin?: Date;
+  biometricAvailable?: boolean;
+  maxAttempts?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -241,455 +268,202 @@ const props = withDefaults(defineProps<Props>(), {
   passwordHint: '',
   lastLogin: () => new Date(),
   biometricAvailable: false,
-  maxAttempts: 5
-})
+  maxAttempts: 5,
+});
 
 const emit = defineEmits<{
-  unlock: [masterPassword: string]
-  biometricUnlock: []
-  resetPassword: []
-  recoveryKit: []
-  support: []
-}>()
+  unlock: [masterPassword: string];
+  biometricUnlock: [];
+  resetPassword: [];
+  recoveryKit: [];
+  support: [];
+}>();
 
 // Store
-const authStore = useAuthStore()
+const authStore = useAuthStore();
 
 // State
-const passwordInput = ref<any>(null)
-const masterPassword = ref('')
-const passwordError = ref('')
-const loading = ref(false)
-const biometricLoading = ref(false)
-const resetting = ref(false)
-const showHint = ref(false)
-const showAvatarFallback = ref(false)
-const showEmergencyOptions = ref(false)
-const failedAttempts = ref(0)
-const lockoutEndTime = ref<Date | null>(null)
-const lockoutTimer = ref<number | null>(null)
+const passwordInput = ref<any>(null);
+const masterPassword = ref('');
+const passwordError = ref('');
+const loading = ref(false);
+const biometricLoading = ref(false);
+const resetting = ref(false);
+const showHint = ref(false);
+const showAvatarFallback = ref(false);
+const showEmergencyOptions = ref(false);
+const failedAttempts = ref(0);
+const lockoutEndTime = ref<Date | null>(null);
+const lockoutTimer = ref<number | null>(null);
 
 // Computed
 const userInitials = computed(() => {
-  if (!props.userEmail) return 'U'
-  const parts = props.userEmail.split('@')[0].split('.')
-  return parts.map((part: string) => part.charAt(0).toUpperCase()).slice(0, 2).join('')
-})
+  if (!props.userEmail) return 'U';
+  const parts = props.userEmail.split('@')[0].split('.');
+  return parts
+    .map((part: string) => part.charAt(0).toUpperCase())
+    .slice(0, 2)
+    .join('');
+});
 
 const avatarUrl = computed(() => {
-  if (!props.userEmail) return ''
+  if (!props.userEmail) return '';
   // Generate avatar URL (could use Gravatar, etc.)
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(props.userEmail)}&background=6366f1&color=fff&size=48`
-})
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(props.userEmail)}&background=6366f1&color=fff&size=48`;
+});
 
 const isLocked = computed(() => {
-  return lockoutEndTime.value && new Date() < lockoutEndTime.value
-})
+  return lockoutEndTime.value && new Date() < lockoutEndTime.value;
+});
 
 const lockoutProgress = computed(() => {
-  if (!lockoutEndTime.value) return 0
-  
-  const lockoutDuration = 5 * 60 * 1000 // 5 minutes
-  const elapsed = Date.now() - (lockoutEndTime.value.getTime() - lockoutDuration)
-  const progress = (elapsed / lockoutDuration) * 100
-  
-  return Math.min(100, Math.max(0, progress))
-})
+  if (!lockoutEndTime.value) return 0;
+
+  const lockoutDuration = 5 * 60 * 1000; // 5 minutes
+  const elapsed = Date.now() - (lockoutEndTime.value.getTime() - lockoutDuration);
+  const progress = (elapsed / lockoutDuration) * 100;
+
+  return Math.min(100, Math.max(0, progress));
+});
 
 // Methods
 const formatLastLogin = () => {
-  if (!props.lastLogin) return 'Never'
-  
-  const now = new Date()
-  const diffMs = now.getTime() - props.lastLogin.getTime()
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-  
-  if (diffDays === 0) return 'Today'
-  if (diffDays === 1) return 'Yesterday'
-  if (diffDays < 7) return `${diffDays} days ago`
-  
-  return props.lastLogin.toLocaleDateString()
-}
+  if (!props.lastLogin) return 'Never';
+
+  const now = new Date();
+  const diffMs = now.getTime() - props.lastLogin.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+
+  return props.lastLogin.toLocaleDateString();
+};
 
 const formatLockoutTime = () => {
-  if (!lockoutEndTime.value) return ''
-  
-  const remaining = lockoutEndTime.value.getTime() - Date.now()
-  const minutes = Math.ceil(remaining / (1000 * 60))
-  
-  if (minutes <= 1) return 'less than a minute'
-  return `${minutes} minutes`
-}
+  if (!lockoutEndTime.value) return '';
+
+  const remaining = lockoutEndTime.value.getTime() - Date.now();
+  const minutes = Math.ceil(remaining / (1000 * 60));
+
+  if (minutes <= 1) return 'less than a minute';
+  return `${minutes} minutes`;
+};
 
 const handleUnlock = async () => {
-  if (!masterPassword.value || loading.value || isLocked.value) return
-  
-  passwordError.value = ''
-  loading.value = true
-  
+  if (!masterPassword.value || loading.value || isLocked.value) return;
+
+  passwordError.value = '';
+  loading.value = true;
+
   try {
     // Simulate authentication
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     // For demo purposes, reject if password is "wrong"
     if (masterPassword.value === 'wrong') {
-      throw new Error('Invalid master password')
+      throw new Error('Invalid master password');
     }
-    
+
     // Reset failed attempts on success
-    failedAttempts.value = 0
-    emit('unlock', masterPassword.value)
-  } catch (error: any) {
-    failedAttempts.value++
-    passwordError.value = error.message || 'Invalid master password'
-    
+    failedAttempts.value = 0;
+    emit('unlock', masterPassword.value);
+  } catch (error: unknown) {
+    failedAttempts.value++;
+    const errorMessage = error instanceof Error ? error.message : 'Invalid master password';
+    passwordError.value = errorMessage;
+
     // Trigger lockout if max attempts reached
     if (failedAttempts.value >= props.maxAttempts) {
-      triggerLockout()
+      triggerLockout();
     }
-    
+
     // Clear password and refocus
-    masterPassword.value = ''
-    await nextTick()
-    passwordInput.value?.focus()
+    masterPassword.value = '';
+    await nextTick();
+    passwordInput.value?.focus();
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 const handleBiometricUnlock = async () => {
-  biometricLoading.value = true
-  
+  biometricLoading.value = true;
+
   try {
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    emit('biometricUnlock')
-  } catch (error: any) {
-    passwordError.value = error.message || 'Biometric authentication failed'
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    emit('biometricUnlock');
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Biometric authentication failed';
+    passwordError.value = errorMessage;
   } finally {
-    biometricLoading.value = false
+    biometricLoading.value = false;
   }
-}
+};
 
 const triggerLockout = () => {
-  const lockoutDuration = 5 * 60 * 1000 // 5 minutes
-  lockoutEndTime.value = new Date(Date.now() + lockoutDuration)
-  
+  const lockoutDuration = 5 * 60 * 1000; // 5 minutes
+  lockoutEndTime.value = new Date(Date.now() + lockoutDuration);
+
   // Start countdown timer
-  startLockoutTimer()
-}
+  startLockoutTimer();
+};
 
 const startLockoutTimer = () => {
   if (lockoutTimer.value) {
-    clearInterval(lockoutTimer.value)
+    clearInterval(lockoutTimer.value);
   }
-  
+
   lockoutTimer.value = window.setInterval(() => {
     if (!isLocked.value) {
-      clearInterval(lockoutTimer.value!)
-      lockoutTimer.value = null
-      lockoutEndTime.value = null
+      clearInterval(lockoutTimer.value!);
+      lockoutTimer.value = null;
+      lockoutEndTime.value = null;
     }
-  }, 1000)
-}
+  }, 1000);
+};
 
 const handleKeydown = (event: KeyboardEvent) => {
   // Clear error on typing
   if (passwordError.value) {
-    passwordError.value = ''
+    passwordError.value = '';
   }
-}
+};
 
 const initiateMasterPasswordReset = () => {
-  resetting.value = true
-  showEmergencyOptions.value = false
-  
+  resetting.value = true;
+  showEmergencyOptions.value = false;
+
   setTimeout(() => {
-    resetting.value = false
-    emit('resetPassword')
-  }, 1000)
-}
+    resetting.value = false;
+    emit('resetPassword');
+  }, 1000);
+};
 
 const initiateRecoveryKit = () => {
-  showEmergencyOptions.value = false
-  emit('recoveryKit')
-}
+  showEmergencyOptions.value = false;
+  emit('recoveryKit');
+};
 
 const contactSupport = () => {
-  showEmergencyOptions.value = false
-  emit('support')
-}
+  showEmergencyOptions.value = false;
+  emit('support');
+};
 
 // Lifecycle
 onMounted(() => {
   // Auto-focus password input
   nextTick(() => {
-    passwordInput.value?.focus()
-  })
-})
+    passwordInput.value?.focus();
+  });
+});
 
 onUnmounted(() => {
   if (lockoutTimer.value) {
-    clearInterval(lockoutTimer.value)
+    clearInterval(lockoutTimer.value);
   }
-})
+});
 </script>
 
-<style scoped>
-.master-password-prompt {
-  @apply w-full max-w-md mx-auto p-8 bg-white rounded-xl shadow-lg space-y-6;
-}
-
-.prompt-header {
-  @apply text-center space-y-3;
-}
-
-.vault-icon {
-  @apply w-16 h-16 mx-auto bg-primary-100 rounded-full flex items-center justify-center text-primary-600;
-}
-
-.vault-icon svg {
-  @apply w-8 h-8;
-}
-
-.prompt-title {
-  @apply text-2xl font-bold text-neutral-900;
-}
-
-.prompt-subtitle {
-  @apply text-neutral-600;
-}
-
-.user-info {
-  @apply flex items-center gap-3 p-4 bg-neutral-50 rounded-lg;
-}
-
-.user-avatar {
-  @apply relative w-12 h-12 shrink-0;
-}
-
-.avatar-image {
-  @apply w-full h-full rounded-full object-cover;
-}
-
-.avatar-fallback {
-  @apply w-full h-full rounded-full bg-primary-600 text-white font-semibold;
-  @apply flex items-center justify-center text-sm;
-}
-
-.user-details {
-  @apply flex flex-col;
-}
-
-.user-email {
-  @apply text-sm font-medium text-neutral-900;
-}
-
-.last-login {
-  @apply text-xs text-neutral-500;
-}
-
-.unlock-form {
-  @apply space-y-4;
-}
-
-.password-field {
-  @apply space-y-2;
-}
-
-.hint-button {
-  @apply text-sm text-primary-600 hover:text-primary-700 underline;
-  @apply transition-colors duration-200;
-}
-
-.password-hint {
-  @apply p-3 bg-info-50 border border-info-200 rounded-lg;
-}
-
-.hint-content {
-  @apply flex items-start gap-2;
-}
-
-.hint-icon {
-  @apply w-4 h-4 text-info-600 shrink-0 mt-0.5;
-}
-
-.hint-text {
-  @apply text-sm text-info-700 italic;
-}
-
-.alternative-options {
-  @apply space-y-4;
-}
-
-.emergency-section {
-  @apply text-center;
-}
-
-.emergency-link {
-  @apply text-sm text-neutral-600 hover:text-neutral-800 underline;
-  @apply transition-colors duration-200;
-}
-
-.attempt-warning {
-  @apply flex items-center gap-2 p-3 bg-warning-50 border border-warning-200 rounded-lg;
-}
-
-.warning-icon {
-  @apply w-4 h-4 text-warning-600 shrink-0;
-}
-
-.warning-text {
-  @apply text-sm text-warning-700;
-}
-
-.lockout-message {
-  @apply flex gap-3 p-4 bg-danger-50 border border-danger-200 rounded-lg;
-}
-
-.lockout-icon {
-  @apply w-6 h-6 text-danger-600 shrink-0 mt-0.5;
-}
-
-.lockout-content {
-  @apply space-y-3 flex-1;
-}
-
-.lockout-title {
-  @apply text-sm font-semibold text-danger-800;
-}
-
-.lockout-text {
-  @apply text-sm text-danger-700;
-}
-
-.lockout-progress {
-  @apply mt-2;
-}
-
-.emergency-content {
-  @apply space-y-6;
-}
-
-.emergency-option {
-  @apply flex gap-4 p-4 border border-neutral-200 rounded-lg;
-}
-
-.option-icon {
-  @apply w-10 h-10 bg-neutral-100 rounded-lg flex items-center justify-center shrink-0;
-}
-
-.option-icon svg {
-  @apply w-5 h-5 text-neutral-600;
-}
-
-.option-content {
-  @apply space-y-2 flex-1;
-}
-
-.option-title {
-  @apply text-sm font-semibold text-neutral-900;
-}
-
-.option-description {
-  @apply text-sm text-neutral-600;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .master-password-prompt {
-    @apply bg-neutral-800;
-  }
-  
-  .vault-icon {
-    @apply bg-primary-900 text-primary-400;
-  }
-  
-  .prompt-title {
-    @apply text-neutral-100;
-  }
-  
-  .prompt-subtitle {
-    @apply text-neutral-400;
-  }
-  
-  .user-info {
-    @apply bg-neutral-700;
-  }
-  
-  .user-email {
-    @apply text-neutral-100;
-  }
-  
-  .last-login {
-    @apply text-neutral-400;
-  }
-  
-  .hint-button {
-    @apply text-primary-400 hover:text-primary-300;
-  }
-  
-  .password-hint {
-    @apply bg-info-900 border-info-700;
-  }
-  
-  .hint-icon {
-    @apply text-info-400;
-  }
-  
-  .hint-text {
-    @apply text-info-300;
-  }
-  
-  .emergency-link {
-    @apply text-neutral-400 hover:text-neutral-300;
-  }
-  
-  .attempt-warning {
-    @apply bg-warning-900 border-warning-700;
-  }
-  
-  .warning-icon {
-    @apply text-warning-400;
-  }
-  
-  .warning-text {
-    @apply text-warning-300;
-  }
-  
-  .lockout-message {
-    @apply bg-danger-900 border-danger-700;
-  }
-  
-  .lockout-icon {
-    @apply text-danger-400;
-  }
-  
-  .lockout-title {
-    @apply text-danger-300;
-  }
-  
-  .lockout-text {
-    @apply text-danger-400;
-  }
-  
-  .emergency-option {
-    @apply border-neutral-600;
-  }
-  
-  .option-icon {
-    @apply bg-neutral-700;
-  }
-  
-  .option-icon svg {
-    @apply text-neutral-400;
-  }
-  
-  .option-title {
-    @apply text-neutral-100;
-  }
-  
-  .option-description {
-    @apply text-neutral-400;
-  }
-}
-</style>
+<!-- Styles are now handled by the comprehensive CSS architecture in /src/styles/components/auth/master-password-prompt.css -->

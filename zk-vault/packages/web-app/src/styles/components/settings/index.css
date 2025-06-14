@@ -3,5 +3,23 @@
  * Styles for application settings and configuration
  */
 
+/* === SETTINGS PANEL === */
+@import './settings-panel.css';
+
+/* === ACCOUNT SETTINGS === */
+@import './account-settings.css';
+
+/* === SECURITY SETTINGS === */
+@import './security-settings.css';
+
+/* === ENCRYPTION SETTINGS === */
+@import './encryption-settings.css';
+
+/* === NOTIFICATION SETTINGS === */
+@import './notification-settings.css';
+
+/* === APPEARANCE SETTINGS === */
+@import './appearance-settings.css';
+
 /* === BACKUP & RESTORE === */
-@import "./backup-restore.css"; 
+@import './backup-restore.css';

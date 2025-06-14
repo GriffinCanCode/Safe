@@ -195,7 +195,7 @@
   .flex-col-sm {
     flex-direction: column;
   }
-  
+
   .flex-wrap-sm {
     flex-wrap: wrap;
   }
@@ -205,7 +205,7 @@
   .flex-col-md {
     flex-direction: column;
   }
-  
+
   .flex-wrap-md {
     flex-wrap: wrap;
   }
@@ -278,4 +278,4 @@
 
 .gap-y-6 {
   row-gap: var(--space-6);
-} 
+}

@@ -382,7 +382,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.7;
   }
   50% {
@@ -439,4 +440,4 @@
   .action-card:hover {
     border-width: 3px;
   }
-} 
+}

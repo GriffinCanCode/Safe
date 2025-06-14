@@ -1,0 +1,347 @@
+---
+description: 
+globs: *.css,*.css*
+alwaysApply: false
+---
+# CSS Architecture Rules - ZK-Vault
+
+## Core CSS Philosophy
+ZK-Vault uses **external stylesheets only** with **Tailwind CSS v4** and a **component-based CSS architecture**. All styling must be defined in `/src/styles/` directory.
+
+## CRITICAL BANS
+
+### ❌ NEVER Use These
+- **`@apply` directives** - Completely forbidden, replace with CSS classes
+- **Inline styles** - Except for CSS custom properties with dynamic values
+- **Component `<style>` sections** - All styling must be external
+- **Tailwind classes in Vue templates** - Use semantic CSS classes instead
+
+## CSS Directory Structure
+
+```
+src/styles/
+├── index.css                    # Main entry point - imports all styles
+├── variables.css                # CSS custom properties and design tokens
+├── utilities.css                # Utility classes (spacing, colors, etc.)
+├── components.css               # Component imports index
+├── main.css                     # Base application styles
+├── base/                        # Reset, normalize, typography
+├── theme/                       # Color schemes, dark mode
+├── layout/                      # Grid, flexbox, container layouts
+├── utilities/                   # Utility class definitions
+├── animations/                  # Keyframes and animation utilities
+└── components/                  # Component-specific styles
+    ├── auth/                    # Authentication components
+    │   ├── login-form.css
+    │   ├── register-form.css
+    │   └── biometric-auth.css
+    ├── vault/                   # Vault/password components
+    │   ├── vault-dashboard.css
+    │   ├── password-editor.css
+    │   └── password-item.css
+    ├── settings/                # Settings components
+    │   ├── account-settings.css
+    │   ├── security-settings.css
+    │   └── backup-restore.css
+    ├── common/                  # Shared components
+    │   ├── buttons.css
+    │   ├── modals.css
+    │   ├── forms.css
+    │   └── inputs.css
+    ├── layout/                  # Layout components
+    │   ├── main-layout.css
+    │   ├── sidebar.css
+    │   └── header.css
+    ├── security/                # Security components
+    ├── search/                  # Search components
+    ├── files/                   # File management components
+    └── admin/                   # Admin dashboard components
+```
+
+## CSS Class Naming Conventions
+
+### Component Classes
+- **Primary container**: `.component-name` (e.g., `.vault-dashboard`, `.login-form`)
+- **Child elements**: `.component-element` (e.g., `.dashboard-header`, `.form-field`)
+- **Modifiers**: `.component--modifier` (e.g., `.button--primary`, `.input--error`)
+- **States**: `.component.is-state` (e.g., `.modal.is-open`, `.button.is-loading`)
+
+### Utility Classes
+- **Spacing**: `.space-{size}`, `.gap-{size}`, `.padding-{size}`, `.margin-{size}`
+- **Colors**: `.color-{palette}-{shade}`, `.bg-{palette}-{shade}`, `.border-{palette}-{shade}`
+- **Typography**: `.text-{size}`, `.font-{weight}`, `.leading-{height}`
+- **Layout**: `.flex-{direction}`, `.grid-{cols}`, `.container-{size}`
+
+## Dynamic Styles Pattern
+
+### CSS Custom Properties for Dynamic Values
+```vue
+<!-- CORRECT: Use CSS custom properties -->
+<template>
+  <div 
+    class="progress-bar"
+    :style="{ '--progress-width': `${progress}%` }"
+  />
+  <div 
+    class="strength-meter"
+    :style="{ 
+      '--strength-width': `${strength}%`,
+      '--strength-color': strengthColor 
+    }"
+  />
+</template>
+```
+
+```css
+/* In external CSS file */
+.progress-bar {
+  position: relative;
+  height: var(--space-2);
+  background-color: var(--color-neutral-200);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: var(--progress-width, 0%);
+  background-color: var(--color-primary-500);
+  transition: width var(--duration-300) var(--ease-out);
+}
+
+.strength-meter {
+  width: var(--strength-width, 0%);
+  background-color: var(--strength-color, var(--color-neutral-400));
+  transition: all var(--duration-300) var(--ease-out);
+}
+```
+
+## Tailwind CSS v4 Integration
+
+### CSS Variables from Tailwind Config
+```css
+/* Use Tailwind's CSS variables in custom components */
+.custom-button {
+  padding: rgb(var(--space-3)) rgb(var(--space-6));
+  background-color: rgb(var(--color-primary-600));
+  border-radius: var(--radius-lg);
+  color: rgb(var(--color-white));
+  transition: all var(--duration-200) var(--ease-out);
+}
+
+.custom-button:hover {
+  background-color: rgb(var(--color-primary-700));
+  transform: translateY(-1px);
+}
+```
+
+### Security-Specific Color System
+```css
+/* Security status indicators */
+.security-safe {
+  color: rgb(var(--color-security-safe));
+  background-color: rgb(var(--color-security-safe) / 0.1);
+}
+
+.security-warning {
+  color: rgb(var(--color-security-warning));
+  background-color: rgb(var(--color-security-warning) / 0.1);
+}
+
+.security-danger {
+  color: rgb(var(--color-security-danger));
+  background-color: rgb(var(--color-security-danger) / 0.1);
+}
+
+.security-critical {
+  color: rgb(var(--color-security-critical));
+  background-color: rgb(var(--color-security-critical) / 0.1);
+}
+```
+
+## Component CSS Integration
+
+### Vue Component Pattern
+```vue
+<template>
+  <div class="account-settings">
+    <div class="settings-section">
+      <h2 class="section-title">Account Information</h2>
+      <div class="section-content">
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="field-label">Email</label>
+            <input class="field-input" type="email" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+// Import CSS in script or main CSS index
+// No <style> section allowed
+</script>
+```
+
+### CSS Import Methods
+```typescript
+// Method 1: Import in component (if component-specific)
+import '@/styles/components/settings/account-settings.css'
+
+// Method 2: Add to main CSS index (preferred for reusable components)
+// In src/styles/components.css:
+@import './components/settings/account-settings.css';
+```
+
+## Dark Mode Support
+
+### CSS Custom Properties Pattern
+```css
+/* Light mode (default) */
+:root {
+  --color-background: 255 255 255;
+  --color-text: 17 24 39;
+  --color-border: 229 231 235;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: 17 24 39;
+    --color-text: 249 250 251;
+    --color-border: 55 65 81;
+  }
+}
+
+/* Component using dark mode variables */
+.component {
+  background-color: rgb(var(--color-background));
+  color: rgb(var(--color-text));
+  border-color: rgb(var(--color-border));
+}
+```
+
+## Animation Standards
+
+### Performance-Optimized Animations
+```css
+/* Use Tailwind's custom animations */
+.fade-in { animation: fade-in 0.2s ease-out; }
+.slide-up { animation: slide-up 0.25s ease-out; }
+.scale-in { animation: scale-in 0.2s ease-out; }
+
+/* Security-specific animations */
+.security-pulse { animation: security-pulse 2s ease-in-out infinite; }
+.strength-fill { animation: strength-fill 0.5s ease-out; }
+
+/* Loading states */
+.loading-pulse { animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+```
+
+## Accessibility Requirements
+
+### Focus Management
+```css
+/* Visible focus indicators */
+.focusable:focus {
+  outline: 2px solid rgb(var(--color-primary-500));
+  outline-offset: 2px;
+}
+
+/* High contrast support */
+@media (prefers-contrast: high) {
+  .button {
+    border: 2px solid rgb(var(--color-primary-600));
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+```
+
+## Container Queries (Tailwind CSS v4)
+
+### Component-Level Responsive Design
+```css
+/* Use container queries for component responsiveness */
+.component {
+  container-type: inline-size;
+}
+
+@container (min-width: 768px) {
+  .form-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@container (min-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+```
+
+## CSS Migration Rules
+
+### Replacing @apply Directives
+```css
+/* WRONG: @apply directives */
+.old-component {
+  @apply flex items-center justify-between p-4 bg-white border rounded-lg;
+}
+
+/* CORRECT: CSS classes */
+.new-component {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4);
+  background-color: rgb(var(--color-white));
+  border: 1px solid rgb(var(--color-neutral-200));
+  border-radius: var(--radius-lg);
+}
+```
+
+## Performance Optimization
+
+### CSS Organization for Optimal Loading
+1. **Critical CSS**: Base styles, layout, above-the-fold components
+2. **Component CSS**: Lazy-loaded with component routes
+3. **Utility CSS**: Cached and reused across components
+4. **Animation CSS**: Separate chunk for performance
+
+### CSS Custom Properties Benefits
+- **Runtime theming** without CSS-in-JS overhead
+- **Dynamic values** without inline styles
+- **Better caching** with static CSS files
+- **Dark mode** without JavaScript
+
+## Validation Rules
+
+### Forbidden Patterns (Linting)
+```bash
+# These should return no results:
+grep -r "@apply" src/
+grep -r "style=" src/ --include="*.vue"
+grep -r "<style" src/ --include="*.vue"
+```
+
+### Required Patterns
+- All components must have corresponding CSS files in `/src/styles/components/`
+- All dynamic styles must use CSS custom properties
+- All colors must use CSS custom property system
+- All spacing must use design token variables
+
+Remember: CSS architecture is critical for maintaining consistency, performance, and developer experience in ZK-Vault. Always prefer external stylesheets over any inline styling approach. 

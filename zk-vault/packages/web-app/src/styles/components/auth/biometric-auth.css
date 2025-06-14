@@ -1,0 +1,475 @@
+/**
+ * Biometric Authentication Component Styles
+ * Styles for biometric authentication flow and device management
+ */
+
+/* === BIOMETRIC AUTH CONTAINER === */
+.biometric-auth {
+  width: 100%;
+  max-width: 28rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding: var(--space-8);
+  background-color: var(--color-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* === AUTH HEADER === */
+.auth-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.biometric-icon {
+  width: var(--space-16);
+  height: var(--space-16);
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--duration-300) var(--ease-out);
+}
+
+.biometric-icon svg {
+  width: var(--space-8);
+  height: var(--space-8);
+}
+
+.icon-prompt {
+  background-color: var(--color-primary-50);
+  color: var(--color-primary-600);
+}
+
+.icon-authenticating {
+  background-color: var(--color-warning-50);
+  color: var(--color-warning-600);
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.icon-success {
+  background-color: var(--color-success-50);
+  color: var(--color-success-600);
+}
+
+.icon-error {
+  background-color: var(--color-danger-50);
+  color: var(--color-danger-600);
+}
+
+.auth-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.auth-subtitle {
+  color: var(--color-text-secondary);
+}
+
+/* === AUTH CONTENT === */
+.auth-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* === BIOMETRIC METHODS === */
+.biometric-methods {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.method-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--color-neutral-200);
+  border-radius: var(--radius-md);
+  transition: all var(--duration-200) var(--ease-out);
+}
+
+.method-preferred {
+  border-color: var(--color-primary-300);
+  background-color: var(--color-primary-50);
+}
+
+.method-icon {
+  width: var(--space-10);
+  height: var(--space-10);
+  background-color: var(--color-neutral-100);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.method-icon svg {
+  width: var(--space-5);
+  height: var(--space-5);
+  color: var(--color-neutral-600);
+}
+
+.method-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.method-name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.method-description {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.preferred-badge {
+  padding: var(--space-1) var(--space-2);
+  background-color: var(--color-primary-600);
+  color: var(--color-white);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-sm);
+}
+
+/* === AUTH ACTIONS === */
+.auth-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* === AUTH PROGRESS === */
+.auth-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-6) 0;
+}
+
+.progress-content {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.progress-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.progress-text {
+  color: var(--color-text-secondary);
+}
+
+/* === ERROR MESSAGE === */
+.error-message {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4) 0;
+}
+
+.error-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-danger-600);
+}
+
+.error-text {
+  color: var(--color-text-secondary);
+}
+
+/* === DEVICE MANAGEMENT === */
+.device-management {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  border-top: 1px solid var(--color-neutral-200);
+  padding-top: var(--space-6);
+}
+
+.devices-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.devices-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.device-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background-color: var(--color-neutral-50);
+  border-radius: var(--radius-lg);
+}
+
+.device-icon {
+  width: var(--space-8);
+  height: var(--space-8);
+  background-color: var(--color-neutral-200);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.device-icon svg {
+  width: var(--space-4);
+  height: var(--space-4);
+  color: var(--color-neutral-600);
+}
+
+.device-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.device-name {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.device-last-used {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.device-remove {
+  padding: var(--space-1);
+  color: var(--color-neutral-400);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color var(--duration-200) var(--ease-out);
+}
+
+.device-remove:hover {
+  color: var(--color-danger-600);
+}
+
+.device-remove svg {
+  width: var(--space-4);
+  height: var(--space-4);
+}
+
+/* === SETUP SECTION === */
+.setup-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  border-top: 1px solid var(--color-neutral-200);
+  padding-top: var(--space-6);
+}
+
+.setup-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.setup-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.setup-description {
+  color: var(--color-text-secondary);
+}
+
+.setup-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* === DARK MODE === */
+@media (prefers-color-scheme: dark) {
+  .biometric-auth {
+    background-color: var(--color-neutral-800);
+  }
+
+  .auth-title {
+    color: var(--color-neutral-100);
+  }
+
+  .auth-subtitle {
+    color: var(--color-neutral-400);
+  }
+
+  .icon-prompt {
+    background-color: var(--color-primary-900);
+    color: var(--color-primary-400);
+  }
+
+  .icon-authenticating {
+    background-color: var(--color-warning-900);
+    color: var(--color-warning-400);
+  }
+
+  .icon-success {
+    background-color: var(--color-success-900);
+    color: var(--color-success-400);
+  }
+
+  .icon-error {
+    background-color: var(--color-danger-900);
+    color: var(--color-danger-400);
+  }
+
+  .method-item {
+    border-color: var(--color-neutral-600);
+  }
+
+  .method-preferred {
+    border-color: var(--color-primary-600);
+    background-color: var(--color-primary-900);
+  }
+
+  .method-icon {
+    background-color: var(--color-neutral-700);
+  }
+
+  .method-icon svg {
+    color: var(--color-neutral-400);
+  }
+
+  .method-name {
+    color: var(--color-neutral-100);
+  }
+
+  .method-description {
+    color: var(--color-neutral-400);
+  }
+
+  .progress-title {
+    color: var(--color-neutral-100);
+  }
+
+  .progress-text {
+    color: var(--color-neutral-400);
+  }
+
+  .error-text {
+    color: var(--color-neutral-400);
+  }
+
+  .device-management {
+    border-color: var(--color-neutral-600);
+  }
+
+  .devices-title {
+    color: var(--color-neutral-100);
+  }
+
+  .device-item {
+    background-color: var(--color-neutral-700);
+  }
+
+  .device-icon {
+    background-color: var(--color-neutral-600);
+  }
+
+  .device-icon svg {
+    color: var(--color-neutral-400);
+  }
+
+  .device-name {
+    color: var(--color-neutral-100);
+  }
+
+  .device-last-used {
+    color: var(--color-neutral-400);
+  }
+
+  .device-remove {
+    color: var(--color-neutral-400);
+  }
+
+  .device-remove:hover {
+    color: var(--color-danger-400);
+  }
+
+  .setup-section {
+    border-color: var(--color-neutral-600);
+  }
+
+  .setup-title {
+    color: var(--color-neutral-100);
+  }
+
+  .setup-description {
+    color: var(--color-neutral-400);
+  }
+}
+
+/* === ANIMATIONS === */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* === ACCESSIBILITY === */
+@media (prefers-reduced-motion: reduce) {
+  .biometric-icon,
+  .method-item,
+  .device-remove,
+  .animate-pulse {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* === HIGH CONTRAST MODE === */
+@media (prefers-contrast: high) {
+  .method-item,
+  .device-item {
+    border-width: 2px;
+  }
+
+  .preferred-badge {
+    border: 1px solid var(--color-primary-700);
+  }
+}

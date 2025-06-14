@@ -6,31 +6,31 @@
  */
 
 /* === TAILWIND CSS v4.1 CORE === */
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* === THEME CONFIGURATION === */
 /* CSS-first theme configuration using @theme directive */
-@import "./theme/index.css";
+@import './theme/index.css';
 
 /* === BASE STYLES === */
 /* Foundational styles and resets */
-@import "./base/index.css";
+@import './base/index.css';
 
 /* === LAYOUT STYLES === */
 /* Grid systems, containers, and layout utilities */
-@import "./layout/index.css";
+@import './layout/index.css';
 
 /* === COMPONENT STYLES === */
 /* Component-specific styles and variants */
-@import "./components/index.css";
+@import './components/index.css';
 
 /* === UTILITIES === */
 /* Custom utility classes and helpers */
-@import "./utilities/index.css";
+@import './utilities/index.css';
 
 /* === ANIMATIONS === */
 /* Performance-optimized animations and transitions */
-@import "./animations/index.css";
+@import './animations/index.css';
 
 /* === PERFORMANCE OPTIMIZATIONS === */
 /* Critical CSS optimizations for better loading */
@@ -39,12 +39,12 @@
   html {
     font-display: swap;
   }
-  
+
   /* Improve scrolling performance */
   * {
     scroll-behavior: smooth;
   }
-  
+
   /* Optimize animations */
   @media (prefers-reduced-motion: reduce) {
     *,
@@ -55,7 +55,7 @@
       transition-duration: 0.01ms !important;
     }
   }
-  
+
   /* Optimize rendering */
   .password-item,
   .vault-card,
@@ -63,4 +63,4 @@
     contain: layout style paint;
     content-visibility: auto;
   }
-} 
+}

@@ -1,0 +1,867 @@
+---
+description: 
+globs: *firebase*
+alwaysApply: false
+---
+# Firebase Rules - ZK-Vault
+
+## Firebase Configuration Overview
+ZK-Vault uses **Firebase v10.7.0** with **Authentication**, **Firestore**, **Functions**, **Storage**, and **Hosting**. The project includes comprehensive emulator setup for local development.
+
+## Firebase Services Configuration
+
+### Project Structure (Based on firebase.json)
+```
+zk-vault/
+├── firebase.json              # Main Firebase configuration
+├── firestore.rules           # Firestore security rules
+├── storage.rules             # Storage security rules
+├── firestore.indexes.json    # Firestore composite indexes
+├── functions/                # Cloud Functions (Node.js)
+└── public/                   # Hosting static files
+```
+
+### Emulator Configuration
+```javascript
+// Local development emulator ports (from firebase.json)
+{
+  "auth": { "port": 9099 },
+  "functions": { "port": 5001 },
+  "firestore": { "port": 8080 },
+  "hosting": { "port": 5000 },
+  "pubsub": { "port": 8085 },
+  "storage": { "port": 9199 },
+  "ui": { "enabled": true }
+}
+```
+
+## Firebase SDK Integration
+
+### Firebase Initialization
+```typescript
+// src/plugins/firebase.ts
+import { initializeApp } from 'firebase/app'
+import { getAuth, connectAuthEmulator } from 'firebase/auth'
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore'
+import { getFunctions, connectFunctionsEmulator } from 'firebase/functions'
+import { getStorage, connectStorageEmulator } from 'firebase/storage'
+
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
+}
+
+// Initialize Firebase
+export const app = initializeApp(firebaseConfig)
+
+// Initialize services
+export const auth = getAuth(app)
+export const db = getFirestore(app)
+export const functions = getFunctions(app)
+export const storage = getStorage(app)
+
+// Connect to emulators in development (only once)
+if (import.meta.env.DEV && !auth.config.emulatorConfig) {
+  connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true })
+  connectFirestoreEmulator(db, 'localhost', 8080)
+  connectFunctionsEmulator(functions, 'localhost', 5001)
+  connectStorageEmulator(storage, 'localhost', 9199)
+}
+```
+
+### Environment Variables Setup
+```bash
+# .env.local (never commit)
+VITE_FIREBASE_API_KEY=your-api-key
+VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your-project-id
+VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
+VITE_FIREBASE_APP_ID=1:123456789:web:abcdef
+```
+
+## Authentication Patterns
+
+### Auth Service Implementation
+```typescript
+// src/services/auth.ts
+import { 
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  updateProfile,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  deleteUser,
+  User as FirebaseUser
+} from 'firebase/auth'
+import { auth } from '@/plugins/firebase'
+import type { User, ApiResponse } from '@/types/auth'
+
+export class AuthService {
+  /**
+   * Sign in with email and password
+   * @param email User email
+   * @param password User password
+   * @returns Promise with user data or error
+   */
+  static async login(
+    email: string, 
+    password: string
+  ): Promise<ApiResponse<User>> {
+    try {
+      const credential = await signInWithEmailAndPassword(auth, email, password)
+      const user = await this.mapFirebaseUser(credential.user)
+      
+      return { success: true, data: user }
+    } catch (error) {
+      return {
+        success: false,
+        message: this.getAuthErrorMessage(error),
+        data: null
+      }
+    }
+  }
+
+  /**
+   * Create new user account
+   * @param email User email
+   * @param password User password
+   * @param displayName User display name
+   * @returns Promise with user data or error
+   */
+  static async register(
+    email: string,
+    password: string,
+    displayName: string
+  ): Promise<ApiResponse<User>> {
+    try {
+      const credential = await createUserWithEmailAndPassword(auth, email, password)
+      
+      // Update profile with display name
+      await updateProfile(credential.user, { displayName })
+      
+      // Send verification email
+      if (!credential.user.emailVerified) {
+        await sendEmailVerification(credential.user)
+      }
+      
+      const user = await this.mapFirebaseUser(credential.user)
+      
+      return { success: true, data: user }
+    } catch (error) {
+      return {
+        success: false,
+        message: this.getAuthErrorMessage(error),
+        data: null
+      }
+    }
+  }
+
+  /**
+   * Sign out current user
+   */
+  static async logout(): Promise<void> {
+    await signOut(auth)
+  }
+
+  /**
+   * Send password reset email
+   * @param email User email
+   */
+  static async resetPassword(email: string): Promise<ApiResponse<void>> {
+    try {
+      await sendPasswordResetEmail(auth, email)
+      return { 
+        success: true, 
+        message: 'Password reset email sent',
+        data: undefined
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: this.getAuthErrorMessage(error),
+        data: undefined
+      }
+    }
+  }
+
+  /**
+   * Delete user account (requires recent authentication)
+   */
+  static async deleteAccount(): Promise<ApiResponse<void>> {
+    try {
+      if (!auth.currentUser) {
+        throw new Error('No authenticated user')
+      }
+      
+      await deleteUser(auth.currentUser)
+      return { 
+        success: true, 
+        message: 'Account deleted successfully',
+        data: undefined
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: this.getAuthErrorMessage(error),
+        data: undefined
+      }
+    }
+  }
+
+  /**
+   * Listen to authentication state changes
+   * @param callback Function to call when auth state changes
+   * @returns Unsubscribe function
+   */
+  static onAuthStateChange(
+    callback: (user: User | null) => void
+  ): () => void {
+    return onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const user = await this.mapFirebaseUser(firebaseUser)
+        callback(user)
+      } else {
+        callback(null)
+      }
+    })
+  }
+
+  /**
+   * Map Firebase user to app user interface
+   * @param firebaseUser Firebase user object
+   * @returns App user object
+   */
+  private static async mapFirebaseUser(firebaseUser: FirebaseUser): Promise<User> {
+    return {
+      id: firebaseUser.uid,
+      email: firebaseUser.email!,
+      name: firebaseUser.displayName || 'Anonymous',
+      emailVerified: firebaseUser.emailVerified,
+      createdAt: new Date(firebaseUser.metadata.creationTime!),
+      lastLoginAt: firebaseUser.metadata.lastSignInTime 
+        ? new Date(firebaseUser.metadata.lastSignInTime) 
+        : undefined,
+      photoURL: firebaseUser.photoURL,
+      settings: await this.getUserSettings(firebaseUser.uid)
+    }
+  }
+
+  /**
+   * Get user-friendly error messages
+   * @param error Firebase auth error
+   * @returns User-friendly error message
+   */
+  private static getAuthErrorMessage(error: any): string {
+    switch (error.code) {
+      case 'auth/user-not-found':
+        return 'No account found with this email address'
+      case 'auth/wrong-password':
+        return 'Incorrect password'
+      case 'auth/email-already-in-use':
+        return 'An account with this email already exists'
+      case 'auth/weak-password':
+        return 'Password should be at least 6 characters'
+      case 'auth/invalid-email':
+        return 'Invalid email address'
+      case 'auth/too-many-requests':
+        return 'Too many failed attempts. Please try again later'
+      case 'auth/requires-recent-login':
+        return 'Please sign in again to complete this action'
+      default:
+        return error.message || 'An authentication error occurred'
+    }
+  }
+
+  private static async getUserSettings(uid: string): Promise<UserSettings> {
+    // Fetch user settings from Firestore
+    // Implementation depends on your settings structure
+    return {
+      theme: 'system',
+      notifications: {
+        email: true,
+        push: false,
+        securityAlerts: true
+      },
+      security: {
+        twoFactorEnabled: false,
+        biometricEnabled: false,
+        sessionTimeout: 30
+      }
+    }
+  }
+}
+```
+
+## Firestore Database Patterns
+
+### Document Structure and Types
+```typescript
+// src/types/firestore.ts
+export interface FirestoreDocument {
+  id: string
+  createdAt: Date
+  updatedAt: Date
+  createdBy: string
+}
+
+export interface VaultItem extends FirestoreDocument {
+  name: string
+  type: 'password' | 'note' | 'card' | 'identity'
+  encrypted: boolean
+  data: string // Encrypted JSON string
+  tags: string[]
+  favorite: boolean
+  lastAccessed?: Date
+  folder?: string
+}
+
+export interface UserSettings extends FirestoreDocument {
+  userId: string
+  theme: 'light' | 'dark' | 'system'
+  language: string
+  timezone: string
+  notifications: {
+    email: boolean
+    push: boolean
+    securityAlerts: boolean
+  }
+  security: {
+    twoFactorEnabled: boolean
+    biometricEnabled: boolean
+    sessionTimeout: number
+    autoLockEnabled: boolean
+  }
+  backup: {
+    autoBackupEnabled: boolean
+    frequency: 'daily' | 'weekly' | 'monthly'
+    lastBackup?: Date
+  }
+}
+
+export interface SecurityEvent extends FirestoreDocument {
+  userId: string
+  type: 'login' | 'logout' | 'password_change' | 'failed_login' | 'account_locked'
+  ipAddress: string
+  userAgent: string
+  location?: {
+    country: string
+    region: string
+    city: string
+  }
+  metadata?: Record<string, any>
+}
+```
+
+### Firestore Service Implementation
+```typescript
+// src/services/firestore.ts
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  getDocs,
+  onSnapshot,
+  serverTimestamp,
+  writeBatch,
+  runTransaction
+} from 'firebase/firestore'
+import { db } from '@/plugins/firebase'
+import type { VaultItem, UserSettings, SecurityEvent } from '@/types/firestore'
+
+export class VaultService {
+  private static readonly COLLECTION = 'vaultItems'
+
+  /**
+   * Get all vault items for a user
+   * @param userId User ID
+   * @returns Promise with vault items array
+   */
+  static async getUserVaultItems(userId: string): Promise<VaultItem[]> {
+    try {
+      const q = query(
+        collection(db, this.COLLECTION),
+        where('createdBy', '==', userId),
+        orderBy('updatedAt', 'desc')
+      )
+      
+      const snapshot = await getDocs(q)
+      
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate(),
+        updatedAt: doc.data().updatedAt?.toDate(),
+        lastAccessed: doc.data().lastAccessed?.toDate()
+      })) as VaultItem[]
+    } catch (error) {
+      console.error('Error fetching vault items:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Create a new vault item
+   * @param item Vault item data (without id, timestamps)
+   * @returns Promise with created item
+   */
+  static async createVaultItem(
+    item: Omit<VaultItem, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<VaultItem> {
+    try {
+      const docRef = doc(collection(db, this.COLLECTION))
+      const now = serverTimestamp()
+      
+      const itemData = {
+        ...item,
+        createdAt: now,
+        updatedAt: now
+      }
+      
+      await setDoc(docRef, itemData)
+      
+      return {
+        id: docRef.id,
+        ...item,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    } catch (error) {
+      console.error('Error creating vault item:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Update a vault item
+   * @param id Item ID
+   * @param updates Partial item data
+   */
+  static async updateVaultItem(
+    id: string,
+    updates: Partial<Omit<VaultItem, 'id' | 'createdAt' | 'createdBy'>>
+  ): Promise<void> {
+    try {
+      const docRef = doc(db, this.COLLECTION, id)
+      
+      await updateDoc(docRef, {
+        ...updates,
+        updatedAt: serverTimestamp()
+      })
+    } catch (error) {
+      console.error('Error updating vault item:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Delete a vault item
+   * @param id Item ID
+   */
+  static async deleteVaultItem(id: string): Promise<void> {
+    try {
+      await deleteDoc(doc(db, this.COLLECTION, id))
+    } catch (error) {
+      console.error('Error deleting vault item:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Listen to real-time updates for user's vault items
+   * @param userId User ID
+   * @param callback Function to call when data changes
+   * @returns Unsubscribe function
+   */
+  static onVaultItemsChange(
+    userId: string,
+    callback: (items: VaultItem[]) => void
+  ): () => void {
+    const q = query(
+      collection(db, this.COLLECTION),
+      where('createdBy', '==', userId),
+      orderBy('updatedAt', 'desc')
+    )
+
+    return onSnapshot(q, (snapshot) => {
+      const items = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate(),
+        updatedAt: doc.data().updatedAt?.toDate(),
+        lastAccessed: doc.data().lastAccessed?.toDate()
+      })) as VaultItem[]
+      
+      callback(items)
+    })
+  }
+
+  /**
+   * Batch update multiple vault items
+   * @param updates Array of item updates
+   */
+  static async batchUpdateVaultItems(
+    updates: Array<{ id: string; data: Partial<VaultItem> }>
+  ): Promise<void> {
+    try {
+      const batch = writeBatch(db)
+      
+      updates.forEach(({ id, data }) => {
+        const docRef = doc(db, this.COLLECTION, id)
+        batch.update(docRef, {
+          ...data,
+          updatedAt: serverTimestamp()
+        })
+      })
+      
+      await batch.commit()
+    } catch (error) {
+      console.error('Error batch updating vault items:', error)
+      throw error
+    }
+  }
+}
+
+export class SecurityEventService {
+  private static readonly COLLECTION = 'securityEvents'
+
+  /**
+   * Log a security event
+   * @param event Security event data
+   */
+  static async logSecurityEvent(
+    event: Omit<SecurityEvent, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<void> {
+    try {
+      const docRef = doc(collection(db, this.COLLECTION))
+      const now = serverTimestamp()
+      
+      await setDoc(docRef, {
+        ...event,
+        createdAt: now,
+        updatedAt: now
+      })
+    } catch (error) {
+      console.error('Error logging security event:', error)
+      // Don't throw - security logging should be non-blocking
+    }
+  }
+
+  /**
+   * Get recent security events for a user
+   * @param userId User ID
+   * @param limitCount Number of events to fetch
+   * @returns Promise with security events
+   */
+  static async getUserSecurityEvents(
+    userId: string,
+    limitCount: number = 50
+  ): Promise<SecurityEvent[]> {
+    try {
+      const q = query(
+        collection(db, this.COLLECTION),
+        where('userId', '==', userId),
+        orderBy('createdAt', 'desc'),
+        limit(limitCount)
+      )
+      
+      const snapshot = await getDocs(q)
+      
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate(),
+        updatedAt: doc.data().updatedAt?.toDate()
+      })) as SecurityEvent[]
+    } catch (error) {
+      console.error('Error fetching security events:', error)
+      throw error
+    }
+  }
+}
+```
+
+## Firebase Storage Integration
+
+### File Upload Service
+```typescript
+// src/services/storage.ts
+import {
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+  deleteObject,
+  getMetadata,
+  updateMetadata
+} from 'firebase/storage'
+import { storage } from '@/plugins/firebase'
+
+export interface UploadProgress {
+  bytesTransferred: number
+  totalBytes: number
+  state: 'paused' | 'running' | 'success' | 'canceled' | 'error'
+  progress: number
+}
+
+export class StorageService {
+  /**
+   * Upload a file to Firebase Storage
+   * @param file File to upload
+   * @param path Storage path
+   * @param onProgress Progress callback
+   * @returns Promise with download URL
+   */
+  static async uploadFile(
+    file: File,
+    path: string,
+    onProgress?: (progress: UploadProgress) => void
+  ): Promise<string> {
+    try {
+      const storageRef = ref(storage, path)
+      const uploadTask = uploadBytesResumable(storageRef, file)
+
+      return new Promise((resolve, reject) => {
+        uploadTask.on(
+          'state_changed',
+          (snapshot) => {
+            const progress: UploadProgress = {
+              bytesTransferred: snapshot.bytesTransferred,
+              totalBytes: snapshot.totalBytes,
+              state: snapshot.state as any,
+              progress: (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+            }
+            onProgress?.(progress)
+          },
+          (error) => {
+            console.error('Upload error:', error)
+            reject(error)
+          },
+          async () => {
+            try {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref)
+              resolve(downloadURL)
+            } catch (error) {
+              reject(error)
+            }
+          }
+        )
+      })
+    } catch (error) {
+      console.error('Error uploading file:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Delete a file from Firebase Storage
+   * @param path Storage path
+   */
+  static async deleteFile(path: string): Promise<void> {
+    try {
+      const storageRef = ref(storage, path)
+      await deleteObject(storageRef)
+    } catch (error) {
+      console.error('Error deleting file:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Get file metadata
+   * @param path Storage path
+   * @returns File metadata
+   */
+  static async getFileMetadata(path: string) {
+    try {
+      const storageRef = ref(storage, path)
+      return await getMetadata(storageRef)
+    } catch (error) {
+      console.error('Error getting file metadata:', error)
+      throw error
+    }
+  }
+}
+```
+
+## Security Rules Best Practices
+
+### Firestore Security Rules Pattern
+```javascript
+// firestore.rules
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can only access their own data
+    match /vaultItems/{itemId} {
+      allow read, write: if request.auth != null 
+        && resource.data.createdBy == request.auth.uid;
+      allow create: if request.auth != null 
+        && request.resource.data.createdBy == request.auth.uid;
+    }
+    
+    // User settings
+    match /userSettings/{userId} {
+      allow read, write: if request.auth != null 
+        && request.auth.uid == userId;
+    }
+    
+    // Security events (write-only for users, read for admin)
+    match /securityEvents/{eventId} {
+      allow create: if request.auth != null 
+        && request.resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null 
+        && (resource.data.userId == request.auth.uid 
+            || hasAdminRole(request.auth.uid));
+    }
+    
+    // Helper function to check admin role
+    function hasAdminRole(userId) {
+      return exists(/databases/$(database)/documents/users/$(userId)) 
+        && get(/databases/$(database)/documents/users/$(userId)).data.role == 'admin';
+    }
+  }
+}
+```
+
+### Storage Security Rules Pattern
+```javascript
+// storage.rules
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // User-specific file uploads
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null 
+        && request.auth.uid == userId;
+    }
+    
+    // Backup files - encrypted and user-specific
+    match /backups/{userId}/{backupId} {
+      allow read, write: if request.auth != null 
+        && request.auth.uid == userId
+        && request.resource.size < 50 * 1024 * 1024; // 50MB limit
+    }
+  }
+}
+```
+
+## Error Handling and Logging
+
+### Firebase Error Handling
+```typescript
+// src/utils/firebaseErrors.ts
+import { FirebaseError } from 'firebase/app'
+
+export const handleFirebaseError = (error: FirebaseError): string => {
+  console.error('Firebase Error:', error.code, error.message)
+  
+  switch (error.code) {
+    // Firestore errors
+    case 'permission-denied':
+      return 'You do not have permission to perform this action'
+    case 'not-found':
+      return 'The requested document was not found'
+    case 'already-exists':
+      return 'The document already exists'
+    case 'failed-precondition':
+      return 'The operation failed due to a precondition'
+    case 'aborted':
+      return 'The operation was aborted due to a conflict'
+    case 'out-of-range':
+      return 'The operation was attempted past the valid range'
+    case 'unimplemented':
+      return 'This operation is not implemented'
+    case 'internal':
+      return 'An internal error occurred'
+    case 'unavailable':
+      return 'The service is currently unavailable'
+    case 'data-loss':
+      return 'Unrecoverable data loss or corruption'
+    
+    // Storage errors
+    case 'storage/object-not-found':
+      return 'File not found'
+    case 'storage/unauthorized':
+      return 'User is not authorized to perform this action'
+    case 'storage/canceled':
+      return 'Operation was canceled'
+    case 'storage/unknown':
+      return 'An unknown error occurred'
+    
+    default:
+      return error.message || 'An unexpected error occurred'
+  }
+}
+```
+
+## Testing Firebase Integration
+
+### Firebase Testing Setup
+```typescript
+// src/__tests__/setup/firebase.ts
+import { initializeTestEnvironment } from '@firebase/rules-unit-testing'
+import type { RulesTestEnvironment } from '@firebase/rules-unit-testing'
+
+let testEnv: RulesTestEnvironment
+
+export const setupFirebaseTest = async () => {
+  testEnv = await initializeTestEnvironment({
+    projectId: 'zk-vault-test',
+    firestore: {
+      rules: `
+        rules_version = '2';
+        service cloud.firestore {
+          match /databases/{database}/documents {
+            match /{document=**} {
+              allow read, write: if true;
+            }
+          }
+        }
+      `
+    },
+    storage: {
+      rules: `
+        rules_version = '2';
+        service firebase.storage {
+          match /b/{bucket}/o {
+            match /{allPaths=**} {
+              allow read, write: if true;
+            }
+          }
+        }
+      `
+    }
+  })
+}
+
+export const teardownFirebaseTest = async () => {
+  await testEnv.cleanup()
+}
+
+export const getTestFirestore = (uid?: string) => {
+  return uid 
+    ? testEnv.authenticatedContext(uid).firestore()
+    : testEnv.unauthenticatedContext().firestore()
+}
+
+export const getTestStorage = (uid?: string) => {
+  return uid
+    ? testEnv.authenticatedContext(uid).storage()
+    : testEnv.unauthenticatedContext().storage()
+}
+```
+
+Remember: Firebase integration in ZK-Vault must prioritize security, data encryption, and user privacy. Always validate security rules, handle errors gracefully, and never expose sensitive data in client-side code. 

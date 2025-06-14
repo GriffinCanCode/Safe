@@ -1,0 +1,293 @@
+/* ===================================================================
+   ENCRYPTION SETTINGS COMPONENT
+   ================================================================ */
+
+.encryption-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+/* === MAIN LAYOUT === */
+.settings-section {
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-neutral-200);
+  background-color: var(--color-white);
+  box-shadow: var(--shadow-sm);
+}
+
+.section-title {
+  border-bottom: 1px solid var(--color-neutral-200);
+  padding: var(--space-6);
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+  color: var(--color-neutral-900);
+}
+
+.section-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-6);
+}
+
+/* === SETTING GROUPS === */
+.setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.group-title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-medium);
+  color: var(--color-neutral-900);
+}
+
+/* === INFO CARDS === */
+.info-card {
+  display: flex;
+  gap: var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-green-200);
+  background-color: var(--color-green-50);
+  padding: var(--space-6);
+}
+
+.info-icon {
+  flex-shrink: 0;
+}
+
+.info-content {
+  flex: 1;
+}
+
+.info-title {
+  margin-bottom: var(--space-2);
+  font-weight: var(--font-semibold);
+  color: var(--color-green-900);
+}
+
+.info-description {
+  margin-bottom: var(--space-4);
+  color: var(--color-green-800);
+}
+
+.encryption-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-sm);
+}
+
+.detail-label {
+  font-weight: var(--font-medium);
+  color: var(--color-green-700);
+}
+
+.detail-value {
+  color: var(--color-green-800);
+}
+
+/* === MASTER PASSWORD CARD === */
+.master-password-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-neutral-200);
+  background-color: var(--color-neutral-50);
+  padding: var(--space-6);
+}
+
+.password-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.password-title {
+  font-weight: var(--font-semibold);
+  color: var(--color-neutral-900);
+}
+
+.password-description {
+  color: var(--color-neutral-600);
+}
+
+.password-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+.warning-notice {
+  display: flex;
+  gap: var(--space-3);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-yellow-200);
+  background-color: var(--color-yellow-50);
+  padding: var(--space-4);
+}
+
+.warning-icon {
+  flex-shrink: 0;
+}
+
+.warning-content {
+  flex: 1;
+}
+
+.warning-text {
+  font-size: var(--text-sm);
+  color: var(--color-yellow-800);
+}
+
+.password-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+/* === KEY INFO CARD === */
+.key-info-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-neutral-200);
+  background-color: var(--color-neutral-50);
+  padding: var(--space-6);
+}
+
+.key-status {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.status-dot {
+  height: var(--space-2);
+  width: var(--space-2);
+  border-radius: var(--radius-full);
+}
+
+.status-indicator.active .status-dot {
+  background-color: var(--color-green-500);
+}
+
+.status-text {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--color-neutral-900);
+}
+
+.key-date {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-neutral-600);
+}
+
+.date-label {
+  font-weight: var(--font-medium);
+}
+
+/* === DARK MODE SUPPORT === */
+@media (prefers-color-scheme: dark) {
+  .settings-section {
+    border-color: var(--color-neutral-700);
+    background-color: var(--color-neutral-800);
+  }
+
+  .section-title {
+    border-color: var(--color-neutral-700);
+    color: var(--color-neutral-100);
+  }
+
+  .group-title {
+    color: var(--color-neutral-100);
+  }
+
+  .info-card {
+    border-color: var(--color-green-700);
+    background-color: color-mix(in oklch, var(--color-green-900) 20%, transparent);
+  }
+
+  .info-title {
+    color: var(--color-green-300);
+  }
+
+  .info-description {
+    color: var(--color-green-400);
+  }
+
+  .detail-label {
+    color: var(--color-green-400);
+  }
+
+  .detail-value {
+    color: var(--color-green-300);
+  }
+
+  .master-password-card,
+  .key-info-card {
+    border-color: var(--color-neutral-600);
+    background-color: var(--color-neutral-700);
+  }
+
+  .password-title,
+  .status-text {
+    color: var(--color-neutral-100);
+  }
+
+  .password-description,
+  .key-date {
+    color: var(--color-neutral-400);
+  }
+
+  .warning-notice {
+    border-color: var(--color-yellow-700);
+    background-color: color-mix(in oklch, var(--color-yellow-900) 20%, transparent);
+  }
+
+  .warning-text {
+    color: var(--color-yellow-300);
+  }
+}
+
+/* === HIGH CONTRAST MODE === */
+@media (prefers-contrast: high) {
+  .info-card,
+  .master-password-card,
+  .key-info-card,
+  .warning-notice {
+    border-width: 2px;
+  }
+}
+
+/* === REDUCED MOTION === */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}

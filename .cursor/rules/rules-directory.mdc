@@ -1,0 +1,392 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Project Directory Rules - ZK-Vault
+
+## Monorepo Structure Overview
+ZK-Vault follows a **Lerna-managed monorepo** structure with clear separation of concerns across packages, shared utilities, and development tools.
+
+## Root Directory Structure
+
+```
+zk-vault/                           # Root monorepo directory
+├── README.md                       # Main project documentation
+├── package.json                    # Root package.json (workspaces config)
+├── lerna.json                      # Lerna monorepo configuration
+├── .gitignore                      # Git ignore patterns
+├── .cursorignore                   # Cursor ignore patterns
+├── CSS_ENFORCEMENT_PLAN.md         # CSS architecture documentation
+├── firebase.json                   # Firebase project configuration
+├── firestore.rules                # Firestore security rules
+├── storage.rules                   # Firebase Storage security rules
+├── .cursor/                        # Cursor IDE configuration
+│   ├── rules-css.md               # CSS-specific rules
+│   ├── rules-typescript.md        # TypeScript-specific rules
+│   ├── rules-firebase.md          # Firebase-specific rules
+│   ├── rules-config.md            # Configuration-specific rules
+│   └── rules-directory.md         # Project structure rules
+├── docs/                           # Project documentation
+├── .github/                        # GitHub workflows and templates
+├── tools/                          # Development tools and scripts
+│   ├── cli.js                     # CLI tools for project management
+│   ├── config/                    # Shared configuration files
+│   │   ├── tsconfig.base.json     # Base TypeScript configuration
+│   │   └── commitlint.config.js   # Commit linting rules
+│   └── scripts/                   # Build and deployment scripts
+├── tests/                          # Integration and E2E tests
+├── infrastructure/                 # Infrastructure as code
+├── security/                       # Security documentation and configs
+└── packages/                       # Monorepo packages
+    ├── web-app/                   # Vue 3 web application
+    ├── mobile-app/                # Mobile application
+    ├── browser-extension/         # Browser extension
+    ├── crypto/                    # Cryptographic utilities
+    └── shared/                    # Shared utilities and types
+```
+
+## Web App Package Structure
+
+```
+packages/web-app/                   # Main web application
+├── package.json                   # Package configuration
+├── vite.config.ts                 # Vite build configuration
+├── tailwind.config.js             # Tailwind CSS configuration
+├── postcss.config.mjs             # PostCSS configuration
+├── tsconfig.json                  # TypeScript configuration
+├── vitest.config.ts               # Vitest testing configuration
+├── vitest.setup.ts                # Test setup file
+├── index.html                     # HTML entry point
+├── .eslintrc.cjs                  # ESLint configuration
+├── .stylelintrc.json              # Stylelint configuration
+├── .prettierrc                    # Prettier configuration
+├── public/                        # Static assets
+│   ├── favicon.ico
+│   ├── icons/                     # App icons and PWA assets
+│   └── manifest.json              # PWA manifest
+├── dist/                          # Build output (gitignored)
+├── node_modules/                  # Dependencies (gitignored)
+└── src/                           # Source code
+    ├── main.ts                    # Application entry point
+    ├── App.vue                    # Root Vue component
+    ├── router.ts                  # Vue Router configuration
+    ├── vite-env.d.ts              # Vite type definitions
+    ├── components/                # Vue components
+    │   ├── auth/                  # Authentication components
+    │   ├── vault/                 # Vault/password components
+    │   ├── settings/              # Settings components
+    │   ├── security/              # Security components
+    │   ├── admin/                 # Admin dashboard components
+    │   ├── files/                 # File management components
+    │   ├── search/                # Search components
+    │   ├── layout/                # Layout components
+    │   └── common/                # Shared/reusable components
+    ├── views/                     # Route-level components
+    │   ├── VaultView.vue
+    │   ├── SettingsView.vue
+    │   ├── AuthView.vue
+    │   ├── SecurityView.vue
+    │   └── AdminView.vue
+    ├── store/                     # Pinia store modules
+    │   ├── auth.ts               # Authentication store
+    │   ├── vault.ts              # Vault data store
+    │   ├── settings.ts           # User settings store
+    │   ├── security.ts           # Security events store
+    │   └── index.ts              # Store index
+    ├── composables/               # Vue composables
+    │   ├── useAuth.ts
+    │   ├── useNotifications.ts
+    │   ├── useVault.ts
+    │   ├── useSecurity.ts
+    │   └── index.ts
+    ├── services/                  # API and external services
+    │   ├── api.ts                # Base API service
+    │   ├── auth.ts               # Authentication service
+    │   ├── firestore.ts          # Firestore service
+    │   ├── storage.ts            # Firebase Storage service
+    │   └── index.ts
+    ├── utils/                     # Utility functions
+    │   ├── crypto.ts             # Cryptographic utilities
+    │   ├── validation.ts         # Form validation
+    │   ├── formatters.ts         # Data formatters
+    │   ├── constants.ts          # Application constants
+    │   ├── errors.ts             # Error handling
+    │   └── typeGuards.ts         # TypeScript type guards
+    ├── types/                     # TypeScript type definitions
+    │   ├── auth.ts               # Authentication types
+    │   ├── vault.ts              # Vault item types
+    │   ├── api.ts                # API response types
+    │   ├── firestore.ts          # Firestore document types
+    │   ├── settings.ts           # Settings types
+    │   └── index.ts              # Type exports
+    ├── plugins/                   # Vue plugins and integrations
+    │   ├── firebase.ts           # Firebase initialization
+    │   ├── pinia.ts              # Pinia store setup
+    │   └── router.ts             # Router setup
+    ├── workers/                   # Web Workers
+    │   ├── crypto-worker.ts      # Cryptographic operations
+    │   └── backup-worker.ts      # Backup processing
+    ├── styles/                    # CSS architecture (CRITICAL)
+    │   ├── index.css             # Main CSS entry point
+    │   ├── variables.css         # CSS custom properties
+    │   ├── utilities.css         # Utility classes
+    │   ├── components.css        # Component imports index
+    │   ├── main.css              # Base application styles
+    │   ├── README.md             # CSS architecture documentation
+    │   ├── base/                 # Base styles
+    │   │   ├── reset.css
+    │   │   ├── typography.css
+    │   │   └── index.css
+    │   ├── theme/                # Theme variables
+    │   │   ├── colors.css
+    │   │   ├── spacing.css
+    │   │   ├── dark-mode.css
+    │   │   └── index.css
+    │   ├── layout/               # Layout components
+    │   │   ├── grid.css
+    │   │   ├── containers.css
+    │   │   ├── main-layout.css
+    │   │   ├── sidebar.css
+    │   │   ├── header.css
+    │   │   └── index.css
+    │   ├── utilities/            # Utility class definitions
+    │   │   ├── spacing.css
+    │   │   ├── colors.css
+    │   │   ├── typography.css
+    │   │   ├── responsive.css
+    │   │   └── index.css
+    │   ├── animations/           # Animation utilities
+    │   │   ├── transitions.css
+    │   │   ├── keyframes.css
+    │   │   └── index.css
+    │   └── components/           # Component-specific styles
+    │       ├── index.css         # Component imports
+    │       ├── auth/             # Authentication components
+    │       │   ├── login-form.css
+    │       │   ├── register-form.css
+    │       │   ├── biometric-auth.css
+    │       │   └── index.css
+    │       ├── vault/            # Vault components
+    │       │   ├── vault-dashboard.css
+    │       │   ├── password-editor.css
+    │       │   ├── password-item.css
+    │       │   └── index.css
+    │       ├── settings/         # Settings components
+    │       │   ├── account-settings.css
+    │       │   ├── security-settings.css
+    │       │   ├── backup-restore.css
+    │       │   └── index.css
+    │       ├── common/           # Shared components
+    │       │   ├── buttons.css
+    │       │   ├── modals.css
+    │       │   ├── forms.css
+    │       │   ├── inputs.css
+    │       │   ├── notifications.css
+    │       │   └── index.css
+    │       ├── layout/           # Layout components
+    │       │   ├── main-layout.css
+    │       │   ├── sidebar.css
+    │       │   ├── header.css
+    │       │   └── index.css
+    │       ├── security/         # Security components
+    │       ├── search/           # Search components
+    │       ├── files/            # File components
+    │       └── admin/            # Admin components
+    └── __tests__/                # Test files
+        ├── unit/                 # Unit tests
+        ├── integration/          # Integration tests
+        ├── components/           # Component tests
+        ├── stores/               # Store tests
+        ├── services/             # Service tests
+        └── __mocks__/            # Test mocks
+```
+
+## Shared Package Structure
+
+```
+packages/shared/                    # Shared utilities and types
+├── package.json
+├── tsconfig.json
+├── vite.config.ts                 # Build configuration
+├── src/
+│   ├── index.ts                   # Main exports
+│   ├── types/                     # Shared TypeScript types
+│   │   ├── auth.ts
+│   │   ├── vault.ts
+│   │   ├── api.ts
+│   │   └── index.ts
+│   ├── utils/                     # Shared utility functions
+│   │   ├── validation.ts
+│   │   ├── formatters.ts
+│   │   ├── constants.ts
+│   │   └── index.ts
+│   ├── constants/                 # Application constants
+│   └── schemas/                   # Validation schemas
+├── dist/                          # Build output
+└── __tests__/                     # Tests
+```
+
+## Crypto Package Structure
+
+```
+packages/crypto/                    # Cryptographic utilities
+├── package.json
+├── tsconfig.json
+├── vite.config.ts
+├── src/
+│   ├── index.ts                   # Main crypto exports
+│   ├── encryption/                # Encryption utilities
+│   │   ├── aes.ts
+│   │   ├── xchacha20.ts
+│   │   └── index.ts
+│   ├── hashing/                   # Hashing utilities
+│   │   ├── argon2.ts
+│   │   ├── pbkdf2.ts
+│   │   └── index.ts
+│   ├── key-derivation/            # Key derivation
+│   ├── random/                    # Secure random generation
+│   ├── workers/                   # Crypto web workers
+│   └── types/                     # Crypto-specific types
+├── dist/                          # Build output
+└── __tests__/                     # Crypto tests
+```
+
+## File Naming Conventions
+
+### Vue Components
+- **PascalCase for components**: `UserSettings.vue`, `PasswordEditor.vue`
+- **kebab-case for files**: `user-settings.vue`, `password-editor.vue` (if needed)
+- **Descriptive names**: Avoid generic names like `Item.vue`, `Form.vue`
+
+### TypeScript Files
+- **camelCase**: `authService.ts`, `vaultStore.ts`
+- **PascalCase for classes**: `ApiService.ts`, `CryptoManager.ts`
+- **kebab-case for utilities**: `form-validation.ts`, `date-helpers.ts`
+
+### CSS Files
+- **kebab-case**: `login-form.css`, `account-settings.css`
+- **Component matching**: CSS file name should match component name
+- **Category grouping**: Group by component category (auth, vault, settings)
+
+### Directory Naming
+- **kebab-case**: `web-app/`, `crypto-utils/`
+- **Descriptive**: Avoid abbreviations, use full words
+- **Consistent**: Same naming pattern across all packages
+
+## Import/Export Patterns
+
+### Index File Pattern
+```typescript
+// src/components/auth/index.ts
+export { default as LoginForm } from './LoginForm.vue'
+export { default as RegisterForm } from './RegisterForm.vue'
+export { default as BiometricAuth } from './BiometricAuth.vue'
+
+// src/services/index.ts
+export * from './auth'
+export * from './firestore'
+export * from './storage'
+export { ApiService } from './api'
+```
+
+### Barrel Exports
+```typescript
+// src/types/index.ts
+export * from './auth'
+export * from './vault'
+export * from './api'
+export * from './firestore'
+```
+
+### Component Import Pattern
+```vue
+<script setup lang="ts">
+// Group imports by type
+// 1. Vue imports
+import { ref, computed, onMounted } from 'vue'
+
+// 2. Component imports
+import BaseButton from '@/components/common/BaseButton.vue'
+import BaseModal from '@/components/common/BaseModal.vue'
+
+// 3. Composables
+import { useAuth } from '@/composables/useAuth'
+import { useNotifications } from '@/composables/useNotifications'
+
+// 4. Services
+import { AuthService } from '@/services/auth'
+
+// 5. Types
+import type { User } from '@/types/auth'
+import type { NotificationOptions } from '@/types/notifications'
+
+// 6. CSS imports (if component-specific)
+import '@/styles/components/auth/login-form.css'
+</script>
+```
+
+## File Organization Rules
+
+### Component Organization
+- **Group by feature**: Auth components together, vault components together
+- **Shared components**: Common/reusable components in `common/`
+- **Layout components**: Page layout components in `layout/`
+- **Route components**: Page-level components in `views/`
+
+### Store Organization
+- **Feature-based stores**: One store per major feature
+- **Shared state**: Global app state in main stores
+- **Modular**: Each store in its own file with clear exports
+
+### Service Organization
+- **API services**: Group by external service (Firebase, REST API)
+- **Business logic**: Keep business logic in services, not components
+- **Single responsibility**: One service per major function
+
+### CSS Organization (CRITICAL)
+- **Component-based**: Each component has corresponding CSS file
+- **Category grouping**: Group CSS by component categories
+- **Import hierarchy**: Base → Layout → Utilities → Components
+- **No component styles**: All styling in external CSS files
+
+## Security and Privacy Considerations
+
+### Sensitive File Handling
+```bash
+# Files that should NEVER be committed
+.env.local
+.env.production.local
+firebase-admin-key.json
+private-keys/
+secrets/
+
+# Files that should be gitignored
+node_modules/
+dist/
+coverage/
+.cache/
+```
+
+### File Permissions
+- **Environment files**: Restrict access to environment files
+- **Build artifacts**: Ensure build outputs don't contain secrets
+- **Log files**: Don't commit log files that might contain sensitive data
+
+## Development Workflow Files
+
+### Required Config Files
+- `.gitignore`: Comprehensive ignore patterns
+- `.eslintrc.cjs`: ESLint configuration
+- `.prettierrc`: Code formatting
+- `.stylelintrc.json`: CSS linting
+- `package.json`: Package configuration
+- `tsconfig.json`: TypeScript configuration
+
+### Documentation Files
+- `README.md`: Package-specific documentation
+- `CHANGELOG.md`: Version history
+- `API.md`: API documentation (for packages)
+- `CONTRIBUTING.md`: Development guidelines
+
+Remember: Maintain consistent directory structure across all packages, use descriptive naming, group related functionality, and keep the CSS architecture strictly organized in external files. 

@@ -4,11 +4,7 @@
     <div class="dashboard-header">
       <h1 class="dashboard-title">ZK-Vault Admin Dashboard</h1>
       <div class="header-actions">
-        <button 
-          class="btn btn-primary" 
-          @click="refreshAllData"
-          :disabled="isLoading"
-        >
+        <button class="btn btn-primary" @click="refreshAllData" :disabled="isLoading">
           {{ isLoading ? 'Refreshing...' : 'Refresh Data' }}
         </button>
         <select v-model="selectedTimeRange" @change="onTimeRangeChange" class="time-range-selector">
@@ -93,15 +89,21 @@
         <div class="retention-metrics">
           <div class="retention-item">
             <span class="retention-label">1 Day Retention</span>
-            <span class="retention-value">{{ formatPercentage(userAnalytics?.userRetentionRates?.day1 || 0) }}</span>
+            <span class="retention-value">{{
+              formatPercentage(userAnalytics?.userRetentionRates?.day1 || 0)
+            }}</span>
           </div>
           <div class="retention-item">
             <span class="retention-label">7 Day Retention</span>
-            <span class="retention-value">{{ formatPercentage(userAnalytics?.userRetentionRates?.day7 || 0) }}</span>
+            <span class="retention-value">{{
+              formatPercentage(userAnalytics?.userRetentionRates?.day7 || 0)
+            }}</span>
           </div>
           <div class="retention-item">
             <span class="retention-label">30 Day Retention</span>
-            <span class="retention-value">{{ formatPercentage(userAnalytics?.userRetentionRates?.day30 || 0) }}</span>
+            <span class="retention-value">{{
+              formatPercentage(userAnalytics?.userRetentionRates?.day30 || 0)
+            }}</span>
           </div>
         </div>
       </div>
@@ -110,8 +112,8 @@
       <div class="analytics-card">
         <h3>Top User Countries</h3>
         <div class="countries-list">
-          <div 
-            v-for="(count, country) in userAnalytics?.topUserCountries" 
+          <div
+            v-for="(count, country) in userAnalytics?.topUserCountries"
             :key="country"
             class="country-item"
           >
@@ -125,8 +127,8 @@
       <div class="analytics-card">
         <h3>Feature Usage</h3>
         <div class="feature-usage">
-          <div 
-            v-for="(usage, feature) in userAnalytics?.featureUsage" 
+          <div
+            v-for="(usage, feature) in userAnalytics?.featureUsage"
             :key="feature"
             class="feature-item"
           >
@@ -140,8 +142,8 @@
       <div class="analytics-card">
         <h3>Top File Types</h3>
         <div class="file-types">
-          <div 
-            v-for="(count, type) in userAnalytics?.storageUsage?.topFileTypes" 
+          <div
+            v-for="(count, type) in userAnalytics?.storageUsage?.topFileTypes"
             :key="type"
             class="file-type-item"
           >
@@ -199,32 +201,16 @@
     <div class="admin-actions">
       <h3>Admin Actions</h3>
       <div class="actions-grid">
-        <button 
-          class="action-btn danger"
-          @click="showPurgeModal = true"
-          :disabled="isProcessing"
-        >
+        <button class="action-btn danger" @click="showPurgeModal = true" :disabled="isProcessing">
           Purge Inactive Users
         </button>
-        <button 
-          class="action-btn warning"
-          @click="optimizeSystem"
-          :disabled="isProcessing"
-        >
+        <button class="action-btn warning" @click="optimizeSystem" :disabled="isProcessing">
           Optimize System
         </button>
-        <button 
-          class="action-btn primary"
-          @click="exportAnalytics"
-          :disabled="isProcessing"
-        >
+        <button class="action-btn primary" @click="exportAnalytics" :disabled="isProcessing">
           Export Analytics
         </button>
-        <button 
-          class="action-btn secondary"
-          @click="runHealthCheck"
-          :disabled="isProcessing"
-        >
+        <button class="action-btn secondary" @click="runHealthCheck" :disabled="isProcessing">
           Run Health Check
         </button>
       </div>
@@ -234,8 +220,8 @@
     <div v-if="systemHealth?.alerts?.length" class="alerts-panel">
       <h3>System Alerts</h3>
       <div class="alerts-list">
-        <div 
-          v-for="alert in systemHealth.alerts" 
+        <div
+          v-for="alert in systemHealth.alerts"
           :key="alert.timestamp"
           class="alert-item"
           :class="alert.type"
@@ -258,10 +244,10 @@
         <p>This will permanently delete users who haven't logged in for the specified period.</p>
         <div class="modal-form">
           <label>Days since last login:</label>
-          <input 
-            v-model.number="purgeSettings.daysSinceLastLogin" 
-            type="number" 
-            min="30" 
+          <input
+            v-model.number="purgeSettings.daysSinceLastLogin"
+            type="number"
+            min="30"
             max="1095"
           />
         </div>
@@ -300,16 +286,19 @@ const userSegmentation = ref(null);
 const systemHealth = ref(null);
 
 const purgeSettings = reactive({
-  daysSinceLastLogin: 365
+  daysSinceLastLogin: 365,
 });
 
 // Computed properties
 const alertClass = computed(() => {
   if (!systemHealth.value) return '';
   switch (systemHealth.value.status) {
-    case 'warning': return 'alert-warning';
-    case 'critical': return 'alert-critical';
-    default: return 'alert-healthy';
+    case 'warning':
+      return 'alert-warning';
+    case 'critical':
+      return 'alert-critical';
+    default:
+      return 'alert-healthy';
   }
 });
 
@@ -321,7 +310,7 @@ const refreshAllData = async () => {
       loadUserAnalytics(),
       loadActivityTrends(),
       loadUserSegmentation(),
-      loadSystemHealth()
+      loadSystemHealth(),
     ]);
   } catch (error) {
     console.error('Error refreshing dashboard data:', error);
@@ -342,20 +331,20 @@ const loadUserAnalytics = async () => {
       averageSessionDuration: 1845,
       topUserCountries: {
         'United States': 4521,
-        'Canada': 1876,
+        Canada: 1876,
         'United Kingdom': 1432,
-        'Germany': 987,
-        'France': 743
+        Germany: 987,
+        France: 743,
       },
       userRetentionRates: {
         day1: 78.5,
         day7: 54.2,
-        day30: 23.8
+        day30: 23.8,
       },
       featureUsage: {
         vault_items_created: 45632,
         files_uploaded: 12845,
-        files_shared: 3421
+        files_shared: 3421,
       },
       storageUsage: {
         totalFiles: 156789,
@@ -366,9 +355,9 @@ const loadUserAnalytics = async () => {
           document: 23541,
           video: 8765,
           audio: 3421,
-          other: 12543
-        }
-      }
+          other: 12543,
+        },
+      },
     };
   } catch (error) {
     console.error('Error loading user analytics:', error);
@@ -395,7 +384,7 @@ const loadUserSegmentation = async () => {
       regularUsers: { count: 4981, percentage: 40, definition: 'Moderate activity users' },
       lightUsers: { count: 3736, percentage: 30, definition: 'Low activity users' },
       inactiveUsers: { count: 1869, percentage: 15, definition: 'Inactive users' },
-      newUsers: { count: 623, percentage: 5, definition: 'New users' }
+      newUsers: { count: 623, percentage: 5, definition: 'New users' },
     };
   } catch (error) {
     console.error('Error loading user segmentation:', error);
@@ -415,7 +404,7 @@ const loadSystemHealth = async () => {
       cpuUsage: 23.8,
       diskUsage: 45.2,
       lastChecked: new Date().toISOString(),
-      alerts: []
+      alerts: [],
     };
   } catch (error) {
     console.error('Error loading system health:', error);
@@ -474,9 +463,9 @@ const exportAnalytics = () => {
     activityTrends: activityTrends.value,
     userSegmentation: userSegmentation.value,
     systemHealth: systemHealth.value,
-    exportedAt: new Date().toISOString()
+    exportedAt: new Date().toISOString(),
   };
-  
+
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -516,16 +505,19 @@ const formatTime = (timestamp: string): string => {
 const getSystemStatusMessage = (): string => {
   if (!systemHealth.value) return '';
   switch (systemHealth.value.status) {
-    case 'warning': return 'System is experiencing minor issues. Performance may be affected.';
-    case 'critical': return 'System is experiencing critical issues. Immediate attention required.';
-    default: return 'All systems are operating normally.';
+    case 'warning':
+      return 'System is experiencing minor issues. Performance may be affected.';
+    case 'critical':
+      return 'System is experiencing critical issues. Immediate attention required.';
+    default:
+      return 'All systems are operating normally.';
   }
 };
 
 const getHealthClass = (metric: string): string => {
   if (!systemHealth.value) return '';
   const value = systemHealth.value[metric];
-  
+
   switch (metric) {
     case 'responseTime':
       return value > 1000 ? 'critical' : value > 500 ? 'warning' : 'healthy';
@@ -543,7 +535,7 @@ const getHealthClass = (metric: string): string => {
 const generateMockActivityTrends = () => {
   const trends = [];
   const now = new Date();
-  
+
   for (let i = selectedTimeRange.value; i >= 0; i--) {
     const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
     trends.push({
@@ -551,10 +543,10 @@ const generateMockActivityTrends = () => {
       activeUsers: Math.floor(Math.random() * 2000) + 5000,
       newUsers: Math.floor(Math.random() * 100) + 20,
       sessions: Math.floor(Math.random() * 5000) + 8000,
-      fileUploads: Math.floor(Math.random() * 500) + 100
+      fileUploads: Math.floor(Math.random() * 500) + 100,
     });
   }
-  
+
   return trends;
 };
 
@@ -646,9 +638,18 @@ onMounted(() => {
   margin-bottom: 2rem;
 }
 
-.alert-healthy { background: #dcfce7; border-left: 4px solid #16a34a; }
-.alert-warning { background: #fef3c7; border-left: 4px solid #f59e0b; }
-.alert-critical { background: #fecaca; border-left: 4px solid #ef4444; }
+.alert-healthy {
+  background: #dcfce7;
+  border-left: 4px solid #16a34a;
+}
+.alert-warning {
+  background: #fef3c7;
+  border-left: 4px solid #f59e0b;
+}
+.alert-critical {
+  background: #fecaca;
+  border-left: 4px solid #ef4444;
+}
 
 .metrics-grid {
   display: grid;
@@ -691,13 +692,19 @@ onMounted(() => {
   color: #374151;
 }
 
-.retention-metrics, .countries-list, .feature-usage, .file-types {
+.retention-metrics,
+.countries-list,
+.feature-usage,
+.file-types {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-.retention-item, .country-item, .feature-item, .file-type-item {
+.retention-item,
+.country-item,
+.feature-item,
+.file-type-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -737,9 +744,15 @@ onMounted(() => {
   font-weight: 700;
 }
 
-.health-value.healthy { color: #16a34a; }
-.health-value.warning { color: #f59e0b; }
-.health-value.critical { color: #ef4444; }
+.health-value.healthy {
+  color: #16a34a;
+}
+.health-value.warning {
+  color: #f59e0b;
+}
+.health-value.critical {
+  color: #ef4444;
+}
 
 .admin-actions {
   background: white;
@@ -765,10 +778,22 @@ onMounted(() => {
   transition: all 0.2s;
 }
 
-.action-btn.primary { background: #3b82f6; color: white; }
-.action-btn.secondary { background: #6b7280; color: white; }
-.action-btn.warning { background: #f59e0b; color: white; }
-.action-btn.danger { background: #ef4444; color: white; }
+.action-btn.primary {
+  background: #3b82f6;
+  color: white;
+}
+.action-btn.secondary {
+  background: #6b7280;
+  color: white;
+}
+.action-btn.warning {
+  background: #f59e0b;
+  color: white;
+}
+.action-btn.danger {
+  background: #ef4444;
+  color: white;
+}
 
 .alerts-panel {
   background: white;
@@ -872,27 +897,31 @@ onMounted(() => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 768px) {
   .admin-dashboard {
     padding: 1rem;
   }
-  
+
   .dashboard-header {
     flex-direction: column;
     gap: 1rem;
     align-items: stretch;
   }
-  
+
   .charts-row {
     grid-template-columns: 1fr;
   }
-  
+
   .metrics-grid {
     grid-template-columns: 1fr;
   }
 }
-</style> 
+</style>

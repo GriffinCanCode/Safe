@@ -37,12 +37,12 @@
   --border-muted: color-mix(in oklch, var(--color-neutral-200) 100%, transparent);
   --border-subtle: color-mix(in oklch, var(--color-neutral-100) 100%, transparent);
   --border-strong: color-mix(in oklch, var(--color-neutral-400) 100%, transparent);
-  
+
   /* Interactive borders */
   --border-interactive: color-mix(in oklch, var(--color-primary-300) 100%, transparent);
   --border-focus: color-mix(in oklch, var(--color-primary-500) 100%, transparent);
   --border-hover: color-mix(in oklch, var(--color-primary-400) 100%, transparent);
-  
+
   /* State borders */
   --border-success: color-mix(in oklch, var(--color-success-300) 100%, transparent);
   --border-warning: color-mix(in oklch, var(--color-warning-300) 100%, transparent);
@@ -57,11 +57,11 @@
     --border-muted: color-mix(in oklch, var(--color-neutral-700) 100%, transparent);
     --border-subtle: color-mix(in oklch, var(--color-neutral-800) 100%, transparent);
     --border-strong: color-mix(in oklch, var(--color-neutral-500) 100%, transparent);
-    
+
     --border-interactive: color-mix(in oklch, var(--color-primary-600) 100%, transparent);
     --border-focus: color-mix(in oklch, var(--color-primary-400) 100%, transparent);
     --border-hover: color-mix(in oklch, var(--color-primary-500) 100%, transparent);
-    
+
     --border-success: color-mix(in oklch, var(--color-success-600) 100%, transparent);
     --border-warning: color-mix(in oklch, var(--color-warning-600) 100%, transparent);
     --border-danger: color-mix(in oklch, var(--color-danger-600) 100%, transparent);
@@ -75,7 +75,7 @@
     --border-width-thin: 2px;
     --border-width-medium: 3px;
     --border-width-thick: 4px;
-    
+
     --border-default: color-mix(in oklch, var(--color-neutral-900) 100%, transparent);
     --border-focus: color-mix(in oklch, var(--color-primary-700) 100%, transparent);
   }
@@ -83,7 +83,8 @@
 
 /* === BORDER UTILITIES === */
 .border-glass {
-  border: var(--border-width-thin) solid color-mix(in oklch, var(--color-neutral-200) 30%, transparent);
+  border: var(--border-width-thin) solid
+    color-mix(in oklch, var(--color-neutral-200) 30%, transparent);
   backdrop-filter: blur(8px);
 }
 
@@ -101,4 +102,4 @@
   .border-glass {
     border-color: color-mix(in oklch, var(--color-neutral-600) 30%, transparent);
   }
-} 
+}

@@ -4,10 +4,10 @@
  */
 
 /* Import Tailwind CSS v4 - single line, zero config! */
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* Custom theme configuration imported after Tailwind */
-@import "./variables.css";
+@import './variables.css';
 
 /* === BASE STYLES === */
 @layer base {
@@ -99,10 +99,10 @@
 @layer components {
   /* Button base styles using modern CSS features */
   .btn {
-    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg transition-all;
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
-    @apply disabled:opacity-50 disabled:cursor-not-allowed;
-    
+    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-all;
+    @apply focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:outline-none;
+    @apply disabled:cursor-not-allowed disabled:opacity-50;
+
     /* Using CSS color-mix for dynamic hover states */
     &:hover:not(:disabled) {
       background-color: color-mix(in oklab, currentColor 10%, transparent);
@@ -116,7 +116,7 @@
   .btn-primary {
     @apply bg-primary-600 text-white hover:bg-primary-700;
     box-shadow: var(--shadow-sm);
-    
+
     &:hover:not(:disabled) {
       box-shadow: var(--shadow-md);
     }
@@ -124,7 +124,7 @@
 
   .btn-secondary {
     @apply bg-neutral-200 text-neutral-900 hover:bg-neutral-300;
-    
+
     @media (prefers-color-scheme: dark) {
       @apply bg-neutral-700 text-neutral-100 hover:bg-neutral-600;
     }
@@ -137,13 +137,13 @@
 
   /* Input styles with modern features */
   .input {
-    @apply w-full px-3 py-2 border border-neutral-300 rounded-lg bg-white text-neutral-900;
+    @apply w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-neutral-900;
     @apply focus:border-primary-500 focus:ring-1 focus:ring-primary-500;
     @apply placeholder-neutral-500;
     transition: var(--transition-fast);
-    
+
     @media (prefers-color-scheme: dark) {
-      @apply bg-neutral-800 border-neutral-600 text-neutral-100;
+      @apply border-neutral-600 bg-neutral-800 text-neutral-100;
     }
 
     &:invalid {
@@ -153,10 +153,10 @@
 
   /* Card components with container queries */
   .card {
-    @apply @container bg-white rounded-xl shadow-sm border border-neutral-200 p-6;
-    
+    @apply @container rounded-xl border border-neutral-200 bg-white p-6 shadow-sm;
+
     @media (prefers-color-scheme: dark) {
-      @apply bg-neutral-800 border-neutral-700;
+      @apply border-neutral-700 bg-neutral-800;
     }
 
     /* Container query breakpoint */
@@ -169,25 +169,25 @@
 
   /* Loading states with modern animations */
   .loading-spinner {
-    @apply w-6 h-6 border-2 border-neutral-300 border-t-primary-600 rounded-full;
+    @apply h-6 w-6 rounded-full border-2 border-neutral-300 border-t-primary-600;
     animation: spin 1s linear infinite;
   }
 
   /* Security strength indicators */
   .strength-weak {
-    @apply text-danger-600 bg-danger-50;
+    @apply bg-danger-50 text-danger-600;
   }
-  
+
   .strength-fair {
-    @apply text-warning-600 bg-warning-50;
+    @apply bg-warning-50 text-warning-600;
   }
-  
+
   .strength-good {
-    @apply text-success-600 bg-success-50;
+    @apply bg-success-50 text-success-600;
   }
-  
+
   .strength-strong {
-    @apply text-primary-600 bg-primary-50;
+    @apply bg-primary-50 text-primary-600;
   }
 
   /* Modern glass morphism effect */
@@ -195,7 +195,7 @@
     background: color-mix(in oklab, white 80%, transparent);
     backdrop-filter: blur(12px);
     border: 1px solid color-mix(in oklab, white 20%, transparent);
-    
+
     @media (prefers-color-scheme: dark) {
       background: color-mix(in oklab, black 40%, transparent);
       border-color: color-mix(in oklab, white 10%, transparent);
@@ -235,7 +235,7 @@
 
   /* Focus utilities for keyboard navigation */
   .focus-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
+    @apply focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:outline-none;
   }
 
   /* 3D transform utilities (new in Tailwind v4) */
@@ -273,8 +273,10 @@
 
 /* Using @starting-style for enter animations (new in v4) */
 .modal-content {
-  transition: opacity var(--transition-normal), scale var(--transition-normal);
-  
+  transition:
+    opacity var(--transition-normal),
+    scale var(--transition-normal);
+
   @starting-style {
     opacity: 0;
     scale: 0.9;

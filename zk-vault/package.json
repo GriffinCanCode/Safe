@@ -30,7 +30,18 @@
     "setup:config:force": "node tools/scripts/setup-package-config.js all --force",
     "commit": "git-cz",
     "validate": "npm run lint && npm run lint:css && npm run type-check && npm run test",
-    "precommit": "lint-staged"
+    "precommit": "lint-staged",
+    "deploy": "./scripts/deploy.sh",
+    "deploy:firebase": "./scripts/deploy.sh firebase",
+    "deploy:firebase:staging": "./scripts/deploy.sh firebase --env staging",
+    "deploy:firebase:prod": "./scripts/deploy.sh firebase --env production",
+    "deploy:local": "./scripts/deploy.sh local",
+    "deploy:emulators": "./scripts/deploy.sh emulators",
+    "dev:emulators": "firebase emulators:start --only auth,firestore,functions,hosting,storage,pubsub",
+    "dev:docker": "cd infrastructure/docker && docker-compose up -d",
+    "dev:docker:build": "cd infrastructure/docker && docker-compose up -d --build",
+    "dev:docker:down": "cd infrastructure/docker && docker-compose down",
+    "dev:docker:logs": "cd infrastructure/docker && docker-compose logs -f"
   },
   "devDependencies": {
     "@babel/core": "^7.22.0",
@@ -43,6 +54,7 @@
     "@commitlint/config-conventional": "^17.6.0",
     "@tailwindcss/aspect-ratio": "^0.4.2",
     "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/postcss": "^4.1.10",
     "@tailwindcss/typography": "^0.5.16",
     "@testing-library/jest-dom": "^5.16.0",
     "@testing-library/react": "^13.4.0",

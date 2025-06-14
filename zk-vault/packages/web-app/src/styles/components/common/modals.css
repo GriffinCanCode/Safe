@@ -301,7 +301,7 @@
 }
 
 /* Accessibility improvements */
-.modal-overlay[aria-hidden="true"] {
+.modal-overlay[aria-hidden='true'] {
   display: none;
 }
 
@@ -327,4 +327,4 @@
   .modal-container {
     animation: none;
   }
-} 
+}

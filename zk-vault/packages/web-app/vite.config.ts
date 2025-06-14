@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import tailwindcss from '@tailwindcss/vite';
 import { resolve } from 'path';
 
 export default defineConfig({
@@ -11,16 +12,24 @@ export default defineConfig({
         },
       },
     }),
+    // Tailwind CSS v4 Vite plugin for optimal performance
+    tailwindcss(),
   ],
 
   // CSS Processing Configuration
   css: {
     postcss: './postcss.config.mjs',
     devSourcemap: true,
+    // Enhanced CSS processing for better formatting
     preprocessorOptions: {
       css: {
         charset: false,
       },
+    },
+    // CSS code splitting and formatting options
+    modules: {
+      localsConvention: 'camelCase',
+      generateScopedName: '[name]__[local]___[hash:base64:5]',
     },
   },
 
@@ -41,6 +50,7 @@ export default defineConfig({
       // Browser compatibility - redirect problematic Node.js modules to stubs
       'libsodium-wrappers': resolve(__dirname, './src/utils/browser-stubs.ts'),
       argon2: resolve(__dirname, './src/utils/browser-stubs.ts'),
+      'crypto': resolve(__dirname, './src/utils/crypto-stub.ts'),
     },
   },
 
@@ -51,13 +61,15 @@ export default defineConfig({
     'process.env': {},
     'process.platform': JSON.stringify('browser'),
     'process.version': JSON.stringify('v18.0.0'),
+    'process.browser': true,
   },
 
   build: {
     target: 'es2020',
     sourcemap: true,
     cssCodeSplit: true,
-    cssMinify: 'esbuild',
+    // Enhanced CSS minification with structure preservation
+    cssMinify: process.env.NODE_ENV === 'production' ? 'esbuild' : false,
     commonjsOptions: {
       include: [/node_modules/, /packages\/crypto\/dist/, /packages\/shared\/dist/],
       transformMixedEsModules: true,
@@ -71,6 +83,7 @@ export default defineConfig({
         'aws-sdk',
         'argon2',
         'libsodium-wrappers',
+        'crypto', // Add Node.js crypto to externals
       ],
       output: {
         manualChunks: {
@@ -81,14 +94,19 @@ export default defineConfig({
             'firebase/firestore',
             'firebase/functions',
             'firebase/storage',
+            '@firebase/app',
+            '@firebase/auth',
+            '@firebase/firestore',
+            '@firebase/functions',
+            '@firebase/storage',
           ],
           crypto: ['@zk-vault/crypto'],
           shared: ['@zk-vault/shared'],
           workers: ['comlink'],
-          // Separate CSS chunk for better caching
+          // Separate CSS chunk for better caching and formatting
           styles: ['@/styles/index.css'],
         },
-        // Optimize asset naming for better caching
+        // Optimize asset naming for better caching and organization
         assetFileNames: (assetInfo) => {
           if (!assetInfo.names || assetInfo.names.length === 0) return 'assets/[name]-[hash][extname]';
           
@@ -96,6 +114,7 @@ export default defineConfig({
           const info = fileName.split('.');
           const ext = info[info.length - 1];
           if (/\.(css)$/.test(fileName)) {
+            // Preserve CSS structure with descriptive names
             return `styles/[name]-[hash].${ext}`;
           }
           if (/\.(png|jpe?g|svg|gif|tiff|bmp|ico)$/i.test(fileName)) {
@@ -105,6 +124,11 @@ export default defineConfig({
             return `fonts/[name]-[hash].${ext}`;
           }
           return `assets/[name]-[hash].${ext}`;
+        },
+        // Enhanced chunk naming for better debugging
+        chunkFileNames: (chunkInfo) => {
+          const facadeModuleId = chunkInfo.facadeModuleId ? chunkInfo.facadeModuleId.split('/').pop() : 'chunk';
+          return `js/[name]-[hash].js`;
         },
       },
     },
@@ -136,6 +160,11 @@ export default defineConfig({
       'firebase/firestore',
       'firebase/functions',
       'firebase/storage',
+      '@firebase/app',
+      '@firebase/auth',
+      '@firebase/firestore',
+      '@firebase/functions',
+      '@firebase/storage',
       'fuse.js',
       'comlink',
       'pako',

@@ -28,7 +28,12 @@
 .background-gradient {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, var(--color-primary-50) 0%, var(--color-white) 50%, var(--color-purple-50) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-50) 0%,
+    var(--color-white) 50%,
+    var(--color-purple-50) 100%
+  );
 }
 
 /* === AUTH HEADER === */
@@ -346,11 +351,11 @@
     grid-template-columns: 1fr;
     text-align: center;
   }
-  
+
   .welcome-section {
     order: 2;
   }
-  
+
   .auth-forms {
     order: 1;
   }
@@ -359,63 +364,68 @@
 /* === DARK MODE ADAPTATIONS === */
 @media (prefers-color-scheme: dark) {
   .background-gradient {
-    background: linear-gradient(135deg, var(--color-neutral-900) 0%, var(--color-neutral-900) 50%, var(--color-neutral-800) 100%);
+    background: linear-gradient(
+      135deg,
+      var(--color-neutral-900) 0%,
+      var(--color-neutral-900) 50%,
+      var(--color-neutral-800) 100%
+    );
   }
-  
+
   .auth-header {
     border-color: var(--color-neutral-700);
     background-color: color-mix(in oklch, var(--color-neutral-900) 80%, transparent);
   }
-  
+
   .logo-text {
     color: var(--color-neutral-100);
   }
-  
+
   .welcome-title {
     color: var(--color-neutral-100);
   }
-  
+
   .welcome-description {
     color: var(--color-neutral-400);
   }
-  
+
   .feature-title {
     color: var(--color-neutral-100);
   }
-  
+
   .feature-text {
     color: var(--color-neutral-400);
   }
-  
+
   .auth-footer {
     border-color: var(--color-neutral-700);
     background-color: color-mix(in oklch, var(--color-neutral-900) 80%, transparent);
   }
-  
+
   .footer-link {
     color: var(--color-neutral-400);
   }
-  
+
   .footer-link:hover {
     color: var(--color-neutral-300);
   }
-  
+
   .footer-copyright {
     color: var(--color-neutral-500);
   }
-  
+
   .loading-title {
     color: var(--color-neutral-100);
   }
-  
+
   .loading-text {
     color: var(--color-neutral-400);
   }
-  
+
   .success-title {
     color: var(--color-neutral-100);
   }
-  
+
   .success-description {
     color: var(--color-neutral-400);
   }
@@ -445,4 +455,4 @@
   .slide-leave-active {
     transition: none;
   }
-} 
+}

@@ -77,29 +77,29 @@
   .auth-container {
     background: linear-gradient(135deg, var(--color-neutral-900) 0%, var(--color-neutral-800) 100%);
   }
-  
+
   .auth-card {
     background: var(--color-neutral-800);
     border-color: var(--color-neutral-700);
     box-shadow: var(--shadow-2xl);
   }
-  
+
   .auth-title {
     color: var(--color-white);
   }
-  
+
   .auth-subtitle {
     color: var(--color-neutral-400);
   }
-  
+
   .auth-footer {
     border-color: var(--color-neutral-700);
   }
-  
+
   .auth-link {
     color: var(--color-primary-400);
   }
-  
+
   .auth-link:hover {
     color: var(--color-primary-300);
   }
@@ -110,12 +110,12 @@
   .auth-container {
     padding: var(--space-2);
   }
-  
+
   .auth-card {
     padding: var(--space-6);
   }
-  
+
   .auth-title {
     font-size: var(--font-size-xl);
   }
-} 
+}

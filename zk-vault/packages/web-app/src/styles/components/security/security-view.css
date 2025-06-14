@@ -331,45 +331,45 @@
   .security-header {
     padding: var(--space-4) var(--space-6);
   }
-  
+
   .header-content {
     flex-direction: column;
     gap: var(--space-4);
     align-items: flex-start;
   }
-  
+
   .page-title {
     font-size: var(--font-size-2xl);
   }
-  
+
   .security-content {
     padding: var(--space-4);
   }
-  
+
   .tab-navigation {
     flex-direction: column;
   }
-  
+
   .tab-button {
     justify-content: flex-start;
     padding: var(--space-3) var(--space-4);
   }
-  
+
   .tab-content {
     padding: var(--space-6);
   }
-  
+
   .security-metrics {
     grid-template-columns: 1fr;
     gap: var(--space-4);
   }
-  
+
   .security-card-header {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-2);
   }
-  
+
   .security-card-actions {
     flex-direction: column;
   }
@@ -380,20 +380,20 @@
   .security-view {
     background-color: var(--color-neutral-900);
   }
-  
+
   .security-header {
     background-color: var(--color-neutral-800);
     border-color: var(--color-neutral-700);
   }
-  
+
   .page-title {
     color: var(--color-neutral-100);
   }
-  
+
   .page-description {
     color: var(--color-neutral-400);
   }
-  
+
   .security-tabs,
   .security-card,
   .metric-card,
@@ -401,66 +401,66 @@
     background-color: var(--color-neutral-800);
     border-color: var(--color-neutral-700);
   }
-  
+
   .tab-navigation {
     background-color: var(--color-neutral-900);
     border-color: var(--color-neutral-700);
   }
-  
+
   .tab-button {
     color: var(--color-neutral-400);
   }
-  
+
   .tab-button:hover {
     color: var(--color-neutral-200);
     background-color: var(--color-neutral-800);
   }
-  
+
   .tab-button.tab-active {
     color: var(--color-primary-400);
     background-color: var(--color-neutral-800);
   }
-  
+
   .security-card-title,
   .progress-title {
     color: var(--color-neutral-100);
   }
-  
+
   .security-card-content,
   .metric-label {
     color: var(--color-neutral-400);
   }
-  
+
   .progress-score {
     color: var(--color-primary-400);
   }
-  
+
   .progress-bar {
     background-color: var(--color-neutral-700);
   }
-  
+
   .progress-item {
     background-color: var(--color-neutral-900);
   }
-  
+
   .progress-item-text {
     color: var(--color-neutral-300);
   }
-  
+
   .progress-item-icon {
     color: var(--color-neutral-400);
   }
-  
+
   .security-card-badge.status-secure {
     background-color: var(--color-success-900);
     color: var(--color-success-200);
   }
-  
+
   .security-card-badge.status-warning {
     background-color: var(--color-warning-900);
     color: var(--color-warning-200);
   }
-  
+
   .security-card-badge.status-danger {
     background-color: var(--color-danger-900);
     color: var(--color-danger-200);
@@ -473,4 +473,4 @@
   .progress-fill {
     transition: none;
   }
-} 
+}

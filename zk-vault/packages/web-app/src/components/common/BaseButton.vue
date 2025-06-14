@@ -11,24 +11,17 @@
     v-bind="$attrs"
     @click="handleClick"
   >
-    <LoadingSpinner
-      v-if="loading"
-      :size="spinnerSize"
-      color="current"
-      inline
-      hide-text
-    />
-    
-    <component
-      v-if="icon && !loading"
-      :is="icon"
-      :class="iconClasses"
-    />
-    
-    <span v-if="$slots.default && (loading || !icon || iconPosition === 'left')" class="button-content">
+    <LoadingSpinner v-if="loading" :size="spinnerSize" color="current" inline hide-text />
+
+    <component v-if="icon && !loading" :is="icon" :class="iconClasses" />
+
+    <span
+      v-if="$slots.default && (loading || !icon || iconPosition === 'left')"
+      class="button-content"
+    >
       <slot />
     </span>
-    
+
     <component
       v-if="icon && !loading && iconPosition === 'right'"
       :is="icon"
@@ -38,23 +31,23 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import LoadingSpinner from './LoadingSpinner.vue'
+import { computed } from 'vue';
+import LoadingSpinner from './LoadingSpinner.vue';
 
 interface Props {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success' | 'warning'
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
-  tag?: 'button' | 'a' | 'router-link'
-  type?: 'button' | 'submit' | 'reset'
-  href?: string
-  to?: string | object
-  disabled?: boolean
-  loading?: boolean
-  block?: boolean
-  rounded?: boolean
-  icon?: string | object
-  iconPosition?: 'left' | 'right'
-  iconOnly?: boolean
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success' | 'warning';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  tag?: 'button' | 'a' | 'router-link';
+  type?: 'button' | 'submit' | 'reset';
+  href?: string;
+  to?: string | object;
+  disabled?: boolean;
+  loading?: boolean;
+  block?: boolean;
+  rounded?: boolean;
+  icon?: string | object;
+  iconPosition?: 'left' | 'right';
+  iconOnly?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -67,12 +60,12 @@ const props = withDefaults(defineProps<Props>(), {
   block: false,
   rounded: false,
   iconPosition: 'left',
-  iconOnly: false
-})
+  iconOnly: false,
+});
 
 const emit = defineEmits<{
-  click: [event: Event]
-}>()
+  click: [event: Event];
+}>();
 
 const buttonClasses = computed(() => {
   const classes = [
@@ -84,26 +77,26 @@ const buttonClasses = computed(() => {
       'btn-rounded': props.rounded,
       'btn-icon-only': props.iconOnly,
       'btn-loading': props.loading,
-      'btn-disabled': props.disabled
-    }
-  ]
-  
-  return classes
-})
+      'btn-disabled': props.disabled,
+    },
+  ];
+
+  return classes;
+});
 
 const iconClasses = computed(() => {
-  const classes = ['btn-icon']
-  
+  const classes = ['btn-icon'];
+
   if (props.iconOnly) {
-    classes.push('btn-icon-centered')
+    classes.push('btn-icon-centered');
   } else if (props.iconPosition === 'right') {
-    classes.push('btn-icon-right')
+    classes.push('btn-icon-right');
   } else {
-    classes.push('btn-icon-left')
+    classes.push('btn-icon-left');
   }
-  
-  return classes
-})
+
+  return classes;
+});
 
 const spinnerSize = computed(() => {
   const sizeMap = {
@@ -111,17 +104,17 @@ const spinnerSize = computed(() => {
     sm: 'xs',
     md: 'sm',
     lg: 'sm',
-    xl: 'md'
-  } as const
-  
-  return sizeMap[props.size]
-})
+    xl: 'md',
+  } as const;
+
+  return sizeMap[props.size];
+});
 
 const handleClick = (event: Event) => {
   if (!props.disabled && !props.loading) {
-    emit('click', event)
+    emit('click', event);
   }
-}
+};
 </script>
 
 <style scoped>

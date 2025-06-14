@@ -75,11 +75,7 @@ src/styles/
 
 /* Dynamic color mixing */
 --border-focus: color-mix(in oklch, var(--color-primary-500) 100%, transparent);
---shadow-colored: color-mix(
-  in oklch,
-  var(--color-primary-500) 20%,
-  transparent
-);
+--shadow-colored: color-mix(in oklch, var(--color-primary-500) 20%, transparent);
 ```
 
 ### Typography System
@@ -163,10 +159,10 @@ Instead of inline `@apply` directives, use dedicated component CSS files:
 
 <style scoped>
 .login-form {
-  @apply w-full max-w-md mx-auto p-8 bg-white rounded-xl shadow-lg;
+  @apply mx-auto w-full max-w-md rounded-xl bg-white p-8 shadow-lg;
 }
 .login-title {
-  @apply text-2xl font-bold text-neutral-900 mb-2;
+  @apply mb-2 text-2xl font-bold text-neutral-900;
 }
 </style>
 ```

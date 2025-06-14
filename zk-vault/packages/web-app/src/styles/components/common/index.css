@@ -4,17 +4,17 @@
  */
 
 /* === FORM COMPONENTS === */
-@import "./buttons.css";
-@import "./inputs.css";
-@import "./dropdowns.css";
+@import './buttons.css';
+@import './inputs.css';
+@import './dropdowns.css';
 
 /* === FEEDBACK COMPONENTS === */
-@import "./alerts.css";
-@import "./badges.css";
-@import "./tooltips.css";
-@import "./modals.css";
+@import './alerts.css';
+@import './badges.css';
+@import './tooltips.css';
+@import './modals.css';
 
 /* === LOADING COMPONENTS === */
-@import "./loading.css";
-@import "./loading-spinner.css";
-@import "./progress-bar.css";
+@import './loading.css';
+@import './loading-spinner.css';
+@import './progress-bar.css';

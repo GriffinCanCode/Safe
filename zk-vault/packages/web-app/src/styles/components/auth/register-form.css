@@ -211,7 +211,11 @@
   }
 
   .biometric-warning {
-    background-color: color-mix(in oklch, var(--color-warning-500) 10%, var(--color-background-secondary));
+    background-color: color-mix(
+      in oklch,
+      var(--color-warning-500) 10%,
+      var(--color-background-secondary)
+    );
     border-color: color-mix(in oklch, var(--color-warning-500) 30%, transparent);
   }
 
@@ -237,4 +241,4 @@
   .register-form-title {
     font-size: var(--font-size-xl);
   }
-} 
+}

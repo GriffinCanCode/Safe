@@ -64,6 +64,10 @@
   transform-origin: left;
 }
 
+.progress-fill.dynamic-progress {
+  width: var(--progress-width, 0%);
+}
+
 .progress-text {
   display: flex;
   justify-content: space-between;
@@ -271,23 +275,23 @@
 }
 
 /* File type specific styling */
-.file-download[data-file-type="image"] .file-icon {
+.file-download[data-file-type='image'] .file-icon {
   color: var(--color-blue-600);
 }
 
-.file-download[data-file-type="document"] .file-icon {
+.file-download[data-file-type='document'] .file-icon {
   color: var(--color-green-600);
 }
 
-.file-download[data-file-type="archive"] .file-icon {
+.file-download[data-file-type='archive'] .file-icon {
   color: var(--color-orange-600);
 }
 
-.file-download[data-file-type="video"] .file-icon {
+.file-download[data-file-type='video'] .file-icon {
   color: var(--color-purple-600);
 }
 
-.file-download[data-file-type="audio"] .file-icon {
+.file-download[data-file-type='audio'] .file-icon {
   color: var(--color-pink-600);
 }
 
@@ -308,10 +312,11 @@
 }
 
 @keyframes skeleton-pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
     opacity: 0.5;
   }
-} 
+}

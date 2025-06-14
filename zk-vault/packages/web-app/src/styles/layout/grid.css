@@ -90,9 +90,9 @@
 .grid-dashboard {
   display: grid;
   grid-template-areas:
-    "header header header"
-    "sidebar main aside"
-    "footer footer footer";
+    'header header header'
+    'sidebar main aside'
+    'footer footer footer';
   grid-template-columns: var(--sidebar-width) 1fr 300px;
   grid-template-rows: var(--header-height) 1fr var(--footer-height);
   min-height: 100vh;
@@ -123,18 +123,18 @@
 @media (max-width: 1024px) {
   .grid-dashboard {
     grid-template-areas:
-      "header header"
-      "main main"
-      "footer footer";
+      'header header'
+      'main main'
+      'footer footer';
     grid-template-columns: 1fr;
     grid-template-rows: var(--header-height) 1fr var(--footer-height);
   }
-  
+
   .grid-dashboard-sidebar {
     display: none;
   }
-  
+
   .grid-dashboard-aside {
     display: none;
   }
-} 
+}

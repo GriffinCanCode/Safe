@@ -85,42 +85,42 @@ select:focus-visible,
   button {
     border-width: 2px;
   }
-  
+
   /* Enhance focus indicators */
   :focus-visible {
     outline-width: 3px;
     outline-offset: 3px;
   }
-  
+
   /* Increase text contrast */
   body {
     color: black;
     background-color: white;
   }
-  
+
   /* Ensure sufficient contrast for interactive elements */
   a {
-    color: #0000EE;
+    color: #0000ee;
     text-decoration: underline;
     text-decoration-thickness: 2px;
   }
-  
+
   a:visited {
-    color: #551A8B;
+    color: #551a8b;
   }
-  
+
   a:hover,
   a:focus {
     background-color: yellow;
     color: black;
   }
-  
+
   button {
     background-color: white;
     color: black;
     border: 2px solid black;
   }
-  
+
   button:hover,
   button:focus {
     background-color: black;
@@ -138,7 +138,7 @@ select:focus-visible,
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  
+
   /* Keep essential animations for accessibility */
   .loading-spin,
   .loading-pulse,
@@ -154,21 +154,21 @@ select:focus-visible,
     outline: 2px solid Highlight;
     outline-offset: 2px;
   }
-  
+
   button {
     border: 1px solid ButtonText;
   }
-  
+
   input,
   textarea,
   select {
     border: 1px solid ButtonText;
   }
-  
+
   a {
     color: LinkText;
   }
-  
+
   a:visited {
     color: VisitedText;
   }
@@ -176,7 +176,7 @@ select:focus-visible,
 
 /* === KEYBOARD NAVIGATION === */
 /* Ensure keyboard users can navigate efficiently */
-[tabindex="-1"]:focus {
+[tabindex='-1']:focus {
   outline: none;
 }
 
@@ -199,11 +199,11 @@ select:focus-visible,
   overflow: hidden;
 }
 
-[aria-live="polite"] {
+[aria-live='polite'] {
   /* Announcements that don't interrupt */
 }
 
-[aria-live="assertive"] {
+[aria-live='assertive'] {
   /* Urgent announcements that interrupt */
 }
 
@@ -214,15 +214,15 @@ input:not([aria-label]):not([aria-labelledby]):not([title]) {
 }
 
 /* Required field indicators */
-[aria-required="true"]::after,
+[aria-required='true']::after,
 [required]::after {
-  content: " *";
+  content: ' *';
   color: var(--color-danger-500);
   font-weight: var(--font-weight-bold);
 }
 
 /* Invalid field styling */
-[aria-invalid="true"] {
+[aria-invalid='true'] {
   border-color: var(--color-danger-500);
   box-shadow: 0 0 0 2px color-mix(in oklch, var(--color-danger-500) 20%, transparent);
 }
@@ -230,7 +230,7 @@ input:not([aria-label]):not([aria-labelledby]):not([title]) {
 /* === BUTTON ACCESSIBILITY === */
 /* Ensure buttons have sufficient click targets */
 button,
-[role="button"] {
+[role='button'] {
   min-height: 44px;
   min-width: 44px;
   cursor: pointer;
@@ -238,7 +238,7 @@ button,
 
 /* Disabled button styling */
 button:disabled,
-[role="button"][aria-disabled="true"] {
+[role='button'][aria-disabled='true'] {
   cursor: not-allowed;
   opacity: 0.6;
 }
@@ -256,8 +256,8 @@ a:not([class]):hover {
 }
 
 /* External link indicators */
-a[href^="http"]:not([href*="localhost"]):not([href*="127.0.0.1"])::after {
-  content: " ↗";
+a[href^='http']:not([href*='localhost']):not([href*='127.0.0.1'])::after {
+  content: ' ↗';
   font-size: 0.8em;
   opacity: 0.7;
 }
@@ -295,8 +295,8 @@ th {
 }
 
 /* === MODAL ACCESSIBILITY === */
-[role="dialog"],
-[role="alertdialog"] {
+[role='dialog'],
+[role='alertdialog'] {
   /* Ensure modals are properly contained */
 }
 
@@ -306,7 +306,7 @@ th {
 }
 
 /* === TOOLTIP ACCESSIBILITY === */
-[role="tooltip"] {
+[role='tooltip'] {
   background-color: var(--color-neutral-900);
   color: white;
   padding: var(--space-2) var(--space-3);
@@ -317,27 +317,27 @@ th {
 }
 
 /* === PROGRESS INDICATORS === */
-[role="progressbar"] {
+[role='progressbar'] {
   background-color: var(--color-neutral-200);
   border-radius: var(--radius-full);
   overflow: hidden;
 }
 
 /* === STATUS INDICATORS === */
-[role="status"],
-[role="alert"] {
+[role='status'],
+[role='alert'] {
   padding: var(--space-3);
   border-radius: var(--radius-md);
   border-left: 4px solid;
 }
 
-[role="alert"] {
+[role='alert'] {
   border-left-color: var(--color-danger-500);
   background-color: var(--color-danger-50);
   color: var(--color-danger-800);
 }
 
-[role="status"] {
+[role='status'] {
   border-left-color: var(--color-info-500);
   background-color: var(--color-info-50);
   color: var(--color-info-800);
@@ -347,15 +347,15 @@ th {
 @media print {
   /* Ensure content is accessible when printed */
   a::after {
-    content: " (" attr(href) ")";
+    content: ' (' attr(href) ')';
     font-size: 0.8em;
     color: #666;
   }
-  
+
   abbr[title]::after {
-    content: " (" attr(title) ")";
+    content: ' (' attr(title) ')';
   }
-  
+
   .sr-only {
     position: static !important;
     width: auto !important;
@@ -369,7 +369,7 @@ th {
 @media (pointer: coarse) {
   /* Increase touch targets for touch devices */
   button,
-  [role="button"],
+  [role='button'],
   a,
   input,
   textarea,
@@ -377,10 +377,10 @@ th {
     min-height: 48px;
     min-width: 48px;
   }
-  
+
   /* Increase spacing for better touch interaction */
   .touch-friendly {
     padding: var(--space-4);
     margin: var(--space-2);
   }
-} 
+}

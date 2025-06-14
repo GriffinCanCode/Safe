@@ -6,7 +6,7 @@
         {{ trendIcon }} {{ formatTrend() }}
       </div>
     </div>
-    
+
     <div class="metric-body">
       <h3 class="metric-title">{{ title }}</h3>
       <div class="metric-value">{{ formattedValue }}</div>
@@ -28,7 +28,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  format: 'number'
+  format: 'number',
 });
 
 const formattedValue = computed(() => {
@@ -74,7 +74,7 @@ const formatDuration = (seconds: number): string => {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
-  
+
   if (hours > 0) {
     return `${hours}h ${minutes}m`;
   } else if (minutes > 0) {
@@ -87,7 +87,7 @@ const formatDuration = (seconds: number): string => {
 const formatUptime = (seconds: number): string => {
   const days = Math.floor(seconds / (24 * 3600));
   const hours = Math.floor((seconds % (24 * 3600)) / 3600);
-  
+
   if (days > 0) {
     return `${days}d ${hours}h`;
   } else {
@@ -102,7 +102,9 @@ const formatUptime = (seconds: number): string => {
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .metric-card:hover {
@@ -170,13 +172,13 @@ const formatUptime = (seconds: number): string => {
   .metric-card {
     padding: 1rem;
   }
-  
+
   .metric-value {
     font-size: 1.5rem;
   }
-  
+
   .metric-icon {
     font-size: 1.5rem;
   }
 }
-</style> 
+</style>

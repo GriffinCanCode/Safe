@@ -1,0 +1,813 @@
+---
+description: 
+globs: *.tsx*,*.ts*
+alwaysApply: false
+---
+# TypeScript Rules - ZK-Vault
+
+## TypeScript Configuration Overview
+ZK-Vault uses **TypeScript 5.3+** with **strict mode**, **Vue 3 Composition API**, and **ES2022** target for optimal performance and type safety.
+
+## Core TypeScript Standards
+
+### Compiler Configuration (Based on tsconfig.json)
+- **Target**: `ES2022` with `DOM` and `DOM.Iterable` libraries
+- **Module**: `ESNext` with `bundler` resolution
+- **Strict Mode**: Always enabled with additional strict checks
+- **No Unused**: `noUnusedLocals` and `noUnusedParameters` enabled
+- **Isolated Modules**: Required for Vite compatibility
+
+### Import Path Mapping
+```typescript
+// Use configured path aliases from tsconfig.json
+import Component from '@/components/ComponentName.vue'
+import { useAuthStore } from '@/store/auth'
+import { encrypt } from '@/utils/crypto'
+import { ApiService } from '@/services/api'
+import type { User } from '@/types/auth'
+
+// Monorepo package imports
+import { sharedUtil } from '@zk-vault/shared'
+import { encrypt, decrypt } from '@zk-vault/crypto'
+```
+
+## Vue 3 + TypeScript Patterns
+
+### Component Definition with `<script setup>`
+```vue
+<script setup lang="ts">
+// 1. Type imports first
+import type { PropType } from 'vue'
+import type { User, AuthStatus } from '@/types/auth'
+
+// 2. Vue imports
+import { ref, computed, onMounted, watch } from 'vue'
+
+// 3. Composable imports
+import { useAuthStore } from '@/store/auth'
+import { useNotifications } from '@/composables/useNotifications'
+
+// 4. Utility imports
+import { validateEmail } from '@/utils/validation'
+
+// 5. Props interface
+interface Props {
+  user?: User
+  readonly?: boolean
+  status: AuthStatus
+  onUpdate?: (user: User) => void
+}
+
+// 6. Emits interface
+interface Emits {
+  (e: 'update:user', user: User): void
+  (e: 'status-change', status: AuthStatus): void
+  (e: 'error', error: Error): void
+}
+
+// 7. Props and emits definition
+const props = withDefaults(defineProps<Props>(), {
+  readonly: false
+})
+
+const emit = defineEmits<Emits>()
+
+// 8. Reactive state with explicit types
+const isLoading = ref<boolean>(false)
+const errors = ref<Record<string, string>>({})
+const formData = ref<Partial<User>>({
+  email: '',
+  name: ''
+})
+
+// 9. Computed properties with inferred types
+const isValid = computed(() => {
+  return formData.value.email && validateEmail(formData.value.email)
+})
+
+const hasErrors = computed(() => Object.keys(errors.value).length > 0)
+
+// 10. Methods with explicit return types
+const handleSubmit = async (): Promise<void> => {
+  try {
+    isLoading.value = true
+    await updateUser(formData.value)
+    emit('update:user', formData.value as User)
+  } catch (error) {
+    emit('error', error as Error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const resetForm = (): void => {
+  formData.value = { email: '', name: '' }
+  errors.value = {}
+}
+
+// 11. Lifecycle hooks
+onMounted(async () => {
+  if (props.user) {
+    formData.value = { ...props.user }
+  }
+})
+
+// 12. Watchers with explicit types
+watch(
+  () => props.status,
+  (newStatus: AuthStatus, oldStatus: AuthStatus) => {
+    if (newStatus === 'authenticated' && oldStatus === 'pending') {
+      resetForm()
+    }
+  }
+)
+</script>
+```
+
+### Type Definitions Structure
+
+#### Interface Organization
+```typescript
+// src/types/auth.ts
+export interface User {
+  readonly id: string
+  email: string
+  name: string
+  createdAt: Date
+  lastLoginAt?: Date
+  settings: UserSettings
+}
+
+export interface UserSettings {
+  theme: 'light' | 'dark' | 'system'
+  notifications: NotificationSettings
+  security: SecuritySettings
+}
+
+export interface NotificationSettings {
+  email: boolean
+  push: boolean
+  securityAlerts: boolean
+}
+
+export interface SecuritySettings {
+  twoFactorEnabled: boolean
+  biometricEnabled: boolean
+  sessionTimeout: number // minutes
+}
+
+export type AuthStatus = 
+  | 'unauthenticated' 
+  | 'pending' 
+  | 'authenticated' 
+  | 'error'
+
+export type UserRole = 'user' | 'admin' | 'moderator'
+```
+
+#### API Response Types
+```typescript
+// src/types/api.ts
+export interface ApiResponse<T = unknown> {
+  success: boolean
+  data: T
+  message?: string
+  errors?: Record<string, string[]>
+}
+
+export interface PaginatedResponse<T> extends ApiResponse<T[]> {
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+}
+
+export interface ErrorResponse {
+  success: false
+  message: string
+  code: string
+  details?: Record<string, unknown>
+}
+```
+
+## Pinia Store TypeScript Patterns
+
+### Store Definition with TypeScript
+```typescript
+// src/store/auth.ts
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+import type { User, AuthStatus, UserSettings } from '@/types/auth'
+import type { ApiResponse } from '@/types/api'
+import { AuthService } from '@/services/auth'
+
+export const useAuthStore = defineStore('auth', () => {
+  // State with explicit types
+  const user = ref<User | null>(null)
+  const status = ref<AuthStatus>('unauthenticated')
+  const isLoading = ref<boolean>(false)
+  const error = ref<string | null>(null)
+
+  // Getters (computed)
+  const isAuthenticated = computed((): boolean => {
+    return status.value === 'authenticated' && user.value !== null
+  })
+
+  const isAdmin = computed((): boolean => {
+    return user.value?.role === 'admin' ?? false
+  })
+
+  const userSettings = computed((): UserSettings | null => {
+    return user.value?.settings ?? null
+  })
+
+  // Actions with explicit return types
+  const login = async (
+    email: string, 
+    password: string
+  ): Promise<ApiResponse<User>> => {
+    try {
+      isLoading.value = true
+      status.value = 'pending'
+      
+      const response = await AuthService.login(email, password)
+      
+      if (response.success) {
+        user.value = response.data
+        status.value = 'authenticated'
+        error.value = null
+      } else {
+        status.value = 'error'
+        error.value = response.message ?? 'Login failed'
+      }
+      
+      return response
+    } catch (err) {
+      status.value = 'error'
+      error.value = (err as Error).message
+      throw err
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  const logout = async (): Promise<void> => {
+    try {
+      await AuthService.logout()
+    } finally {
+      user.value = null
+      status.value = 'unauthenticated'
+      error.value = null
+    }
+  }
+
+  const updateSettings = async (
+    settings: Partial<UserSettings>
+  ): Promise<void> => {
+    if (!user.value) throw new Error('User not authenticated')
+    
+    const response = await AuthService.updateSettings(settings)
+    if (response.success && user.value) {
+      user.value.settings = { ...user.value.settings, ...settings }
+    }
+  }
+
+  return {
+    // State
+    user: readonly(user),
+    status: readonly(status),
+    isLoading: readonly(isLoading),
+    error: readonly(error),
+    
+    // Getters
+    isAuthenticated,
+    isAdmin,
+    userSettings,
+    
+    // Actions
+    login,
+    logout,
+    updateSettings
+  }
+})
+
+// Type helper for store usage
+export type AuthStore = ReturnType<typeof useAuthStore>
+```
+
+## Composables with TypeScript
+
+### Custom Composable Pattern
+```typescript
+// src/composables/useNotifications.ts
+import { ref, computed, onUnmounted } from 'vue'
+import type { Ref } from 'vue'
+
+export interface Notification {
+  id: string
+  type: 'success' | 'error' | 'warning' | 'info'
+  title: string
+  message: string
+  duration?: number
+  actions?: NotificationAction[]
+}
+
+export interface NotificationAction {
+  label: string
+  action: () => void | Promise<void>
+  variant?: 'primary' | 'secondary'
+}
+
+export interface UseNotificationsReturn {
+  notifications: Ref<Notification[]>
+  addNotification: (notification: Omit<Notification, 'id'>) => string
+  removeNotification: (id: string) => void
+  clearAll: () => void
+  hasNotifications: Ref<boolean>
+}
+
+export const useNotifications = (): UseNotificationsReturn => {
+  const notifications = ref<Notification[]>([])
+  const timeouts = new Map<string, NodeJS.Timeout>()
+
+  const hasNotifications = computed(() => notifications.value.length > 0)
+
+  const addNotification = (
+    notificationData: Omit<Notification, 'id'>
+  ): string => {
+    const id = `notification-${Date.now()}-${Math.random()}`
+    const notification: Notification = {
+      ...notificationData,
+      id
+    }
+
+    notifications.value.push(notification)
+
+    // Auto-remove after duration
+    if (notification.duration && notification.duration > 0) {
+      const timeout = setTimeout(() => {
+        removeNotification(id)
+      }, notification.duration)
+      
+      timeouts.set(id, timeout)
+    }
+
+    return id
+  }
+
+  const removeNotification = (id: string): void => {
+    const index = notifications.value.findIndex(n => n.id === id)
+    if (index > -1) {
+      notifications.value.splice(index, 1)
+    }
+
+    // Clear timeout if exists
+    const timeout = timeouts.get(id)
+    if (timeout) {
+      clearTimeout(timeout)
+      timeouts.delete(id)
+    }
+  }
+
+  const clearAll = (): void => {
+    notifications.value = []
+    
+    // Clear all timeouts
+    timeouts.forEach(timeout => clearTimeout(timeout))
+    timeouts.clear()
+  }
+
+  // Cleanup on unmount
+  onUnmounted(() => {
+    clearAll()
+  })
+
+  return {
+    notifications: readonly(notifications),
+    addNotification,
+    removeNotification,
+    clearAll,
+    hasNotifications
+  }
+}
+```
+
+## Service Layer TypeScript
+
+### API Service Pattern
+```typescript
+// src/services/api.ts
+import type { ApiResponse, ErrorResponse } from '@/types/api'
+
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public code: string,
+    public status: number,
+    public details?: Record<string, unknown>
+  ) {
+    super(message)
+    this.name = 'ApiError'
+  }
+}
+
+export abstract class BaseApiService {
+  protected readonly baseUrl: string
+
+  constructor(baseUrl: string) {
+    this.baseUrl = baseUrl
+  }
+
+  protected async request<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<ApiResponse<T>> {
+    const url = `${this.baseUrl}${endpoint}`
+    
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+      },
+      ...options
+    })
+
+    if (!response.ok) {
+      const errorData: ErrorResponse = await response.json()
+      throw new ApiError(
+        errorData.message,
+        errorData.code,
+        response.status,
+        errorData.details
+      )
+    }
+
+    return response.json()
+  }
+
+  protected async get<T>(endpoint: string): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: 'GET' })
+  }
+
+  protected async post<T>(
+    endpoint: string, 
+    data: unknown
+  ): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    })
+  }
+
+  protected async put<T>(
+    endpoint: string, 
+    data: unknown
+  ): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    })
+  }
+
+  protected async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: 'DELETE' })
+  }
+}
+```
+
+## Firebase TypeScript Integration
+
+### Firestore Type Safety
+```typescript
+// src/services/firestore.ts
+import { 
+  collection, 
+  doc, 
+  getDoc, 
+  setDoc, 
+  updateDoc, 
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  limit
+} from 'firebase/firestore'
+import type { 
+  DocumentData, 
+  QueryConstraint,
+  DocumentReference,
+  CollectionReference
+} from 'firebase/firestore'
+import { db } from '@/plugins/firebase'
+
+export interface FirestoreDocument {
+  id: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export abstract class FirestoreService<T extends FirestoreDocument> {
+  protected readonly collectionName: string
+
+  constructor(collectionName: string) {
+    this.collectionName = collectionName
+  }
+
+  protected get collection(): CollectionReference<DocumentData> {
+    return collection(db, this.collectionName)
+  }
+
+  protected docRef(id: string): DocumentReference<DocumentData> {
+    return doc(this.collection, id)
+  }
+
+  async get(id: string): Promise<T | null> {
+    const docSnap = await getDoc(this.docRef(id))
+    
+    if (!docSnap.exists()) {
+      return null
+    }
+
+    return {
+      id: docSnap.id,
+      ...docSnap.data()
+    } as T
+  }
+
+  async create(data: Omit<T, 'id' | 'createdAt' | 'updatedAt'>): Promise<T> {
+    const docRef = doc(this.collection)
+    const now = new Date()
+    
+    const documentData: Omit<T, 'id'> = {
+      ...data,
+      createdAt: now,
+      updatedAt: now
+    } as Omit<T, 'id'>
+
+    await setDoc(docRef, documentData)
+
+    return {
+      id: docRef.id,
+      ...documentData
+    } as T
+  }
+
+  async update(
+    id: string, 
+    data: Partial<Omit<T, 'id' | 'createdAt'>>
+  ): Promise<void> {
+    const updateData = {
+      ...data,
+      updatedAt: new Date()
+    }
+
+    await updateDoc(this.docRef(id), updateData)
+  }
+
+  async delete(id: string): Promise<void> {
+    await deleteDoc(this.docRef(id))
+  }
+
+  protected createQuery(...constraints: QueryConstraint[]) {
+    return query(this.collection, ...constraints)
+  }
+}
+```
+
+## Utility Functions with TypeScript
+
+### Type Guards and Validation
+```typescript
+// src/utils/typeGuards.ts
+import type { User, AuthStatus } from '@/types/auth'
+
+export const isString = (value: unknown): value is string => {
+  return typeof value === 'string'
+}
+
+export const isNumber = (value: unknown): value is number => {
+  return typeof value === 'number' && !isNaN(value)
+}
+
+export const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(email)
+}
+
+export const isUser = (obj: unknown): obj is User => {
+  if (typeof obj !== 'object' || obj === null) return false
+  
+  const user = obj as Record<string, unknown>
+  
+  return (
+    isString(user.id) &&
+    isString(user.email) &&
+    isString(user.name) &&
+    user.createdAt instanceof Date &&
+    typeof user.settings === 'object'
+  )
+}
+
+export const isAuthStatus = (value: unknown): value is AuthStatus => {
+  return isString(value) && 
+    ['unauthenticated', 'pending', 'authenticated', 'error'].includes(value)
+}
+
+// Generic array type guard
+export const isArrayOf = <T>(
+  array: unknown[],
+  guard: (item: unknown) => item is T
+): array is T[] => {
+  return array.every(guard)
+}
+```
+
+## Error Handling Patterns
+
+### Custom Error Classes
+```typescript
+// src/utils/errors.ts
+export abstract class AppError extends Error {
+  abstract readonly code: string
+  abstract readonly statusCode: number
+
+  constructor(message: string, public readonly context?: Record<string, unknown>) {
+    super(message)
+    this.name = this.constructor.name
+  }
+}
+
+export class ValidationError extends AppError {
+  readonly code = 'VALIDATION_ERROR'
+  readonly statusCode = 400
+
+  constructor(
+    message: string,
+    public readonly field: string,
+    context?: Record<string, unknown>
+  ) {
+    super(message, context)
+  }
+}
+
+export class AuthenticationError extends AppError {
+  readonly code = 'AUTHENTICATION_ERROR'
+  readonly statusCode = 401
+}
+
+export class AuthorizationError extends AppError {
+  readonly code = 'AUTHORIZATION_ERROR'
+  readonly statusCode = 403
+}
+
+export class NotFoundError extends AppError {
+  readonly code = 'NOT_FOUND'
+  readonly statusCode = 404
+}
+
+export class CryptographicError extends AppError {
+  readonly code = 'CRYPTOGRAPHIC_ERROR'
+  readonly statusCode = 500
+
+  constructor(message: string, context?: Record<string, unknown>) {
+    super(message, context)
+    // Don't expose cryptographic details in production
+    if (process.env.NODE_ENV === 'production') {
+      this.message = 'Cryptographic operation failed'
+    }
+  }
+}
+```
+
+## Testing TypeScript Patterns
+
+### Component Testing Types
+```typescript
+// src/__tests__/components/LoginForm.spec.ts
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { mount, type VueWrapper } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
+import LoginForm from '@/components/auth/LoginForm.vue'
+import { useAuthStore } from '@/store/auth'
+import type { User } from '@/types/auth'
+
+// Mock user for testing
+const mockUser: User = {
+  id: '123',
+  email: 'test@example.com',
+  name: 'Test User',
+  createdAt: new Date(),
+  settings: {
+    theme: 'light',
+    notifications: {
+      email: true,
+      push: false,
+      securityAlerts: true
+    },
+    security: {
+      twoFactorEnabled: false,
+      biometricEnabled: false,
+      sessionTimeout: 30
+    }
+  }
+}
+
+describe('LoginForm', () => {
+  let wrapper: VueWrapper<any>
+  let authStore: ReturnType<typeof useAuthStore>
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    authStore = useAuthStore()
+    
+    wrapper = mount(LoginForm, {
+      global: {
+        plugins: []
+      }
+    })
+  })
+
+  it('validates email format correctly', async () => {
+    const emailInput = wrapper.find<HTMLInputElement>('input[type="email"]')
+    
+    await emailInput.setValue('invalid-email')
+    expect(wrapper.text()).toContain('Invalid email format')
+    
+    await emailInput.setValue('valid@example.com')
+    expect(wrapper.text()).not.toContain('Invalid email format')
+  })
+
+  it('calls login action with correct parameters', async () => {
+    const loginSpy = vi.spyOn(authStore, 'login')
+    loginSpy.mockResolvedValue({ success: true, data: mockUser })
+
+    await wrapper.find('input[type="email"]').setValue('test@example.com')
+    await wrapper.find('input[type="password"]').setValue('password123')
+    await wrapper.find('form').trigger('submit')
+
+    expect(loginSpy).toHaveBeenCalledWith('test@example.com', 'password123')
+  })
+})
+```
+
+## Performance and Best Practices
+
+### Lazy Loading with TypeScript
+```typescript
+// src/router.ts
+import { createRouter, createWebHistory } from 'vue-router'
+import type { Component } from 'vue'
+
+// Lazy load components with proper typing
+const VaultView = (): Promise<Component> => import('@/views/VaultView.vue')
+const SettingsView = (): Promise<Component> => import('@/views/SettingsView.vue')
+const AdminView = (): Promise<Component> => import('@/views/AdminView.vue')
+
+export const router = createRouter({
+  history: createWebHistory(),
+  routes: [
+    {
+      path: '/',
+      name: 'vault',
+      component: VaultView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/settings',
+      name: 'settings',
+      component: SettingsView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/admin',
+      name: 'admin',
+      component: AdminView,
+      meta: { requiresAuth: true, requiresAdmin: true }
+    }
+  ]
+})
+```
+
+### Generic Utility Types
+```typescript
+// src/types/utils.ts
+export type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P]
+}
+
+export type DeepReadonly<T> = {
+  readonly [P in keyof T]: T[P] extends object ? DeepReadonly<T[P]> : T[P]
+}
+
+export type NonNullable<T> = T extends null | undefined ? never : T
+
+export type ExtractArrayType<T> = T extends (infer U)[] ? U : never
+
+export type RequiredKeys<T, K extends keyof T> = Omit<T, K> & Required<Pick<T, K>>
+
+export type OptionalKeys<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>
+```
+
+Remember: TypeScript in ZK-Vault must prioritize type safety, maintainability, and security. Always use strict typing, explicit return types for public APIs, and proper error handling patterns. 

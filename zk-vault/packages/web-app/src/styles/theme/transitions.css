@@ -9,29 +9,31 @@
   --ease-in: cubic-bezier(0.4, 0, 1, 1);
   --ease-out: cubic-bezier(0, 0, 0.2, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-  
+
   /* Custom easing curves */
   --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
   --ease-elastic: cubic-bezier(0.175, 0.885, 0.32, 1.275);
   --ease-back: cubic-bezier(0.68, -0.6, 0.32, 1.6);
   --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --ease-swift: cubic-bezier(0.4, 0, 0.6, 1);
-  
+
   /* === DURATIONS === */
   --duration-instant: 0ms;
   --duration-fast: 150ms;
+  --duration-200: 200ms;
+  --duration-300: 300ms;
   --duration-normal: 250ms;
   --duration-slow: 350ms;
   --duration-slower: 500ms;
   --duration-slowest: 750ms;
-  
+
   /* Component-specific durations */
   --duration-tooltip: var(--duration-fast);
   --duration-dropdown: var(--duration-normal);
   --duration-modal: var(--duration-slow);
   --duration-page: var(--duration-slower);
   --duration-loading: var(--duration-slowest);
-  
+
   /* === DELAYS === */
   --delay-none: 0ms;
   --delay-short: 75ms;
@@ -48,7 +50,7 @@
     --duration-slow: 0ms;
     --duration-slower: 0ms;
     --duration-slowest: 0ms;
-    
+
     --delay-short: 0ms;
     --delay-medium: 0ms;
     --delay-long: 0ms;
@@ -75,9 +77,10 @@
 
 /* Property-specific transitions */
 .transition-colors-smooth {
-  transition: color var(--duration-normal) var(--ease-smooth),
-              background-color var(--duration-normal) var(--ease-smooth),
-              border-color var(--duration-normal) var(--ease-smooth);
+  transition:
+    color var(--duration-normal) var(--ease-smooth),
+    background-color var(--duration-normal) var(--ease-smooth),
+    border-color var(--duration-normal) var(--ease-smooth);
 }
 
 .transition-transform-smooth {
@@ -94,7 +97,7 @@
 
 /* === COMPONENT TRANSITIONS === */
 .transition-button {
-  transition: 
+  transition:
     background-color var(--duration-fast) var(--ease-out),
     border-color var(--duration-fast) var(--ease-out),
     color var(--duration-fast) var(--ease-out),
@@ -180,7 +183,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -206,10 +210,15 @@
 }
 
 @keyframes bounce {
-  0%, 20%, 53%, 80%, 100% {
+  0%,
+  20%,
+  53%,
+  80%,
+  100% {
     transform: translate3d(0, 0, 0);
   }
-  40%, 43% {
+  40%,
+  43% {
     transform: translate3d(0, -8px, 0);
   }
   70% {
@@ -294,4 +303,4 @@
 
 .stagger-slow {
   --stagger-delay: 150ms;
-} 
+}

@@ -54,7 +54,12 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, var(--color-success-500), var(--color-warning-500), var(--color-danger-500));
+  background: linear-gradient(
+    90deg,
+    var(--color-success-500),
+    var(--color-warning-500),
+    var(--color-danger-500)
+  );
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
@@ -560,4 +565,4 @@
   .recommendation-item {
     border-width: 2px;
   }
-} 
+}

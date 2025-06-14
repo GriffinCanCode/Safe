@@ -300,54 +300,54 @@
   .app-container {
     background-color: var(--color-neutral-900);
   }
-  
+
   .loading-bar {
     background-color: var(--color-neutral-700);
   }
-  
+
   .loading-title {
     color: var(--color-neutral-400);
   }
-  
+
   .maintenance-title,
   .error-title,
   .update-title,
   .details-title {
     color: var(--color-neutral-100);
   }
-  
+
   .maintenance-description,
   .error-description,
   .update-description {
     color: var(--color-neutral-400);
   }
-  
+
   .update-details {
     background-color: var(--color-neutral-800);
   }
-  
+
   .update-list {
     color: var(--color-neutral-400);
   }
-  
+
   .notification-success {
     background-color: color-mix(in oklch, var(--color-success-900) 90%, transparent);
     border-color: var(--color-success-700);
     color: var(--color-success-200);
   }
-  
+
   .notification-error {
     background-color: color-mix(in oklch, var(--color-danger-900) 90%, transparent);
     border-color: var(--color-danger-700);
     color: var(--color-danger-200);
   }
-  
+
   .notification-warning {
     background-color: color-mix(in oklch, var(--color-warning-900) 90%, transparent);
     border-color: var(--color-warning-700);
     color: var(--color-warning-200);
   }
-  
+
   .notification-info {
     background-color: color-mix(in oklch, var(--color-info-900) 90%, transparent);
     border-color: var(--color-info-700);
@@ -430,4 +430,4 @@
   .notification-leave-active {
     transition: none;
   }
-} 
+}

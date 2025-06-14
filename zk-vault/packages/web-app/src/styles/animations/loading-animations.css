@@ -77,7 +77,9 @@
 }
 
 @keyframes dots-bounce {
-  0%, 80%, 100% {
+  0%,
+  80%,
+  100% {
     transform: scale(0);
     opacity: 0.5;
   }
@@ -94,7 +96,8 @@
 }
 
 @keyframes pulse-scale {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
@@ -119,12 +122,7 @@
   left: 0;
   bottom: 0;
   right: 0;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.4),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
   transform: translateX(-100%);
   animation: progress-shimmer 2s infinite;
   will-change: transform;
@@ -153,7 +151,9 @@
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.5);
   transform: translate(-50%, -50%);
-  transition: width 0.6s, height 0.6s;
+  transition:
+    width 0.6s,
+    height 0.6s;
 }
 
 .ripple:active::before {
@@ -168,7 +168,8 @@
 }
 
 @keyframes breathing {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
   }
   50% {
@@ -183,7 +184,8 @@
 }
 
 @keyframes floating {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0px);
   }
   50% {
@@ -205,7 +207,7 @@
   .floating {
     animation: none !important;
   }
-  
+
   .ripple::before {
     transition: none !important;
   }
@@ -216,8 +218,8 @@
   .skeleton {
     @apply bg-gradient-to-r from-black via-gray-800 to-black;
   }
-  
+
   .skeleton-dark {
     @apply bg-gradient-to-r from-white via-gray-200 to-white;
   }
-} 
+}

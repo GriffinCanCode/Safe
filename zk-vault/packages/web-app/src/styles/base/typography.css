@@ -4,7 +4,8 @@
  */
 
 /* === HEADING STYLES === */
-h1, .h1 {
+h1,
+.h1 {
   font-size: var(--font-size-4xl);
   font-weight: var(--font-weight-bold);
   line-height: var(--line-height-tight);
@@ -13,7 +14,8 @@ h1, .h1 {
   margin-bottom: var(--space-6);
 }
 
-h2, .h2 {
+h2,
+.h2 {
   font-size: var(--font-size-3xl);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-tight);
@@ -22,7 +24,8 @@ h2, .h2 {
   margin-bottom: var(--space-5);
 }
 
-h3, .h3 {
+h3,
+.h3 {
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-snug);
@@ -30,7 +33,8 @@ h3, .h3 {
   margin-bottom: var(--space-4);
 }
 
-h4, .h4 {
+h4,
+.h4 {
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-medium);
   line-height: var(--line-height-snug);
@@ -38,7 +42,8 @@ h4, .h4 {
   margin-bottom: var(--space-3);
 }
 
-h5, .h5 {
+h5,
+.h5 {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-medium);
   line-height: var(--line-height-normal);
@@ -46,7 +51,8 @@ h5, .h5 {
   margin-bottom: var(--space-2);
 }
 
-h6, .h6 {
+h6,
+.h6 {
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
   line-height: var(--line-height-normal);
@@ -85,12 +91,14 @@ p {
 }
 
 /* === INLINE TEXT ELEMENTS === */
-strong, b {
+strong,
+b {
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
 }
 
-em, i {
+em,
+i {
   font-style: italic;
 }
 
@@ -143,7 +151,8 @@ a:focus-visible {
 }
 
 /* === LISTS === */
-ul, ol {
+ul,
+ol {
   margin-bottom: var(--space-4);
   padding-left: var(--space-6);
 }
@@ -166,7 +175,10 @@ li::marker {
 }
 
 /* Nested lists */
-ul ul, ol ol, ul ol, ol ul {
+ul ul,
+ol ol,
+ul ol,
+ol ul {
   margin-top: var(--space-1);
   margin-bottom: var(--space-1);
 }
@@ -239,15 +251,18 @@ pre code {
 
 /* === RESPONSIVE TYPOGRAPHY === */
 @media (max-width: 640px) {
-  h1, .h1 {
+  h1,
+  .h1 {
     font-size: var(--font-size-3xl);
   }
-  
-  h2, .h2 {
+
+  h2,
+  .h2 {
     font-size: var(--font-size-2xl);
   }
-  
-  h3, .h3 {
+
+  h3,
+  .h3 {
     font-size: var(--font-size-xl);
   }
 }
@@ -258,23 +273,23 @@ pre code {
     background-color: color-mix(in oklch, var(--color-warning-800) 50%, transparent);
     color: var(--color-text-primary);
   }
-  
+
   code {
     background-color: var(--color-neutral-800);
     border-color: var(--border-muted);
   }
-  
+
   kbd {
     background-color: var(--color-neutral-200);
     color: var(--color-neutral-900);
     border-color: var(--color-neutral-300);
     box-shadow: 0 1px 0 var(--color-neutral-300);
   }
-  
+
   blockquote {
     border-left-color: var(--color-primary-600);
   }
-  
+
   pre {
     background-color: var(--color-neutral-900);
     border-color: var(--border-muted);
@@ -286,12 +301,13 @@ pre code {
   a {
     text-decoration-thickness: 2px;
   }
-  
-  code, kbd {
+
+  code,
+  kbd {
     border-width: 2px;
   }
-  
+
   blockquote {
     border-left-width: 6px;
   }
-} 
+}

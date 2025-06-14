@@ -66,57 +66,57 @@ select:disabled {
 
 /* Input error states */
 input:invalid,
-input[aria-invalid="true"],
+input[aria-invalid='true'],
 textarea:invalid,
-textarea[aria-invalid="true"],
+textarea[aria-invalid='true'],
 select:invalid,
-select[aria-invalid="true"] {
+select[aria-invalid='true'] {
   border-color: var(--border-danger);
   box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-danger-500) 20%, transparent);
 }
 
 /* Input success states */
-input[aria-invalid="false"],
-textarea[aria-invalid="false"],
-select[aria-invalid="false"] {
+input[aria-invalid='false'],
+textarea[aria-invalid='false'],
+select[aria-invalid='false'] {
   border-color: var(--border-success);
 }
 
 /* === SPECIFIC INPUT TYPES === */
-input[type="search"] {
+input[type='search'] {
   -webkit-appearance: none;
   appearance: none;
 }
 
-input[type="search"]::-webkit-search-decoration,
-input[type="search"]::-webkit-search-cancel-button {
+input[type='search']::-webkit-search-decoration,
+input[type='search']::-webkit-search-cancel-button {
   -webkit-appearance: none;
   appearance: none;
 }
 
-input[type="number"] {
+input[type='number'] {
   -moz-appearance: textfield;
 }
 
-input[type="number"]::-webkit-outer-spin-button,
-input[type="number"]::-webkit-inner-spin-button {
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
 
-input[type="file"] {
+input[type='file'] {
   padding: var(--space-2);
   border: 2px dashed var(--border-muted);
   background-color: var(--color-neutral-25);
   cursor: pointer;
 }
 
-input[type="file"]:hover {
+input[type='file']:hover {
   border-color: var(--border-interactive);
   background-color: var(--color-primary-25);
 }
 
-input[type="file"]:focus {
+input[type='file']:focus {
   border-color: var(--border-focus);
   border-style: solid;
 }
@@ -161,8 +161,8 @@ select[multiple] {
 }
 
 /* === CHECKBOXES AND RADIOS === */
-input[type="checkbox"],
-input[type="radio"] {
+input[type='checkbox'],
+input[type='radio'] {
   width: 1rem;
   height: 1rem;
   padding: 0;
@@ -172,17 +172,17 @@ input[type="radio"] {
   position: relative;
 }
 
-input[type="radio"] {
+input[type='radio'] {
   border-radius: var(--radius-full);
 }
 
-input[type="checkbox"]:checked,
-input[type="radio"]:checked {
+input[type='checkbox']:checked,
+input[type='radio']:checked {
   background-color: var(--color-primary-600);
   border-color: var(--color-primary-600);
 }
 
-input[type="checkbox"]:checked::before {
+input[type='checkbox']:checked::before {
   content: '';
   position: absolute;
   top: 50%;
@@ -197,7 +197,7 @@ input[type="checkbox"]:checked::before {
   mask-size: contain;
 }
 
-input[type="radio"]:checked::before {
+input[type='radio']:checked::before {
   content: '';
   position: absolute;
   top: 50%;
@@ -309,19 +309,19 @@ label.inline {
     background-color: var(--color-neutral-800);
     color: var(--color-text-disabled);
   }
-  
-  input[type="file"] {
+
+  input[type='file'] {
     background-color: var(--color-neutral-800);
   }
-  
-  input[type="file"]:hover {
+
+  input[type='file']:hover {
     background-color: var(--color-primary-900);
   }
-  
+
   select {
     background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%239CA3AF' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
   }
-  
+
   select:focus {
     background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2360A5FA' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
   }
@@ -334,15 +334,15 @@ label.inline {
   select {
     border-width: 2px;
   }
-  
+
   input:focus,
   textarea:focus,
   select:focus {
     box-shadow: 0 0 0 4px color-mix(in oklch, var(--color-primary-500) 40%, transparent);
   }
-  
-  input[type="checkbox"],
-  input[type="radio"] {
+
+  input[type='checkbox'],
+  input[type='radio'] {
     border-width: 2px;
   }
 }
@@ -354,4 +354,4 @@ label.inline {
   select {
     transition: none;
   }
-} 
+}

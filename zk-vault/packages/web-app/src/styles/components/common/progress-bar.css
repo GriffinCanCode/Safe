@@ -218,15 +218,15 @@
   .progress-track {
     background-color: var(--color-neutral-700);
   }
-  
+
   .progress-label {
     color: var(--color-neutral-100);
   }
-  
+
   .progress-percentage {
     color: var(--color-neutral-400);
   }
-  
+
   .progress-text {
     color: var(--color-neutral-400);
   }
@@ -241,4 +241,4 @@
     animation: none;
     transition: none;
   }
-} 
+}

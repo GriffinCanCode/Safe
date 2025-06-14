@@ -3,7 +3,7 @@
  * Foundational styles and resets
  */
 
-@import "./reset.css";
-@import "./typography.css";
-@import "./forms.css";
-@import "./accessibility.css"; 
+@import './reset.css';
+@import './typography.css';
+@import './forms.css';
+@import './accessibility.css';

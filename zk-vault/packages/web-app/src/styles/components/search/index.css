@@ -6,8 +6,14 @@
 /* Search Bar Component */
 @import './search-bar.css';
 
+/* Search Filters Component */
+@import './search-filters.css';
+
 /* Search Results Component */
 @import './search-results.css';
 
+/* Search Result Item Component */
+@import './search-result-item.css';
+
 /* Search View Component */
-@import './search-view.css'; 
+@import './search-view.css';

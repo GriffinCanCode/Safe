@@ -21,12 +21,12 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  
+
   /* Prevent font size inflation */
   -webkit-text-size-adjust: 100%;
   -moz-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  
+
   /* Smooth scrolling */
   scroll-behavior: smooth;
 }
@@ -36,7 +36,7 @@ html {
   html {
     scroll-behavior: auto;
   }
-  
+
   *,
   *::before,
   *::after {
@@ -54,10 +54,10 @@ body {
   font-size: var(--font-size-base);
   color: var(--color-text-primary);
   background-color: var(--color-background-primary);
-  
+
   /* Prevent horizontal scroll */
   overflow-x: hidden;
-  
+
   /* Better font rendering on Windows */
   font-feature-settings: 'kern' 1;
   font-kerning: normal;
@@ -171,11 +171,11 @@ table {
   ::-webkit-scrollbar-track {
     background: var(--color-neutral-800);
   }
-  
+
   ::-webkit-scrollbar-thumb {
     background: var(--color-neutral-600);
   }
-  
+
   ::-webkit-scrollbar-thumb:hover {
     background: var(--color-neutral-500);
   }
@@ -191,23 +191,23 @@ table {
     box-shadow: none !important;
     text-shadow: none !important;
   }
-  
+
   a,
   a:visited {
     text-decoration: underline;
   }
-  
+
   img {
     page-break-inside: avoid;
   }
-  
+
   p,
   h2,
   h3 {
     orphans: 3;
     widows: 3;
   }
-  
+
   h2,
   h3 {
     page-break-after: avoid;
@@ -236,4 +236,4 @@ table {
   overflow: visible;
   clip: auto;
   white-space: normal;
-} 
+}

@@ -18,15 +18,15 @@
   .hidden-sm {
     display: none;
   }
-  
+
   .block-sm {
     display: block;
   }
-  
+
   .flex-sm {
     display: flex;
   }
-  
+
   .grid-sm {
     display: grid;
   }
@@ -36,15 +36,15 @@
   .hidden-md {
     display: none;
   }
-  
+
   .block-md {
     display: block;
   }
-  
+
   .flex-md {
     display: flex;
   }
-  
+
   .grid-md {
     display: grid;
   }
@@ -54,15 +54,15 @@
   .hidden-lg {
     display: none;
   }
-  
+
   .block-lg {
     display: block;
   }
-  
+
   .flex-lg {
     display: flex;
   }
-  
+
   .grid-lg {
     display: grid;
   }
@@ -73,12 +73,12 @@
   .p-responsive-sm {
     padding: var(--space-4);
   }
-  
+
   .px-responsive-sm {
     padding-left: var(--space-4);
     padding-right: var(--space-4);
   }
-  
+
   .py-responsive-sm {
     padding-top: var(--space-4);
     padding-bottom: var(--space-4);
@@ -89,12 +89,12 @@
   .p-responsive-sm {
     padding: var(--space-6);
   }
-  
+
   .px-responsive-sm {
     padding-left: var(--space-6);
     padding-right: var(--space-6);
   }
-  
+
   .py-responsive-sm {
     padding-top: var(--space-6);
     padding-bottom: var(--space-6);
@@ -106,23 +106,23 @@
   .text-responsive-sm {
     font-size: var(--font-size-sm);
   }
-  
+
   .text-responsive-base {
     font-size: var(--font-size-base);
   }
-  
+
   .text-responsive-lg {
     font-size: var(--font-size-lg);
   }
-  
+
   .text-responsive-xl {
     font-size: var(--font-size-xl);
   }
-  
+
   .text-responsive-2xl {
     font-size: var(--font-size-xl);
   }
-  
+
   .text-responsive-3xl {
     font-size: var(--font-size-2xl);
   }
@@ -132,23 +132,23 @@
   .text-responsive-sm {
     font-size: var(--font-size-base);
   }
-  
+
   .text-responsive-base {
     font-size: var(--font-size-lg);
   }
-  
+
   .text-responsive-lg {
     font-size: var(--font-size-xl);
   }
-  
+
   .text-responsive-xl {
     font-size: var(--font-size-2xl);
   }
-  
+
   .text-responsive-2xl {
     font-size: var(--font-size-3xl);
   }
-  
+
   .text-responsive-3xl {
     font-size: var(--font-size-4xl);
   }
@@ -268,4 +268,4 @@
     width: 3rem;
     height: 3rem;
   }
-} 
+}

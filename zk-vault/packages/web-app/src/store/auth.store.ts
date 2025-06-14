@@ -11,6 +11,7 @@ import {
   type AuthResult,
   type RegistrationData,
   type ZKUser,
+  type GoogleAuthResult,
 } from '@/services/auth.service';
 
 export const useAuthStore = defineStore('auth', () => {
@@ -392,6 +393,74 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
+  const authenticateUserByEmail = async (email: string): Promise<void> => {
+    isLoading.value = true;
+    error.value = null;
+
+    try {
+      const result = await authService.authenticateUserByEmail(email);
+      user.value = result.user;
+      profile.value = result.profile;
+      setupSessionTimeout();
+    } catch (err: any) {
+      error.value = err.message;
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const loginWithGoogle = async (useRedirect: boolean = false): Promise<GoogleAuthResult> => {
+    isLoading.value = true;
+    error.value = null;
+
+    try {
+      const result = await authService.signInWithGoogle(useRedirect);
+      user.value = result.user;
+      profile.value = result.profile;
+      setupSessionTimeout();
+      return result;
+    } catch (err: any) {
+      error.value = err.message;
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const checkGoogleRedirectResult = async (): Promise<GoogleAuthResult | null> => {
+    try {
+      const result = await authService.checkGoogleRedirectResult();
+      if (result) {
+        user.value = result.user;
+        profile.value = result.profile;
+        setupSessionTimeout();
+      }
+      return result;
+    } catch (err: any) {
+      error.value = err.message;
+      throw err;
+    }
+  };
+
+  const linkGoogleAccount = async (): Promise<void> => {
+    isLoading.value = true;
+    error.value = null;
+
+    try {
+      await authService.linkGoogleAccount();
+      // Refresh profile after linking
+      if (user.value) {
+        await refreshProfile();
+      }
+    } catch (err: any) {
+      error.value = err.message;
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
   // Initialize on store creation
   initialize();
 
@@ -430,6 +499,10 @@ export const useAuthStore = defineStore('auth', () => {
     sendEmailVerification,
     enable2FA,
     disable2FA,
+    authenticateUserByEmail,
+    loginWithGoogle,
+    checkGoogleRedirectResult,
+    linkGoogleAccount,
   };
 });
 

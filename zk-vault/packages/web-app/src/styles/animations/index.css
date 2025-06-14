@@ -3,8 +3,8 @@
  * Custom animations and keyframes for ZK-Vault
  */
 
-@import "./keyframes.css";
-@import "./page-transitions.css";
-@import "./loading-animations.css";
-@import "./micro-interactions.css";
-@import "./framer-motion.css"; 
+@import './keyframes.css';
+@import './page-transitions.css';
+@import './loading-animations.css';
+@import './micro-interactions.css';
+@import './framer-motion.css';

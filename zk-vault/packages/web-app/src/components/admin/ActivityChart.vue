@@ -4,11 +4,11 @@
       <div class="loading-spinner"></div>
       <p>Loading activity data...</p>
     </div>
-    
+
     <div v-else-if="!data.length" class="chart-empty">
       <p>No activity data available</p>
     </div>
-    
+
     <div v-else class="chart-container">
       <div class="chart-legend">
         <div class="legend-item">
@@ -28,9 +28,9 @@
           <span>File Uploads</span>
         </div>
       </div>
-      
+
       <canvas ref="chartCanvas" :width="chartWidth" :height="chartHeight"></canvas>
-      
+
       <div class="chart-tooltip" ref="tooltip" v-show="tooltipVisible" :style="tooltipStyle">
         <div class="tooltip-date">{{ tooltipData.date }}</div>
         <div class="tooltip-metrics">
@@ -73,7 +73,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  loading: false
+  loading: false,
 });
 
 const chartCanvas = ref<HTMLCanvasElement | null>(null);
@@ -89,37 +89,37 @@ const colors = {
   activeUsers: '#3b82f6',
   newUsers: '#10b981',
   sessions: '#f59e0b',
-  fileUploads: '#ef4444'
+  fileUploads: '#ef4444',
 };
 
 const drawChart = () => {
   if (!chartCanvas.value || !props.data.length) return;
-  
+
   const canvas = chartCanvas.value;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
-  
+
   // Clear canvas
   ctx.clearRect(0, 0, chartWidth.value, chartHeight.value);
-  
+
   // Set up chart dimensions
   const padding = 60;
   const chartAreaWidth = chartWidth.value - padding * 2;
   const chartAreaHeight = chartHeight.value - padding * 2;
-  
+
   // Get data ranges
   const maxActiveUsers = Math.max(...props.data.map(d => d.activeUsers));
   const maxNewUsers = Math.max(...props.data.map(d => d.newUsers));
   const maxSessions = Math.max(...props.data.map(d => d.sessions));
   const maxFileUploads = Math.max(...props.data.map(d => d.fileUploads));
-  
+
   // Normalize to percentages for multi-line chart
   const maxValue = Math.max(maxActiveUsers, maxSessions);
-  
+
   // Draw grid lines
   ctx.strokeStyle = '#e5e7eb';
   ctx.lineWidth = 1;
-  
+
   // Horizontal grid lines
   for (let i = 0; i <= 5; i++) {
     const y = padding + (chartAreaHeight / 5) * i;
@@ -127,7 +127,7 @@ const drawChart = () => {
     ctx.moveTo(padding, y);
     ctx.lineTo(padding + chartAreaWidth, y);
     ctx.stroke();
-    
+
     // Y-axis labels
     ctx.fillStyle = '#6b7280';
     ctx.font = '12px sans-serif';
@@ -135,7 +135,7 @@ const drawChart = () => {
     const value = maxValue - (maxValue / 5) * i;
     ctx.fillText(value.toLocaleString(), padding - 10, y + 4);
   }
-  
+
   // Vertical grid lines
   const stepX = chartAreaWidth / (props.data.length - 1);
   for (let i = 0; i < props.data.length; i++) {
@@ -144,58 +144,62 @@ const drawChart = () => {
     ctx.moveTo(x, padding);
     ctx.lineTo(x, padding + chartAreaHeight);
     ctx.stroke();
-    
+
     // X-axis labels (show every 3rd label to avoid crowding)
     if (i % 3 === 0) {
       ctx.fillStyle = '#6b7280';
       ctx.font = '12px sans-serif';
       ctx.textAlign = 'center';
       const date = new Date(props.data[i].timestamp);
-      ctx.fillText(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), x, padding + chartAreaHeight + 20);
+      ctx.fillText(
+        date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        x,
+        padding + chartAreaHeight + 20
+      );
     }
   }
-  
+
   // Draw lines
   const drawLine = (dataKey: keyof ActivityData, color: string, scale: number = maxValue) => {
     if (dataKey === 'timestamp') return;
-    
+
     ctx.strokeStyle = color;
     ctx.lineWidth = 3;
     ctx.beginPath();
-    
+
     props.data.forEach((point, index) => {
       const x = padding + stepX * index;
       const value = point[dataKey] as number;
       const y = padding + chartAreaHeight - (value / scale) * chartAreaHeight;
-      
+
       if (index === 0) {
         ctx.moveTo(x, y);
       } else {
         ctx.lineTo(x, y);
       }
     });
-    
+
     ctx.stroke();
-    
+
     // Draw points
     ctx.fillStyle = color;
     props.data.forEach((point, index) => {
       const x = padding + stepX * index;
       const value = point[dataKey] as number;
       const y = padding + chartAreaHeight - (value / scale) * chartAreaHeight;
-      
+
       ctx.beginPath();
       ctx.arc(x, y, 4, 0, Math.PI * 2);
       ctx.fill();
     });
   };
-  
+
   // Draw all lines
   drawLine('activeUsers', colors.activeUsers);
   drawLine('sessions', colors.sessions);
   drawLine('newUsers', colors.newUsers, maxNewUsers);
   drawLine('fileUploads', colors.fileUploads, maxFileUploads);
-  
+
   // Add mouse event handlers
   canvas.addEventListener('mousemove', handleMouseMove);
   canvas.addEventListener('mouseleave', handleMouseLeave);
@@ -203,18 +207,18 @@ const drawChart = () => {
 
 const handleMouseMove = (event: MouseEvent) => {
   if (!chartCanvas.value || !props.data.length) return;
-  
+
   const rect = chartCanvas.value.getBoundingClientRect();
   const x = event.clientX - rect.left;
   const y = event.clientY - rect.top;
-  
+
   const padding = 60;
   const chartAreaWidth = chartWidth.value - padding * 2;
   const stepX = chartAreaWidth / (props.data.length - 1);
-  
+
   // Find closest data point
   const dataIndex = Math.round((x - padding) / stepX);
-  
+
   if (dataIndex >= 0 && dataIndex < props.data.length) {
     const dataPoint = props.data[dataIndex];
     tooltipData.value = {
@@ -222,14 +226,14 @@ const handleMouseMove = (event: MouseEvent) => {
       activeUsers: dataPoint.activeUsers,
       newUsers: dataPoint.newUsers,
       sessions: dataPoint.sessions,
-      fileUploads: dataPoint.fileUploads
+      fileUploads: dataPoint.fileUploads,
     };
-    
+
     tooltipStyle.value = {
       left: `${event.clientX - rect.left + 10}px`,
-      top: `${event.clientY - rect.top - 10}px`
+      top: `${event.clientY - rect.top - 10}px`,
     };
-    
+
     tooltipVisible.value = true;
   }
 };
@@ -254,11 +258,15 @@ onMounted(() => {
   });
 });
 
-watch(() => props.data, () => {
-  nextTick(() => {
-    drawChart();
-  });
-}, { deep: true });
+watch(
+  () => props.data,
+  () => {
+    nextTick(() => {
+      drawChart();
+    });
+  },
+  { deep: true }
+);
 </script>
 
 <style scoped>
@@ -289,8 +297,12 @@ watch(() => props.data, () => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .chart-container {
@@ -385,14 +397,14 @@ canvas {
   .chart-legend {
     gap: 1rem;
   }
-  
+
   .legend-item {
     font-size: 0.75rem;
   }
-  
+
   .chart-tooltip {
     font-size: 0.75rem;
     min-width: 150px;
   }
 }
-</style> 
+</style>

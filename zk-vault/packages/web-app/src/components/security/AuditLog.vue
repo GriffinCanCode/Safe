@@ -7,20 +7,10 @@
         <p class="audit-description">Track all security-related activities in your vault</p>
       </div>
       <div class="header-actions">
-        <BaseButton
-          variant="outline"
-          size="sm"
-          @click="exportLogs"
-          :loading="exporting"
-        >
+        <BaseButton variant="outline" size="sm" @click="exportLogs" :loading="exporting">
           Export
         </BaseButton>
-        <BaseButton
-          variant="outline"
-          size="sm"
-          @click="refreshLogs"
-          :loading="loading"
-        >
+        <BaseButton variant="outline" size="sm" @click="refreshLogs" :loading="loading">
           Refresh
         </BaseButton>
       </div>
@@ -87,8 +77,13 @@
         :class="getEntryClass(entry)"
       >
         <div class="entry-icon" :class="getIconClass(entry.type, entry.severity)">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getIconPath(entry.type)" />
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              :d="getIconPath(entry.type)"
+            />
           </svg>
         </div>
 
@@ -148,33 +143,40 @@
     <!-- Empty State -->
     <div v-else class="audit-empty">
       <div class="empty-icon">
-        <svg class="w-16 h-16 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        <svg
+          class="h-16 w-16 text-neutral-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+          />
         </svg>
       </div>
       <h3 class="empty-title">No audit logs found</h3>
       <p class="empty-description">
-        {{ filters.search || filters.eventType || filters.severity 
-           ? 'No logs match your current filters.' 
-           : 'No security events have been recorded yet.' }}
+        {{
+          filters.search || filters.eventType || filters.severity
+            ? 'No logs match your current filters.'
+            : 'No security events have been recorded yet.'
+        }}
       </p>
     </div>
 
     <!-- Pagination -->
     <div v-if="totalPages > 1" class="audit-pagination">
-      <BaseButton
-        variant="outline"
-        size="sm"
-        :disabled="currentPage === 1"
-        @click="currentPage--"
-      >
+      <BaseButton variant="outline" size="sm" :disabled="currentPage === 1" @click="currentPage--">
         Previous
       </BaseButton>
-      
+
       <span class="pagination-info">
         Page {{ currentPage }} of {{ totalPages }} ({{ filteredLogs.length }} total)
       </span>
-      
+
       <BaseButton
         variant="outline"
         size="sm"
@@ -188,118 +190,116 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import BaseButton from '@/components/common/BaseButton.vue'
-import BaseInput from '@/components/common/BaseInput.vue'
-import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import { useAuthStore } from '@/store/auth.store'
-import { formatRelativeTime } from '@/utils/helpers'
+import { ref, computed, onMounted, watch } from 'vue';
+import BaseButton from '@/components/common/BaseButton.vue';
+import BaseInput from '@/components/common/BaseInput.vue';
+import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
+import { useAuthStore } from '@/store/auth.store';
+import { formatRelativeTime } from '@/utils/helpers';
 
 interface AuditLogEntry {
-  id: string
-  type: 'authentication' | 'password' | 'security' | 'access' | 'breach'
-  title: string
-  description: string
-  timestamp: Date
-  severity: 'low' | 'medium' | 'high' | 'critical'
-  status?: 'success' | 'failed' | 'pending' | 'blocked'
-  userId?: string
+  id: string;
+  type: 'authentication' | 'password' | 'security' | 'access' | 'breach';
+  title: string;
+  description: string;
+  timestamp: Date;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  status?: 'success' | 'failed' | 'pending' | 'blocked';
+  userId?: string;
   details?: {
-    ipAddress?: string
-    userAgent?: string
-    location?: string
-    device?: string
-    [key: string]: any
-  }
+    ipAddress?: string;
+    userAgent?: string;
+    location?: string;
+    device?: string;
+    [key: string]: any;
+  };
   actions?: Array<{
-    id: string
-    label: string
-    action: string
-  }>
+    id: string;
+    label: string;
+    action: string;
+  }>;
 }
 
 interface AuditFilters {
-  timeRange: '24h' | '7d' | '30d' | '90d' | 'all'
-  eventType: string
-  severity: string
-  search: string
+  timeRange: '24h' | '7d' | '30d' | '90d' | 'all';
+  eventType: string;
+  severity: string;
+  search: string;
 }
 
 // Store
-const authStore = useAuthStore()
+const authStore = useAuthStore();
 
 // State
-const loading = ref(false)
-const exporting = ref(false)
-const auditLogs = ref<AuditLogEntry[]>([])
-const currentPage = ref(1)
-const itemsPerPage = 20
+const loading = ref(false);
+const exporting = ref(false);
+const auditLogs = ref<AuditLogEntry[]>([]);
+const currentPage = ref(1);
+const itemsPerPage = 20;
 
 const filters = ref<AuditFilters>({
   timeRange: '30d',
   eventType: '',
   severity: '',
-  search: ''
-})
+  search: '',
+});
 
 // Computed
 const filteredLogs = computed(() => {
-  let logs = [...auditLogs.value]
+  let logs = [...auditLogs.value];
 
   // Filter by time range
   if (filters.value.timeRange !== 'all') {
-    const now = new Date()
+    const now = new Date();
     const timeRanges: Record<string, number> = {
       '24h': 24 * 60 * 60 * 1000,
       '7d': 7 * 24 * 60 * 60 * 1000,
       '30d': 30 * 24 * 60 * 60 * 1000,
-      '90d': 90 * 24 * 60 * 60 * 1000
-    }
-    const cutoff = new Date(now.getTime() - timeRanges[filters.value.timeRange])
-    logs = logs.filter(log => log.timestamp >= cutoff)
+      '90d': 90 * 24 * 60 * 60 * 1000,
+    };
+    const cutoff = new Date(now.getTime() - timeRanges[filters.value.timeRange]);
+    logs = logs.filter(log => log.timestamp >= cutoff);
   }
 
   // Filter by event type
   if (filters.value.eventType) {
-    logs = logs.filter(log => log.type === filters.value.eventType)
+    logs = logs.filter(log => log.type === filters.value.eventType);
   }
 
   // Filter by severity
   if (filters.value.severity) {
-    logs = logs.filter(log => log.severity === filters.value.severity)
+    logs = logs.filter(log => log.severity === filters.value.severity);
   }
 
   // Filter by search
   if (filters.value.search) {
-    const search = filters.value.search.toLowerCase()
-    logs = logs.filter(log => 
-      log.title.toLowerCase().includes(search) ||
-      log.description.toLowerCase().includes(search)
-    )
+    const search = filters.value.search.toLowerCase();
+    logs = logs.filter(
+      log =>
+        log.title.toLowerCase().includes(search) || log.description.toLowerCase().includes(search)
+    );
   }
 
   // Sort by timestamp (newest first)
-  return logs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-})
+  return logs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+});
 
-const totalPages = computed(() => 
-  Math.ceil(filteredLogs.value.length / itemsPerPage)
-)
+const totalPages = computed(() => Math.ceil(filteredLogs.value.length / itemsPerPage));
 
 const paginatedLogs = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  const end = start + itemsPerPage
-  return filteredLogs.value.slice(start, end)
-})
+  const start = (currentPage.value - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  return filteredLogs.value.slice(start, end);
+});
 
 // Methods
 const loadAuditLogs = async () => {
-  loading.value = true
-  
+  loading.value = true;
+
   try {
     // Simulate API call - in real app, this would fetch from backend
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     // Mock audit log data
     auditLogs.value = [
       {
@@ -314,8 +314,8 @@ const loadAuditLogs = async () => {
           ipAddress: '192.168.1.100',
           userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
           location: 'San Francisco, CA',
-          device: 'MacBook Pro'
-        }
+          device: 'MacBook Pro',
+        },
       },
       {
         id: '2',
@@ -327,8 +327,8 @@ const loadAuditLogs = async () => {
         status: 'success',
         details: {
           ipAddress: '192.168.1.100',
-          device: 'MacBook Pro'
-        }
+          device: 'MacBook Pro',
+        },
       },
       {
         id: '3',
@@ -340,8 +340,8 @@ const loadAuditLogs = async () => {
         status: 'pending',
         actions: [
           { id: 'view-breached', label: 'View Passwords', action: 'view-breached-passwords' },
-          { id: 'dismiss', label: 'Dismiss', action: 'dismiss-breach' }
-        ]
+          { id: 'dismiss', label: 'Dismiss', action: 'dismiss-breach' },
+        ],
       },
       {
         id: '4',
@@ -350,7 +350,7 @@ const loadAuditLogs = async () => {
         description: 'User enabled two-factor authentication for their account',
         timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
         severity: 'low',
-        status: 'success'
+        status: 'success',
       },
       {
         id: '5',
@@ -363,8 +363,8 @@ const loadAuditLogs = async () => {
         details: {
           ipAddress: '203.0.113.42',
           userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-          location: 'Unknown'
-        }
+          location: 'Unknown',
+        },
       },
       {
         id: '6',
@@ -373,55 +373,55 @@ const loadAuditLogs = async () => {
         description: 'User exported vault data to encrypted backup file',
         timestamp: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
         severity: 'medium',
-        status: 'success'
-      }
-    ]
+        status: 'success',
+      },
+    ];
   } catch (error) {
-    console.error('Failed to load audit logs:', error)
+    console.error('Failed to load audit logs:', error);
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 const refreshLogs = () => {
-  loadAuditLogs()
-}
+  loadAuditLogs();
+};
 
 const exportLogs = async () => {
-  exporting.value = true
-  
+  exporting.value = true;
+
   try {
     // Simulate export process
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
     // In real app, this would generate and download a file
-    const data = JSON.stringify(filteredLogs.value, null, 2)
-    const blob = new Blob([data], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `audit-logs-${new Date().toISOString().split('T')[0]}.json`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    const data = JSON.stringify(filteredLogs.value, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `audit-logs-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   } catch (error) {
-    console.error('Failed to export logs:', error)
+    console.error('Failed to export logs:', error);
   } finally {
-    exporting.value = false
+    exporting.value = false;
   }
-}
+};
 
 const handleAction = (action: any, entry: AuditLogEntry) => {
   switch (action.action) {
     case 'view-breached-passwords':
       // Emit event to parent or navigate
-      break
+      break;
     case 'dismiss-breach':
       // Mark as dismissed
-      break
+      break;
   }
-}
+};
 
 const formatDateTime = (date: Date) => {
   return new Intl.DateTimeFormat('en-US', {
@@ -430,353 +430,88 @@ const formatDateTime = (date: Date) => {
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit'
-  }).format(date)
-}
+    second: '2-digit',
+  }).format(date);
+};
 
 const getEntryClass = (entry: AuditLogEntry) => {
   return {
     'entry-critical': entry.severity === 'critical',
     'entry-high': entry.severity === 'high',
-    'entry-failed': entry.status === 'failed' || entry.status === 'blocked'
-  }
-}
+    'entry-failed': entry.status === 'failed' || entry.status === 'blocked',
+  };
+};
 
 const getIconClass = (type: string, severity: string) => {
-  const baseClass = 'entry-icon'
-  
+  const baseClass = 'entry-icon';
+
   if (severity === 'critical' || severity === 'high') {
-    return `${baseClass} icon-danger`
+    return `${baseClass} icon-danger`;
   } else if (severity === 'medium') {
-    return `${baseClass} icon-warning`
+    return `${baseClass} icon-warning`;
   } else {
-    return `${baseClass} icon-info`
+    return `${baseClass} icon-info`;
   }
-}
+};
 
 const getIconPath = (type: string) => {
   switch (type) {
     case 'authentication':
-      return 'M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1'
+      return 'M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1';
     case 'password':
-      return 'M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z'
+      return 'M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z';
     case 'security':
-      return 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z'
+      return 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z';
     case 'access':
-      return 'M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
+      return 'M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z';
     case 'breach':
-      return 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z'
+      return 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z';
     default:
-      return 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+      return 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z';
   }
-}
+};
 
 const getSeverityClass = (severity: string) => {
   switch (severity) {
     case 'critical':
-      return 'severity-critical'
+      return 'severity-critical';
     case 'high':
-      return 'severity-high'
+      return 'severity-high';
     case 'medium':
-      return 'severity-medium'
+      return 'severity-medium';
     case 'low':
-      return 'severity-low'
+      return 'severity-low';
     default:
-      return 'severity-low'
+      return 'severity-low';
   }
-}
+};
 
 const getStatusClass = (status: string) => {
   switch (status) {
     case 'success':
-      return 'status-success'
+      return 'status-success';
     case 'failed':
-      return 'status-failed'
+      return 'status-failed';
     case 'pending':
-      return 'status-pending'
+      return 'status-pending';
     case 'blocked':
-      return 'status-blocked'
+      return 'status-blocked';
     default:
-      return 'status-neutral'
+      return 'status-neutral';
   }
-}
+};
 
 // Watch for filter changes to reset pagination
-watch(filters, () => {
-  currentPage.value = 1
-}, { deep: true })
+watch(
+  filters,
+  () => {
+    currentPage.value = 1;
+  },
+  { deep: true }
+);
 
 // Lifecycle
 onMounted(() => {
-  loadAuditLogs()
-})
+  loadAuditLogs();
+});
 </script>
-
-<style scoped>
-.audit-log {
-  @apply space-y-6;
-}
-
-.audit-header {
-  @apply flex items-start justify-between;
-}
-
-.header-content {
-  @apply space-y-1;
-}
-
-.audit-title {
-  @apply text-2xl font-bold text-neutral-900;
-}
-
-.audit-description {
-  @apply text-neutral-600;
-}
-
-.header-actions {
-  @apply flex items-center space-x-3;
-}
-
-.audit-filters {
-  @apply grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-neutral-50 rounded-lg;
-}
-
-.filter-group {
-  @apply space-y-1;
-}
-
-.filter-label {
-  @apply block text-sm font-medium text-neutral-700;
-}
-
-.filter-select {
-  @apply w-full px-3 py-2 border border-neutral-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500;
-}
-
-.audit-loading {
-  @apply flex flex-col items-center justify-center py-16 space-y-4;
-}
-
-.loading-text {
-  @apply text-neutral-600;
-}
-
-.audit-entries {
-  @apply space-y-4;
-}
-
-.audit-entry {
-  @apply bg-white border border-neutral-200 rounded-lg p-6 flex items-start space-x-4;
-}
-
-.entry-critical {
-  @apply border-red-300 bg-red-50;
-}
-
-.entry-high {
-  @apply border-orange-300 bg-orange-50;
-}
-
-.entry-failed {
-  @apply border-red-300 bg-red-50;
-}
-
-.entry-icon {
-  @apply w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0;
-}
-
-.icon-danger {
-  @apply bg-red-100 text-red-600;
-}
-
-.icon-warning {
-  @apply bg-yellow-100 text-yellow-600;
-}
-
-.icon-info {
-  @apply bg-blue-100 text-blue-600;
-}
-
-.entry-content {
-  @apply flex-1 space-y-3;
-}
-
-.entry-header {
-  @apply flex items-start justify-between;
-}
-
-.entry-title {
-  @apply text-lg font-semibold text-neutral-900;
-}
-
-.entry-meta {
-  @apply flex items-center space-x-3 text-sm;
-}
-
-.entry-time {
-  @apply text-neutral-600;
-}
-
-.entry-severity {
-  @apply px-2 py-1 rounded text-xs font-medium;
-}
-
-.severity-critical {
-  @apply bg-red-100 text-red-800;
-}
-
-.severity-high {
-  @apply bg-orange-100 text-orange-800;
-}
-
-.severity-medium {
-  @apply bg-yellow-100 text-yellow-800;
-}
-
-.severity-low {
-  @apply bg-blue-100 text-blue-800;
-}
-
-.entry-description {
-  @apply text-neutral-700;
-}
-
-.entry-details {
-  @apply bg-neutral-50 rounded-lg p-4;
-}
-
-.details-grid {
-  @apply grid grid-cols-1 md:grid-cols-2 gap-3;
-}
-
-.detail-item {
-  @apply flex items-center space-x-2;
-}
-
-.detail-label {
-  @apply text-sm font-medium text-neutral-600;
-}
-
-.detail-value {
-  @apply text-sm text-neutral-900 font-mono;
-}
-
-.entry-actions {
-  @apply flex items-center space-x-2;
-}
-
-.entry-status {
-  @apply px-3 py-1 rounded-full text-sm font-medium flex-shrink-0;
-}
-
-.status-success {
-  @apply bg-green-100 text-green-800;
-}
-
-.status-failed {
-  @apply bg-red-100 text-red-800;
-}
-
-.status-pending {
-  @apply bg-yellow-100 text-yellow-800;
-}
-
-.status-blocked {
-  @apply bg-red-100 text-red-800;
-}
-
-.status-neutral {
-  @apply bg-neutral-100 text-neutral-800;
-}
-
-.audit-empty {
-  @apply text-center py-16;
-}
-
-.empty-icon {
-  @apply mb-4;
-}
-
-.empty-title {
-  @apply text-xl font-semibold text-neutral-900 mb-2;
-}
-
-.empty-description {
-  @apply text-neutral-600 max-w-md mx-auto;
-}
-
-.audit-pagination {
-  @apply flex items-center justify-between pt-6 border-t border-neutral-200;
-}
-
-.pagination-info {
-  @apply text-sm text-neutral-600;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .audit-title {
-    @apply text-neutral-100;
-  }
-
-  .audit-description {
-    @apply text-neutral-400;
-  }
-
-  .audit-filters {
-    @apply bg-neutral-800;
-  }
-
-  .filter-label {
-    @apply text-neutral-300;
-  }
-
-  .filter-select {
-    @apply bg-neutral-700 border-neutral-600 text-neutral-100;
-  }
-
-  .audit-entry {
-    @apply bg-neutral-800 border-neutral-700;
-  }
-
-  .entry-title {
-    @apply text-neutral-100;
-  }
-
-  .entry-time {
-    @apply text-neutral-400;
-  }
-
-  .entry-description {
-    @apply text-neutral-300;
-  }
-
-  .entry-details {
-    @apply bg-neutral-700;
-  }
-
-  .detail-label {
-    @apply text-neutral-400;
-  }
-
-  .detail-value {
-    @apply text-neutral-100;
-  }
-
-  .empty-title {
-    @apply text-neutral-100;
-  }
-
-  .empty-description {
-    @apply text-neutral-400;
-  }
-
-  .pagination-info {
-    @apply text-neutral-400;
-  }
-
-  .audit-pagination {
-    @apply border-neutral-700;
-  }
-}
-</style>

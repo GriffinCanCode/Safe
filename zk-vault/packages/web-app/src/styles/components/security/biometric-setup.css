@@ -54,7 +54,12 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, var(--color-success-500), var(--color-primary-500), var(--color-warning-500));
+  background: linear-gradient(
+    90deg,
+    var(--color-success-500),
+    var(--color-primary-500),
+    var(--color-warning-500)
+  );
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
@@ -733,7 +738,8 @@
 
 /* === ANIMATIONS === */
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
     opacity: 1;
   }
@@ -811,4 +817,4 @@
   .compatibility-item {
     border-width: 2px;
   }
-} 
+}

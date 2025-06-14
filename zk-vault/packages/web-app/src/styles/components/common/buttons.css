@@ -300,8 +300,6 @@
   border-radius: 9999px;
 }
 
-
-
 /* === BUTTON CONTENT === */
 .button-content {
   overflow: hidden;
@@ -345,36 +343,36 @@
     color: var(--color-neutral-200);
     border-color: var(--color-neutral-600);
   }
-  
+
   .btn-secondary:hover {
     background-color: var(--color-neutral-700);
     border-color: var(--color-neutral-500);
   }
-  
+
   .btn-secondary:active {
     background-color: var(--color-neutral-600);
     border-color: var(--color-neutral-400);
   }
-  
+
   .btn-ghost {
     color: var(--color-neutral-300);
   }
-  
+
   .btn-ghost:hover {
     background-color: var(--color-neutral-800);
     color: var(--color-neutral-200);
   }
-  
+
   .btn-ghost:active {
     background-color: var(--color-neutral-700);
     color: var(--color-neutral-100);
   }
-  
+
   .btn-outline {
     color: var(--color-primary-400);
     border-color: var(--color-primary-400);
   }
-  
+
   .btn-outline:hover {
     background-color: var(--color-primary-900);
     color: var(--color-primary-300);
@@ -387,7 +385,7 @@
   .btn {
     border-width: 2px;
   }
-  
+
   .btn:focus-visible {
     outline-width: 3px;
     outline-color: var(--color-primary-500);
@@ -399,11 +397,11 @@
   .btn {
     transition: none;
   }
-  
+
   .btn-fab:hover {
     transform: none;
   }
-  
+
   .btn-loading::before {
     animation: none;
   }
@@ -414,4 +412,4 @@
   to {
     transform: rotate(360deg);
   }
-} 
+}

@@ -255,7 +255,7 @@
   .motion-card-hover {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   }
-  
+
   .motion-card-hover:hover {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
   }
@@ -277,7 +277,7 @@
     transition: none !important;
     animation: none !important;
   }
-  
+
   .motion-fade-in,
   .motion-slide-left,
   .motion-slide-right,
@@ -287,7 +287,7 @@
     opacity: 1;
     transform: none;
   }
-  
+
   .motion-stagger-container > * {
     opacity: 1;
     transform: none;
@@ -306,4 +306,4 @@
 
 .motion-gpu-accelerated:not(.animating) {
   will-change: auto;
-} 
+}

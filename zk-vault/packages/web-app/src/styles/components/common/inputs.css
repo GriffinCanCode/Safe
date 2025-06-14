@@ -404,58 +404,58 @@
   .input-label {
     color: var(--color-neutral-200);
   }
-  
+
   .input,
   .input-base {
     background-color: var(--color-neutral-800);
     border-color: var(--color-neutral-600);
     color: var(--color-neutral-100);
   }
-  
+
   .input::placeholder,
   .input-base::placeholder {
     color: var(--color-neutral-400);
   }
-  
+
   .input:disabled,
   .input-base:disabled {
     background-color: var(--color-neutral-900);
     color: var(--color-neutral-600);
   }
-  
+
   .input:read-only,
   .input-base:read-only {
     background-color: var(--color-neutral-900);
   }
-  
+
   .input-icon {
     color: var(--color-neutral-400);
   }
-  
+
   .input-clear,
   .input-toggle-password {
     color: var(--color-neutral-400);
   }
-  
+
   .input-clear:hover,
   .input-toggle-password:hover {
     color: var(--color-neutral-300);
   }
-  
+
   .input-error {
     color: var(--color-danger-400);
   }
-  
+
   .input-help {
     color: var(--color-neutral-400);
   }
-  
+
   .checkbox,
   .radio {
     background-color: var(--color-neutral-800);
     border-color: var(--color-neutral-600);
   }
-  
+
   .input-addon {
     background-color: var(--color-neutral-800);
     border-color: var(--color-neutral-600);
@@ -469,17 +469,17 @@
   .input-base {
     border-width: 2px;
   }
-  
+
   .input:focus,
   .input-base:focus {
     border-width: 2px;
     box-shadow: 0 0 0 2px var(--color-primary-500);
   }
-  
+
   .input-error-state {
     border-width: 2px;
   }
-  
+
   .checkbox,
   .radio {
     border-width: 2px;
@@ -496,4 +496,4 @@
   .input-toggle-password {
     transition: none;
   }
-} 
+}

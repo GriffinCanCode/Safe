@@ -1,0 +1,278 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# ZK-Vault Development Rules
+
+## Project Overview
+You are working on ZK-Vault, a zero-knowledge password and file storage system built as a monorepo with Vue 3, TypeScript, Tailwind CSS v4, and Firebase backend.
+
+## Architecture & Structure
+
+### Monorepo Organization
+- **Root**: `zk-vault/` - Lerna-managed monorepo
+- **Packages**: 
+  - `packages/web-app/` - Vue 3 web application
+  - `packages/crypto/` - Cryptographic utilities
+  - `packages/browser-extension/` - Browser extension
+  - `packages/shared/` - Shared utilities and types
+  - `packages/mobile-app/` - Mobile application
+- **Use workspace dependencies** with `file:../` for internal packages
+- **Follow Lerna conventions** for cross-package dependencies
+
+### Vue 3 + TypeScript Standards
+- **Always use Composition API** with `<script setup>` syntax
+- **Use TypeScript** for all new files (.ts, .vue with lang="ts")
+- **Import aliases**: Use `@/` for src directory, `@/components/`, `@/composables/`, etc.
+- **Component naming**: PascalCase for components, kebab-case for files
+- **Props & emits**: Always define with TypeScript interfaces
+- **Composables**: Use VueUse patterns, prefix with `use`
+
+```vue
+<script setup lang="ts">
+interface Props {
+  modelValue: string
+  disabled?: boolean
+}
+
+interface Emits {
+  (e: 'update:modelValue', value: string): void
+  (e: 'submit'): void
+}
+
+const props = defineProps<Props>()
+const emit = defineEmits<Emits>()
+</script>
+```
+
+## CSS Architecture - CRITICAL RULES
+
+### Mandatory CSS Practices
+- **NEVER use `@apply` directives** - They are banned and must be replaced with CSS classes
+- **NEVER use inline styles** except for dynamic values with CSS custom properties
+- **ALWAYS use external CSS** files from `src/styles/` directory
+- **Component CSS structure**: `src/styles/components/[category]/[component-name].css`
+
+### CSS File Organization
+```
+src/styles/
+├── index.css                 # Main entry point
+├── variables.css             # CSS custom properties
+├── utilities.css             # Utility classes
+├── components.css            # Component imports index
+├── base/                     # Base styles
+├── layout/                   # Layout components
+├── components/               # Component-specific styles
+│   ├── auth/                 # Authentication components
+│   ├── vault/                # Vault/password components
+│   ├── settings/             # Settings components
+│   └── common/               # Shared components
+├── utilities/                # Utility class definitions
+└── theme/                    # Theme variables
+```
+
+### Dynamic Styles with CSS Custom Properties
+```vue
+<!-- CORRECT: Use CSS custom properties for dynamic values -->
+<template>
+  <div 
+    class="progress-fill"
+    :style="{ '--progress-width': `${progress}%` }"
+  />
+</template>
+
+<style>
+/* In external CSS file */
+.progress-fill {
+  width: var(--progress-width, 0%);
+  transition: width var(--duration-300) var(--ease-out);
+}
+</style>
+```
+
+### Component CSS Integration
+- **Import CSS** in component file or main CSS index
+- **Use semantic class names** that match CSS architecture
+- **Follow BEM methodology** for complex components
+- **Support dark mode** through CSS architecture, not component overrides
+
+## Security & Cryptography
+
+### Zero-Knowledge Principles
+- **Never log sensitive data** (passwords, keys, encrypted content)
+- **Use crypto package** for all cryptographic operations
+- **Validate all inputs** before encryption/decryption
+- **Clear sensitive data** from memory when possible
+- **Use secure random generation** for keys, salts, nonces
+
+### Firebase Security
+- **Always validate Firestore rules** before data operations
+- **Use authentication guards** for protected routes
+- **Implement proper error handling** for auth failures
+- **Never expose sensitive operations** in client-side code
+
+```typescript
+// CORRECT: Use crypto package
+import { encrypt, decrypt } from '@zk-vault/crypto'
+
+// WRONG: Direct crypto operations in components
+// Use the dedicated crypto package instead
+```
+
+## Component Development
+
+### Vue Component Structure
+```vue
+<template>
+  <!-- Use semantic HTML -->
+  <!-- Apply CSS classes from external stylesheets -->
+  <!-- Use proper accessibility attributes -->
+</template>
+
+<script setup lang="ts">
+// 1. Imports (Vue, composables, types, utils)
+// 2. Props and emits interfaces
+// 3. Reactive state
+// 4. Computed properties
+// 5. Methods
+// 6. Lifecycle hooks
+// 7. Watchers
+</script>
+
+<!-- NO <style> section - use external CSS -->
+```
+
+### State Management (Pinia)
+- **Use Pinia stores** for application state
+- **Organize stores** by feature domain (auth, vault, settings)
+- **Use composable pattern** for store access
+- **Keep stores focused** on single responsibility
+
+### Form Handling
+- **Use form validation** with proper TypeScript types
+- **Implement proper error states** using CSS classes
+- **Use semantic form elements** with labels
+- **Support keyboard navigation** and screen readers
+
+## Testing Standards
+
+### Test Organization
+- **Unit tests**: `src/__tests__/unit/`
+- **Integration tests**: `src/__tests__/integration/`
+- **Use Vitest** for testing framework
+- **Mock external dependencies** (Firebase, crypto operations)
+- **Test accessibility** with testing-library queries
+
+### Test Structure
+```typescript
+import { describe, it, expect, beforeEach } from 'vitest'
+import { mount } from '@vue/test-utils'
+import Component from '@/components/Component.vue'
+
+describe('Component', () => {
+  it('renders correctly', () => {
+    const wrapper = mount(Component, {
+      props: { /* props */ }
+    })
+    expect(wrapper.text()).toContain('expected text')
+  })
+})
+```
+
+## Build & Development
+
+### Vite Configuration
+- **Use proper aliases** in vite.config.ts
+- **Configure for monorepo** with proper path resolution
+- **Enable source maps** for development
+- **Optimize for production** with proper chunking
+
+### Linting & Formatting
+- **ESLint**: Follow Vue 3 + TypeScript configuration
+- **Stylelint**: Enforce CSS architecture rules
+- **Prettier**: Consistent code formatting
+- **Pre-commit hooks**: Lint-staged validation
+
+## Performance & Optimization
+
+### Vue Performance
+- **Use `v-memo`** for expensive computations
+- **Lazy load components** with `defineAsyncComponent`
+- **Optimize watchers** with proper cleanup
+- **Use `shallowRef`** for large objects when appropriate
+
+### Bundle Optimization
+- **Tree-shake unused code** properly
+- **Code-split by routes** using dynamic imports
+- **Optimize images** and assets
+- **Use web workers** for heavy computations
+
+## Accessibility Standards
+
+### ARIA & Semantic HTML
+- **Use semantic HTML elements** first
+- **Add ARIA labels** for complex interactions
+- **Support keyboard navigation** completely
+- **Test with screen readers** regularly
+- **Use proper color contrast** through CSS variables
+
+### Focus Management
+- **Visible focus indicators** using CSS classes
+- **Logical tab order** in forms and modals
+- **Focus trapping** in modals and drawers
+- **Skip links** for main content areas
+
+## Error Handling
+
+### Error Boundaries
+- **Wrap async operations** in try-catch blocks
+- **Use proper error types** with TypeScript
+- **Log errors appropriately** (no sensitive data)
+- **Show user-friendly messages** through UI components
+
+### Firebase Error Handling
+```typescript
+import { FirebaseError } from 'firebase/app'
+
+try {
+  await firebaseOperation()
+} catch (error) {
+  if (error instanceof FirebaseError) {
+    handleFirebaseError(error.code, error.message)
+  } else {
+    handleGenericError(error)
+  }
+}
+```
+
+## Documentation Standards
+
+### Code Comments
+- **Use JSDoc** for public functions and components
+- **Explain complex algorithms** especially crypto operations
+- **Document security considerations** where relevant
+- **Keep comments current** with code changes
+
+### README Updates
+- **Update feature documentation** when adding components
+- **Include setup instructions** for new dependencies
+- **Document API changes** that affect other packages
+- **Maintain changelog** for significant updates
+
+## Migration Guidelines
+
+### CSS Migration (Active Priority)
+- **Replace all `@apply` directives** with CSS classes from `/styles`
+- **Convert inline styles** to CSS custom properties pattern
+- **Use existing CSS architecture** - don't create new patterns
+- **Test dark mode support** after CSS migration
+- **Validate responsive behavior** with container queries
+
+### Legacy Code Updates
+- **Prefer refactoring** over rewriting when safe
+- **Maintain backward compatibility** in shared packages
+- **Update tests** when refactoring components
+- **Document breaking changes** in commit messages
+
+Remember: This is a security-focused application. Always prioritize security, accessibility, and maintainability over quick solutions. 
